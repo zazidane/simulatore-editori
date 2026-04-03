@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Editori — Confronto Opzioni Catalogo</title>
+    <script src="chart.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a2744;
+            --primary-light: #2d4a7a;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.06);
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 28px 32px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 6px;
+        }
+        .header p {
+            font-size: 0.95rem;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        /* Layout */
+        .app-container {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 28px 24px;
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 28px;
+            align-items: start;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+        .card-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        /* Input Panel */
+        .input-panel { position: sticky; top: 20px; }
+
+        .input-group {
+            margin-bottom: 22px;
+        }
+        .input-group:last-child { margin-bottom: 0; }
+
+        .input-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 7px;
+        }
+        .input-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        /* Number input */
+        .input-euro-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-euro-wrapper::before {
+            content: '€';
+            position: absolute;
+            left: 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        .input-number {
+            width: 100%;
+            padding: 10px 14px 10px 32px;
+            font-size: 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+            color: var(--text);
+            background: white;
+        }
+        .input-number:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+
+        /* Slider */
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .slider-row input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+        .slider-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .slider-value {
+            min-width: 52px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--primary);
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 4px;
+            gap: 4px;
+        }
+        .toggle-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+        }
+        .toggle-btn.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 1px 3px rgba(59,130,246,0.3);
+        }
+        .toggle-btn:not(.active):hover {
+            background: rgba(0,0,0,0.04);
+        }
+        .toggle-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Warning banner */
+        .warning-banner {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-top: 16px;
+            display: none;
+        }
+        .warning-banner.visible { display: block; }
+        .warning-banner .warning-icon {
+            font-size: 1rem;
+            margin-right: 6px;
+        }
+        .warning-banner .warning-text {
+            font-size: 0.78rem;
+            color: #92400e;
+            line-height: 1.5;
+        }
+        .warning-banner .warning-title {
+            font-weight: 700;
+            font-size: 0.82rem;
+            color: #78350f;
+            margin-bottom: 4px;
+        }
+
+        /* Effective value display */
+        .effective-value-display {
+            background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 16px;
+            border: 1px solid #bfdbfe;
+        }
+        .effective-value-display .ev-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+        .effective-value-display .ev-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-top: 6px;
+        }
+        .effective-value-display .ev-name {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .effective-value-display .ev-value {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Right panel */
+        .output-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Result cards row */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .result-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            border: 2px solid transparent;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            border-top: 4px solid;
+        }
+        .result-card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+        .result-card.royalty-sale { border-top-color: var(--accent); }
+        .result-card.sale { border-top-color: var(--green); }
+        .result-card.hold { border-top-color: var(--orange); }
+
+        .result-card .rc-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 14px;
+        }
+        .result-card.royalty-sale .rc-label { color: var(--accent); }
+        .result-card.sale .rc-label { color: var(--green); }
+        .result-card.hold .rc-label { color: var(--orange); }
+
+        .result-card .rc-main-value {
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+        .result-card .rc-sub-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 14px;
+        }
+        .result-card .rc-detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-top: 1px solid var(--border);
+        }
+        .result-card .rc-detail-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .result-card .rc-detail-value {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* Chart container */
+        .chart-wrapper {
+            position: relative;
+            height: 380px;
+        }
+
+        /* Cost breakdown */
+        .cost-breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 4px;
+        }
+        .cost-item {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+        .cost-item .ci-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .cost-item .ci-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* Tier badge */
+        .tier-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--bg);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .tier-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .tier-small .tier-dot { background: var(--accent); }
+        .tier-medium .tier-dot { background: var(--orange); }
+        .tier-large .tier-dot { background: var(--green); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            .input-panel { position: static; }
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            .insight-box {
+                flex-direction: column;
+                text-align: center;
+            }
+            .insight-box .insight-text {
+                border-left: none;
+                border-top: 1px solid rgba(255,255,255,0.25);
+                padding-left: 0;
+                padding-top: 14px;
+            }
+            .cost-breakdown {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Risk info box */
+        .risk-info-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 10px;
+            font-size: 0.76rem;
+            line-height: 1.5;
+        }
+        .risk-info-title {
+            font-weight: 700;
+            font-size: 0.78rem;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+        .risk-info-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .risk-info-section {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+        .risk-info-section strong {
+            font-size: 0.74rem;
+            color: var(--text);
+            display: block;
+            margin-bottom: 3px;
+        }
+        .risk-info-section ul {
+            margin: 0;
+            padding-left: 14px;
+            color: var(--text-muted);
+        }
+        .risk-info-section li {
+            margin-bottom: 1px;
+        }
+        .risk-arrow {
+            font-size: 1.1rem;
+            font-weight: 800;
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-top: 1px;
+        }
+        .risk-arrow-low {
+            color: #059669;
+            background: #d1fae5;
+        }
+        .risk-arrow-high {
+            color: #dc2626;
+            background: #fee2e2;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Simulatore per Editori</h1>
+        <p>Confronta le opzioni finanziarie per il tuo catalogo musicale</p>
+    </div>
+
+    <div class="app-container">
+        <!-- INPUT PANEL -->
+        <div class="input-panel">
+            <div class="card">
+                <div class="card-title">Parametri del Catalogo</div>
+
+                <!-- Flusso di cassa annuale -->
+                <div class="input-group">
+                    <label class="input-label" for="annualCashFlow">Flusso di cassa medio annuale</label>
+                    <div class="input-euro-wrapper">
+                        <input type="text" id="annualCashFlow" class="input-number" placeholder="es. 22.222" inputmode="numeric">
+                    </div>
+                    <div class="input-hint">Royalties medie annuali generate dal tuo catalogo</div>
+                </div>
+
+                <!-- % tokenizzazione -->
+                <div class="input-group">
+                    <label class="input-label">Quota del catalogo da tokenizzare</label>
+                    <div class="slider-row">
+                        <input type="range" id="tokenPct" min="10" max="100" value="100" step="5">
+                        <span class="slider-value" id="tokenPctDisplay">100%</span>
+                    </div>
+                </div>
+
+                <!-- Time horizon -->
+                <div class="input-group">
+                    <label class="input-label">Orizzonte temporale</label>
+                    <div class="slider-row">
+                        <input type="range" id="timeHorizon" min="3" max="10" value="10" step="1">
+                        <span class="slider-value" id="timeHorizonDisplay">10 anni</span>
+                    </div>
+                </div>
+
+                <!-- Royalty risk rate -->
+                <div class="input-group">
+                    <label class="input-label">Tasso di rischio del catalogo</label>
+                    <div class="slider-row">
+                        <input type="range" id="riskRate" min="7" max="15" value="10" step="0.5">
+                        <span class="slider-value" id="riskRateDisplay">10%</span>
+                    </div>
+                    <div class="input-hint">Un tasso pi&ugrave; alto riduce il valore riconosciuto del catalogo</div>
+                    <div class="risk-info-box" id="riskInfoBox">
+                        <div class="risk-info-title">Cosa influenza il tasso di rischio?</div>
+                        <div class="risk-info-content">
+                            <div class="risk-info-section">
+                                <span class="risk-arrow risk-arrow-low">&#x2193;</span>
+                                <div>
+                                    <strong>Rischio pi&ugrave; basso (7-9%)</strong>
+                                    <ul>
+                                        <li>Catalogo diversificato con molti brani</li>
+                                        <li>Flussi di cassa stabili e prevedibili</li>
+                                        <li>Artisti affermati con storico lungo</li>
+                                        <li>Mix di generi e mercati geografici</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="risk-info-section">
+                                <span class="risk-arrow risk-arrow-high">&#x2191;</span>
+                                <div>
+                                    <strong>Rischio pi&ugrave; alto (11-15%)</strong>
+                                    <ul>
+                                        <li>Catalogo concentrato su pochi brani/artisti</li>
+                                        <li>Flussi di cassa volatili anno su anno</li>
+                                        <li>Forte dipendenza da trend o viral</li>
+                                        <li>Artisti emergenti senza storico</li>
+                                        <li>Concentrazione su un singolo mercato</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Percorso switch -->
+                <div class="input-group">
+                    <label class="input-label">Modalità di strutturazione</label>
+                    <div class="toggle-container">
+                        <button class="toggle-btn" id="btnInstant" onclick="setPath('instant')">
+                            Istantaneo
+                        </button>
+                        <button class="toggle-btn active" id="btnAggregated" onclick="setPath('aggregated')">
+                            Aggregato
+                        </button>
+                    </div>
+                    <div class="input-hint" id="pathHint" style="display:none;"></div>
+                </div>
+
+                <!-- Warning banner -->
+                <div class="warning-banner" id="warningBanner">
+                    <div class="warning-title">⚠ Percorso aggregato obbligatorio</div>
+                    <div class="warning-text">
+                        Il valore effettivo del catalogo è inferiore alla soglia minima di €800.000 per procedere in modalità istantanea. Devi attendere l'aggregazione con altri editori.
+                    </div>
+                </div>
+
+                <!-- Effective value summary -->
+                <div class="effective-value-display">
+                    <div class="ev-label">Riepilogo valori</div>
+                    <div class="ev-row">
+                        <span class="ev-name">Valore catalogo stimato (9×)</span>
+                        <span class="ev-value" id="evCatalogValue">—</span>
+                    </div>
+                    <div class="ev-row">
+                        <span class="ev-name">Valore effettivo tokenizzato</span>
+                        <span class="ev-value" id="evTokenized">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OUTPUT PANEL -->
+        <div class="output-panel">
+
+            <!-- 3 result cards -->
+            <div class="results-grid">
+                <!-- Royalty Sale -->
+                <div class="result-card royalty-sale">
+                    <div class="rc-label">Anticipo sui Ricavi</div>
+                    <div class="rc-main-value" id="rsMainValue">—</div>
+                    <div class="rc-sub-label">NPV</div>
+                    <div class="rc-detail">
+                        <span class="rc-detail-label">Flusso di cassa ad anno 0</span>
+                        <span class="rc-detail-value" id="rsCF0">—</span>
+                    </div>
+                </div>
+
+                <!-- Sale -->
+                <div class="result-card sale">
+                    <div class="rc-label">Vendita Catalogo</div>
+                    <div class="rc-main-value" id="saleMainValue">—</div>
+                    <div class="rc-sub-label">NPV</div>
+                    <div class="rc-detail">
+                        <span class="rc-detail-label">Flusso di cassa ad anno 0</span>
+                        <span class="rc-detail-value" id="saleCF0">—</span>
+                    </div>
+                </div>
+
+                <!-- Hold -->
+                <div class="result-card hold">
+                    <div class="rc-label">Mantieni Catalogo</div>
+                    <div class="rc-main-value" id="holdMainValue">—</div>
+                    <div class="rc-sub-label">NPV</div>
+                    <div class="rc-detail">
+                        <span class="rc-detail-label">Flusso di cassa ad anno 0</span>
+                        <span class="rc-detail-value">€0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cumulative cash flow chart -->
+            <div class="card">
+                <div class="card-title">Flussi di cassa cumulati</div>
+                <div class="chart-wrapper">
+                    <canvas id="cashFlowChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div style="max-width:1320px; margin:0 auto 32px; padding:0 24px;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px 20px; font-size:0.78rem; color:#64748b; line-height:1.6;">
+            <strong style="color:#475569;">Disclaimer</strong> — I risultati di questo simulatore sono puramente indicativi e basati su parametri standard del modello finanziario. La valutazione del singolo catalogo dipende dalle caratteristiche specifiche dello stesso, tra cui la volatilit&agrave; dei flussi di cassa, la composizione del repertorio, la concentrazione degli artisti e le dinamiche di mercato. La piattaforma a regime fornir&agrave; delle valutazioni ad hoc.
+        </div>
+    </div>
+
+    <script>
+    // =========================================
+    //  CONSTANTS FROM FINANCIAL MODEL
+    // =========================================
+    const ROYALTY_RATIO = 9;
+    const RISK_FREE_RATE = 0.04;
+    const ORIGINATION_FEE = 25845.95;
+    const MIN_PACKAGE_VALUE = 800000;
+    const AGGREGATED_TARGET = MIN_PACKAGE_VALUE; // Aggregate to reach minimum €800k
+    const CHART_YEARS = 15; // Fixed 15-year chart horizon
+    const RISK_SENSITIVITY = 0.55; // Dampening factor for risk rate impact on investor pricing
+    // Sale valuation: sale_rate = SALE_BASE_RATE + RISK_SENSITIVITY × risk_rate
+    // Calibrated so at risk=10%: sale_rate = 1/9 = 0.1111 → multiple = 9×
+    const SALE_BASE_RATE = (1 / ROYALTY_RATIO) - RISK_SENSITIVITY * 0.10; // recalculated on sensitivity change
+
+    // Tier thresholds — investor pricing: investor_rate = base_spread + sensitivity × risk_rate
+    // Calibrated so that at risk=10% the effective discount matches the Excel model (~44-46%)
+    // Recalibrated for sensitivity=0.55: base + 0.55×0.10 must equal original investor_rate at risk=10%
+    const TIERS = [
+        { name: 'Large',  minValue: 1600000, baseSpread: 0.154 - RISK_SENSITIVITY * 0.10 }, // inv_rate=15.4% at r=10%
+        { name: 'Medium', minValue: 1000000, baseSpread: 0.151 - RISK_SENSITIVITY * 0.10 }, // inv_rate=15.1% at r=10%
+        { name: 'Small',  minValue: 0,       baseSpread: 0.150 - RISK_SENSITIVITY * 0.10 }, // inv_rate=15.0% at r=10%
+    ];
+
+    // =========================================
+    //  STATE
+    // =========================================
+    let state = {
+        annualCashFlow: 20000, // royalties annuali medie
+        tokenPct: 100,
+        timeHorizon: 10,
+        riskRate: 10, // royalty risk rate in %
+        path: 'aggregated', // 'instant' or 'aggregated'
+    };
+
+    // =========================================
+    //  CHART SETUP
+    // =========================================
+    const ctx = document.getElementById('cashFlowChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Anticipo sui Ricavi',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.08)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 2.5,
+                },
+                {
+                    label: 'Vendita Catalogo',
+                    data: [],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.08)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 2.5,
+                },
+                {
+                    label: 'Mantieni Catalogo',
+                    data: [],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245,158,11,0.08)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 2.5,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + formatEuro(context.parsed.y);
+                        }
+                    }
+                },
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 16,
+                        font: { size: 12, weight: '600' }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(value) { return formatEuroShort(value); }
+                    },
+                    grid: { color: 'rgba(0,0,0,0.04)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    // =========================================
+    //  CALCULATION ENGINE
+    // =========================================
+
+    // Annuity factor helper: PV of €1/year for T years at rate r
+    function annuityFactor(T, r) {
+        if (r === 0) return T;
+        return (1 - Math.pow(1 + r, -T)) / r;
+    }
+
+    function calculate(s) {
+        // Step 1: Full catalog value from annual cash flow (market convention: 9×)
+        const fullCatalogValue = s.annualCashFlow * ROYALTY_RATIO;
+
+        // Step 2: Effective royalties after tokenization %
+        const royaltiesPerYear = s.annualCashFlow * (s.tokenPct / 100);
+        // Market value (9× multiple, fixed convention) — used for Sale
+        const effectiveValue = royaltiesPerYear * ROYALTY_RATIO;
+
+        const T = s.timeHorizon;
+        const riskRate = s.riskRate / 100;
+
+        // Step 3: Determine package size and tier
+        // For threshold/aggregation, use market value (effectiveValue) as reference
+        const belowThreshold = effectiveValue < MIN_PACKAGE_VALUE;
+        const effectivePath = belowThreshold ? 'aggregated' : s.path;
+
+        let nCatalogs;
+        if (effectivePath === 'aggregated') {
+            nCatalogs = Math.max(1, Math.ceil(AGGREGATED_TARGET / effectiveValue - 0.01));
+        } else {
+            nCatalogs = 1;
+        }
+
+        const packageValue = effectiveValue * nCatalogs;
+        const tier = TIERS.find(t => packageValue >= t.minValue);
+
+        // Step 4: Unified investor pricing formula
+        // investor_rate = base_spread + sensitivity × risk_rate
+        // Investor prices T years of royalties at this rate
+        const investorRate = tier.baseSpread + RISK_SENSITIVITY * riskRate;
+        const investorPrice = royaltiesPerYear * annuityFactor(T, investorRate);
+
+        // Effective discount (derived, for display)
+        const effectiveDiscount = 1 - investorPrice / effectiveValue;
+
+        // Step 5: Origination fee per catalog
+        let originationFeePerCatalog;
+        if (effectivePath === 'instant') {
+            originationFeePerCatalog = ORIGINATION_FEE;
+        } else {
+            originationFeePerCatalog = ORIGINATION_FEE / nCatalogs;
+        }
+
+        // Step 6: Cash flows for three options
+        // Royalty Sale: investor buys T years of royalties
+        const royaltySaleCF0 = investorPrice - originationFeePerCatalog;
+
+        // Sale: sell the whole catalog — value adjusts with risk rate
+        // Higher risk = lower multiple = lower catalog price
+        const saleRate = SALE_BASE_RATE + RISK_SENSITIVITY * riskRate;
+        const saleMultiple = 1 / saleRate;
+        const saleCF0 = royaltiesPerYear * saleMultiple;
+
+        // Hold: receive royalties for T years, NPV at risk-free rate
+        const holdNPV = royaltiesPerYear * annuityFactor(T, RISK_FREE_RATE);
+
+        // Cumulative cash flows by year (fixed 15-year chart)
+        // After T years, royalties return to the editor in Royalty Sale scenario
+        const labels = [];
+        const rsCumulative = [];
+        const saleCumulative = [];
+        const holdCumulative = [];
+
+        for (let year = 0; year <= CHART_YEARS; year++) {
+            labels.push('Anno ' + year);
+
+            // Sale: lump sum at Y0, catalog sold permanently, no future flows
+            saleCumulative.push(saleCF0);
+
+            // Hold: royalties accumulate every year (editor keeps catalog forever)
+            holdCumulative.push(year === 0 ? 0 : royaltiesPerYear * year);
+
+            // Royalty Sale: lump sum at Y0, no royalties during T years,
+            // then royalties return from year T+1 onwards
+            if (year === 0) {
+                rsCumulative.push(royaltySaleCF0);
+            } else if (year <= T) {
+                // During securitization period: royalties go to investor
+                rsCumulative.push(royaltySaleCF0);
+            } else {
+                // After securitization: royalties return to editor
+                const yearsAfterT = year - T;
+                rsCumulative.push(royaltySaleCF0 + royaltiesPerYear * yearsAfterT);
+            }
+        }
+
+        // NPV: for lump sums at Y0, NPV = the amount itself
+        const rsNPV = royaltySaleCF0;
+        const saleNPV = saleCF0;
+
+        // Implicit cost of immediate liquidity (Hold NPV vs Royalty Sale NPV)
+        const liquidityCost = holdNPV - rsNPV;
+
+        return {
+            fullCatalogValue,
+            effectiveValue,
+            royaltiesPerYear,
+            belowThreshold,
+            effectivePath,
+            nCatalogs,
+            packageValue,
+            tier,
+            effectiveDiscount,
+            investorRate,
+            originationFeePerCatalog,
+            investorPrice,
+            royaltySaleCF0,
+            saleCF0,
+            holdNPV,
+            labels,
+            rsCumulative,
+            saleCumulative,
+            holdCumulative,
+            rsNPV,
+            saleNPV,
+            liquidityCost,
+            T,
+        };
+    }
+
+    // =========================================
+    //  UI UPDATE
+    // =========================================
+    function updateUI() {
+        const r = calculate(state);
+
+        // Update effective value display
+        document.getElementById('evCatalogValue').textContent = formatEuro(r.fullCatalogValue);
+        document.getElementById('evTokenized').textContent = formatEuro(r.effectiveValue);
+
+        // Warning banner
+        const warning = document.getElementById('warningBanner');
+        if (r.belowThreshold) {
+            warning.classList.add('visible');
+            // Force aggregated
+            document.getElementById('btnInstant').disabled = true;
+            document.getElementById('btnInstant').classList.remove('active');
+            document.getElementById('btnAggregated').classList.add('active');
+            state.path = 'aggregated';
+        } else {
+            warning.classList.remove('visible');
+            document.getElementById('btnInstant').disabled = false;
+        }
+
+        // Result cards — NPV as main value, CF0 as detail
+        document.getElementById('rsMainValue').textContent = formatEuro(r.rsNPV);
+        document.getElementById('rsCF0').textContent = formatEuro(r.royaltySaleCF0);
+
+        document.getElementById('saleMainValue').textContent = formatEuro(r.saleNPV);
+        document.getElementById('saleCF0').textContent = formatEuro(r.saleCF0);
+
+        document.getElementById('holdMainValue').textContent = formatEuro(r.holdNPV);
+
+        // Chart
+        chart.data.labels = r.labels;
+        chart.data.datasets[0].data = r.rsCumulative;
+        chart.data.datasets[1].data = r.saleCumulative;
+        chart.data.datasets[2].data = r.holdCumulative;
+        chart.update();
+
+    }
+
+    // =========================================
+    //  FORMATTING HELPERS
+    // =========================================
+    function formatEuro(value) {
+        if (value === null || value === undefined || isNaN(value)) return '—';
+        return '€' + Math.round(value).toLocaleString('it-IT');
+    }
+
+    function formatEuroShort(value) {
+        if (Math.abs(value) >= 1000000) return '€' + (value / 1000000).toFixed(1) + 'M';
+        if (Math.abs(value) >= 1000) return '€' + (value / 1000).toFixed(0) + 'k';
+        return '€' + value.toFixed(0);
+    }
+
+    function parseEuroInput(str) {
+        if (!str) return 0;
+        // Remove everything except digits, commas, dots
+        let cleaned = str.replace(/[^0-9.,]/g, '');
+        // Handle Italian format: 200.000 or 200,000
+        // If there's a dot followed by 3 digits and no comma, treat dot as thousands separator
+        if (/^\d{1,3}(\.\d{3})+$/.test(cleaned)) {
+            cleaned = cleaned.replace(/\./g, '');
+        } else {
+            // Replace comma with dot for decimal
+            cleaned = cleaned.replace(/,/g, '.');
+        }
+        return parseFloat(cleaned) || 0;
+    }
+
+    // =========================================
+    //  EVENT HANDLERS
+    // =========================================
+    document.getElementById('annualCashFlow').addEventListener('input', function(e) {
+        state.annualCashFlow = parseEuroInput(e.target.value);
+        updateUI();
+    });
+
+    document.getElementById('tokenPct').addEventListener('input', function(e) {
+        state.tokenPct = parseInt(e.target.value);
+        document.getElementById('tokenPctDisplay').textContent = state.tokenPct + '%';
+        updateUI();
+    });
+
+    document.getElementById('timeHorizon').addEventListener('input', function(e) {
+        state.timeHorizon = parseInt(e.target.value);
+        document.getElementById('timeHorizonDisplay').textContent = state.timeHorizon + ' anni';
+        updateUI();
+    });
+
+    document.getElementById('riskRate').addEventListener('input', function(e) {
+        state.riskRate = parseFloat(e.target.value);
+        document.getElementById('riskRateDisplay').textContent = state.riskRate + '%';
+        updateUI();
+    });
+
+    function setPath(path) {
+        if (path === 'instant' && document.getElementById('btnInstant').disabled) return;
+        state.path = path;
+        document.getElementById('btnInstant').classList.toggle('active', path === 'instant');
+        document.getElementById('btnAggregated').classList.toggle('active', path === 'aggregated');
+        updateUI();
+    }
+
+    // =========================================
+    //  INIT
+    // =========================================
+    // Set default value in input (€20.000/anno → catalogo €180.000)
+    document.getElementById('annualCashFlow').value = '20.000';
+    updateUI();
+    </script>
+
+</body>
+</html>
