@@ -652,7 +652,7 @@
     const ORIGINATION_FEE = 25845.95;
     const MIN_PACKAGE_VALUE = 800000;
     const AGGREGATED_TARGET = MIN_PACKAGE_VALUE; // Aggregate to reach minimum €800k
-    const CHART_YEARS = 15; // Fixed 15-year chart horizon
+    const CHART_YEARS = 20; // Fixed 20-year chart horizon
     const RISK_SENSITIVITY = 0.55; // Dampening factor for risk rate impact on investor pricing
     // Sale valuation: sale_rate = SALE_BASE_RATE + RISK_SENSITIVITY × risk_rate
     // Calibrated so at risk=10%: sale_rate = 1/9 = 0.1111 → multiple = 9×
@@ -666,6 +666,16 @@
         { name: 'Medium', minValue: 1000000, baseSpread: 0.151 - RISK_SENSITIVITY * 0.10 }, // inv_rate=15.1% at r=10%
         { name: 'Small',  minValue: 0,       baseSpread: 0.150 - RISK_SENSITIVITY * 0.10 }, // inv_rate=15.0% at r=10%
     ];
+
+    const THIRD_PARTY_RATIO = 0.10;
+    // Additional annual revenue from third parties (estimated at 10% of SIAE royalties)
+    // Always received by the publisher, even during the full tokenization period
+
+    const BTP_RATE = 0.035;
+    // Annual yield of BTP Italia — used in Scenario B (reserved for future implementation)
+
+    const NEW_CATALOG_RISK_RATE = 0.10;
+    // Discount rate for a newly acquired catalog — used in Scenario C (reserved for future)
 
     // =========================================
     //  STATE
@@ -776,6 +786,8 @@
 
         // Step 2: Effective royalties after tokenization %
         const royaltiesPerYear = s.annualCashFlow * (s.tokenPct / 100);
+        const thirdPartyPerYear = royaltiesPerYear * THIRD_PARTY_RATIO;
+        // Third-party revenue: always received by the publisher, including during tokenization
         // Market value (9× multiple, fixed convention) — used for Sale
         const effectiveValue = royaltiesPerYear * ROYALTY_RATIO;
 
@@ -824,8 +836,8 @@
         const saleMultiple = 1 / saleRate;
         const saleCF0 = royaltiesPerYear * saleMultiple;
 
-        // Hold: receive royalties for T years, NPV at risk-free rate
-        const holdNPV = royaltiesPerYear * annuityFactor(T, RISK_FREE_RATE);
+        // Hold: receive royalties + third-party for T years, NPV at catalog risk rate
+        const holdNPV = (royaltiesPerYear + thirdPartyPerYear) * annuityFactor(T, s.riskRate / 100);
 
         // Cumulative cash flows by year (fixed 15-year chart)
         // After T years, royalties return to the editor in Royalty Sale scenario
@@ -840,20 +852,19 @@
             // Sale: lump sum at Y0, catalog sold permanently, no future flows
             saleCumulative.push(saleCF0);
 
-            // Hold: royalties accumulate every year (editor keeps catalog forever)
-            holdCumulative.push(year === 0 ? 0 : royaltiesPerYear * year);
+            // Hold: royalties + third-party revenues accumulate every year
+            holdCumulative.push((royaltiesPerYear + thirdPartyPerYear) * year);
 
-            // Royalty Sale: lump sum at Y0, no royalties during T years,
-            // then royalties return from year T+1 onwards
+            // Royalty Sale: lump sum at Y0, no SIAE royalties during T years,
+            // but third-party revenues always flow; SIAE royalties return after T years
             if (year === 0) {
                 rsCumulative.push(royaltySaleCF0);
             } else if (year <= T) {
-                // During securitization period: royalties go to investor
-                rsCumulative.push(royaltySaleCF0);
+                rsCumulative.push(royaltySaleCF0 + thirdPartyPerYear * year);
             } else {
-                // After securitization: royalties return to editor
-                const yearsAfterT = year - T;
-                rsCumulative.push(royaltySaleCF0 + royaltiesPerYear * yearsAfterT);
+                rsCumulative.push(royaltySaleCF0
+                    + thirdPartyPerYear * year
+                    + royaltiesPerYear * (year - T));
             }
         }
 
