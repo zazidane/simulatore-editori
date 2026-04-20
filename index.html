@@ -467,6 +467,147 @@
             color: #dc2626;
             background: #fee2e2;
         }
+
+        /* Onboarding */
+        #onboarding {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 80px);
+            padding: 40px 24px;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        #onboarding.hidden { display: none; }
+        #simulator.hidden  { display: none; }
+
+        .onboarding-step {
+            display: none;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .onboarding-step.active { display: block; }
+
+        .onboarding-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .onboarding-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .onboarding-btn {
+            display: inline-block;
+            padding: 12px 28px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 24px;
+        }
+
+        .onboarding-btn:hover { background: var(--accent-hover); }
+
+        .onboarding-btn-secondary {
+            display: inline-block;
+            padding: 12px 24px;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-top: 24px;
+            margin-right: 12px;
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .scenario-card {
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+        }
+
+        .scenario-card:hover { border-color: var(--accent); }
+        .scenario-card.selected { border-color: var(--accent); background: rgba(59,130,246,0.06); }
+
+        .scenario-card .sc-letter {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .scenario-card .sc-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .back-calc-result {
+            background: #f0f4f8;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        .back-calc-result strong { color: var(--primary); }
+
+        .onboarding-step-indicator {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .step-dot.active { background: var(--accent); }
+        .step-dot.done   { background: var(--accent); opacity: 0.4; }
+
+        .onboarding-stop-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 560px) {
+            .scenario-grid { grid-template-columns: 1fr; }
+            .onboarding-step { padding: 24px; }
+        }
     </style>
 </head>
 <body>
@@ -476,7 +617,117 @@
         <p>Confronta le opzioni finanziarie per il tuo catalogo musicale</p>
     </div>
 
-    <div class="app-container">
+    <div id="onboarding">
+
+        <!-- Step 1: Interest check -->
+        <div class="onboarding-step active" id="ob-step-1">
+            <div class="onboarding-step-indicator">
+                <div class="step-dot active" id="dot-1"></div>
+                <div class="step-dot" id="dot-2"></div>
+                <div class="step-dot" id="dot-3"></div>
+                <div class="step-dot" id="dot-4"></div>
+            </div>
+            <div class="onboarding-title">Benvenuto nel Simulatore Editori</div>
+            <div class="onboarding-subtitle">
+                Questa piattaforma ti aiuta a confrontare le opzioni finanziarie per il tuo
+                catalogo musicale. Prima di procedere, hai interesse a esplorare la
+                tokenizzazione dei tuoi diritti editoriali?
+            </div>
+            <button class="onboarding-btn" onclick="obNext(1, true)">Sì, voglio esplorare</button>
+            <button class="onboarding-btn-secondary" onclick="obNext(1, false)">No, non ora</button>
+        </div>
+
+        <!-- Step 1b: No interest message -->
+        <div class="onboarding-step" id="ob-step-1b">
+            <div class="onboarding-stop-message">
+                <div style="font-size:2rem; margin-bottom:16px;">👋</div>
+                <div>Grazie per aver visitato il simulatore.</div>
+                <div style="margin-top:12px;">
+                    Se cambi idea, torna quando vuoi — siamo qui per aiutarti a valutare
+                    le opportunità di finanziamento per il tuo catalogo.
+                </div>
+                <button class="onboarding-btn" style="margin-top:32px;"
+                        onclick="obRestart()">Ricomincia</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Financing target -->
+        <div class="onboarding-step" id="ob-step-2">
+            <div class="onboarding-step-indicator">
+                <div class="step-dot done" id="dot2-1"></div>
+                <div class="step-dot active" id="dot2-2"></div>
+                <div class="step-dot" id="dot2-3"></div>
+                <div class="step-dot" id="dot2-4"></div>
+            </div>
+            <div class="onboarding-title">Qual è il tuo obiettivo di liquidità?</div>
+            <div class="onboarding-subtitle">
+                Indica l'importo che vorresti ricevere subito dalla tokenizzazione
+                del tuo catalogo (es. "100.000" per €100.000).
+            </div>
+            <div class="input-euro-wrapper">
+                <input type="text" id="ob-financing-target" class="input-number"
+                       placeholder="es. 80.000" inputmode="numeric" style="font-size:1.1rem; padding:14px 16px;">
+            </div>
+            <button class="onboarding-btn" onclick="obGoStep3()">Continua</button>
+        </div>
+
+        <!-- Step 3: Actual cash flow -->
+        <div class="onboarding-step" id="ob-step-3">
+            <div class="onboarding-step-indicator">
+                <div class="step-dot done"></div>
+                <div class="step-dot done"></div>
+                <div class="step-dot active"></div>
+                <div class="step-dot"></div>
+            </div>
+            <div class="onboarding-title">Qual è il flusso annuale del tuo catalogo?</div>
+            <div class="onboarding-subtitle">
+                Indica le royalties medie annuali che il tuo catalogo genera (somma SIAE + terze parti).
+                Puoi trovare questo dato nei rendiconti SIAE degli ultimi anni.
+            </div>
+            <div class="input-euro-wrapper">
+                <input type="text" id="ob-actual-cashflow" class="input-number"
+                       placeholder="es. 22.222" inputmode="numeric" style="font-size:1.1rem; padding:14px 16px;">
+            </div>
+            <button class="onboarding-btn" onclick="obGoStep4()">Continua</button>
+            <button class="onboarding-btn-secondary" onclick="obGoBackTo(2)">Indietro</button>
+        </div>
+
+        <!-- Step 4: Scenario choice -->
+        <div class="onboarding-step" id="ob-step-4">
+            <div class="onboarding-step-indicator">
+                <div class="step-dot done"></div>
+                <div class="step-dot done"></div>
+                <div class="step-dot done"></div>
+                <div class="step-dot active"></div>
+            </div>
+            <div class="onboarding-title">Come utilizzerai la liquidità?</div>
+            <div class="onboarding-subtitle">
+                La scelta influenza la visualizzazione del simulatore, mostrandoti come
+                evolve la tua posizione finanziaria nel tempo.
+            </div>
+            <div class="scenario-grid">
+                <div class="scenario-card" id="sc-A" onclick="obSelectScenario('A')">
+                    <div class="sc-letter">A</div>
+                    <div class="sc-label">Spese personali o aziendali</div>
+                </div>
+                <div class="scenario-card" id="sc-B" onclick="obSelectScenario('B')">
+                    <div class="sc-letter">B</div>
+                    <div class="sc-label">Investimento in BTP Italia</div>
+                </div>
+                <div class="scenario-card" id="sc-C" onclick="obSelectScenario('C')">
+                    <div class="sc-letter">C</div>
+                    <div class="sc-label">Acquisto nuovo catalogo</div>
+                </div>
+            </div>
+            <div id="ob-backcalc-result" style="display:none;" class="back-calc-result"></div>
+            <button class="onboarding-btn" id="ob-confirm-btn"
+                    style="display:none;" onclick="obConfirm()">Apri il Simulatore</button>
+            <button class="onboarding-btn-secondary" onclick="obGoBackTo(3)">Indietro</button>
+        </div>
+
+    </div>
+
+    <div class="app-container hidden" id="simulator">
         <!-- INPUT PANEL -->
         <div class="input-panel">
             <div class="card">
@@ -597,7 +848,7 @@
     </div>
 
     <!-- Disclaimer -->
-    <div style="max-width:1320px; margin:0 auto 32px; padding:0 24px;">
+    <div id="disclaimer" style="display:none; max-width:1320px; margin:0 auto 32px; padding:0 24px;">
         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px 20px; font-size:0.78rem; color:#64748b; line-height:1.6;">
             <strong style="color:#475569;">Disclaimer</strong> — I risultati di questo simulatore sono puramente indicativi e basati su parametri standard del modello finanziario. La valutazione del singolo catalogo dipende dalle caratteristiche specifiche dello stesso, tra cui la volatilit&agrave; dei flussi di cassa, la composizione del repertorio, la concentrazione degli artisti e le dinamiche di mercato. La piattaforma a regime fornir&agrave; delle valutazioni ad hoc.
         </div>
@@ -652,6 +903,9 @@
         timeHorizon: 10,
         riskRate: 10, // fixed internal default — no longer user-controlled (band uses RISK_BAND_MIN/MAX)
         path: 'aggregated', // 'instant' or 'aggregated'
+        financingTarget: 0,   // X — desired liquidity amount (€)
+        actualCashFlow: 0,    // Z — actual annual cash flow of the catalog (€)
+        chosenScenario: null, // 'A' | 'B' | 'C' — how the publisher intends to use CF0
     };
 
     // =========================================
@@ -1017,11 +1271,126 @@
     }
 
     // =========================================
+    //  ONBOARDING LOGIC
+    // =========================================
+
+    function obShowStep(n) {
+        document.querySelectorAll('.onboarding-step').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById('ob-step-' + n);
+        if (target) target.classList.add('active');
+    }
+
+    function obNext(step, interested) {
+        if (step === 1) {
+            if (interested) {
+                obShowStep(2);
+            } else {
+                obShowStep('1b');
+            }
+        }
+    }
+
+    function obRestart() {
+        obShowStep(1);
+    }
+
+    function obGoStep3() {
+        const raw = document.getElementById('ob-financing-target').value;
+        const val = parseEuroInput(raw);
+        if (!val || val <= 0) {
+            alert('Inserisci un importo valido per il tuo obiettivo di liquidità.');
+            return;
+        }
+        state.financingTarget = val;
+        obShowStep(3);
+    }
+
+    function obGoStep4() {
+        const raw = document.getElementById('ob-actual-cashflow').value;
+        const val = parseEuroInput(raw);
+        if (!val || val <= 0) {
+            alert('Inserisci un flusso annuale valido per il tuo catalogo.');
+            return;
+        }
+        state.actualCashFlow = val;
+        obShowStep(4);
+        document.getElementById('ob-backcalc-result').style.display = 'none';
+        document.getElementById('ob-confirm-btn').style.display = 'none';
+        document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+        state.chosenScenario = null;
+    }
+
+    function obGoBackTo(step) {
+        obShowStep(step);
+    }
+
+    function obSelectScenario(scenario) {
+        state.chosenScenario = scenario;
+        document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+        document.getElementById('sc-' + scenario).classList.add('selected');
+        const result = backCalculate(state.financingTarget, state.actualCashFlow);
+        const el = document.getElementById('ob-backcalc-result');
+        el.innerHTML = result.message;
+        el.style.display = 'block';
+        document.getElementById('ob-confirm-btn').style.display = 'inline-block';
+        state.annualCashFlow = result.annualCashFlow;
+        state.tokenPct = result.tokenPct;
+        state.path = result.path;
+    }
+
+    function obConfirm() {
+        // Sync simulator input fields with pre-filled state values
+        document.getElementById('annualCashFlow').value = state.annualCashFlow.toLocaleString('it-IT');
+        document.getElementById('tokenPct').value = state.tokenPct;
+        document.getElementById('tokenPctDisplay').textContent = state.tokenPct + '%';
+        document.getElementById('btnInstant').classList.toggle('active', state.path === 'instant');
+        document.getElementById('btnAggregated').classList.toggle('active', state.path === 'aggregated');
+        document.getElementById('onboarding').classList.add('hidden');
+        document.getElementById('simulator').classList.remove('hidden');
+        document.getElementById('disclaimer').style.display = 'block';
+        updateUI();
+    }
+
+    function backCalculate(X, Z) {
+        // X = desired financing target (€)
+        // Z = actual annual cash flow (€)
+        // Y = required annual cash flow to obtain X after origination fee
+        const DEFAULT_RISK_RATE = 0.10;
+        const Y = (X + ORIGINATION_FEE) / annuityFactor(10, DEFAULT_RISK_RATE);
+        let message, annualCashFlow, tokenPct, path;
+
+        if (Z < Y) {
+            const nNeeded = Math.ceil(Y / Z);
+            annualCashFlow = Z;
+            tokenPct = 100;
+            path = 'aggregated';
+            message = `
+                <strong>Il tuo catalogo genera €${Math.round(Z).toLocaleString('it-IT')}/anno.</strong><br>
+                Per ottenere <strong>${formatEuro(X)}</strong> sono necessari circa
+                <strong>€${Math.round(Y).toLocaleString('it-IT')}/anno</strong> di flussi tokenizzati.<br>
+                Dovrai aggregare il tuo catalogo con altri editori (stima: <strong>${nNeeded} cataloghi simili</strong>).
+                Il simulatore è stato pre-configurato in modalità <strong>Aggregato</strong>.
+            `;
+        } else {
+            const pct = Math.min(100, Math.round((Y / Z) * 100));
+            annualCashFlow = Z;
+            tokenPct = pct;
+            path = 'instant';
+            message = `
+                <strong>Ottimo!</strong> Il tuo catalogo è sufficiente da solo.<br>
+                Dovrai tokenizzare il <strong>${pct}%</strong> del catalogo per ottenere
+                <strong>${formatEuro(X)}</strong>.<br>
+                Il simulatore è stato pre-configurato con questi valori.
+            `;
+        }
+
+        return { message, annualCashFlow, tokenPct, path };
+    }
+
+    // =========================================
     //  INIT
     // =========================================
-    // Set default value in input (€20.000/anno → catalogo €180.000)
-    document.getElementById('annualCashFlow').value = '20.000';
-    updateUI();
+    // Simulator is hidden until onboarding completes; no updateUI() call needed here.
     </script>
 
 </body>
