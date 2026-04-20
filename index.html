@@ -509,46 +509,6 @@
                     </div>
                 </div>
 
-                <!-- Royalty risk rate -->
-                <div class="input-group">
-                    <label class="input-label">Tasso di rischio del catalogo</label>
-                    <div class="slider-row">
-                        <input type="range" id="riskRate" min="7" max="15" value="10" step="0.5">
-                        <span class="slider-value" id="riskRateDisplay">10%</span>
-                    </div>
-                    <div class="input-hint">Un tasso pi&ugrave; alto riduce il valore riconosciuto del catalogo</div>
-                    <div class="risk-info-box" id="riskInfoBox">
-                        <div class="risk-info-title">Cosa influenza il tasso di rischio?</div>
-                        <div class="risk-info-content">
-                            <div class="risk-info-section">
-                                <span class="risk-arrow risk-arrow-low">&#x2193;</span>
-                                <div>
-                                    <strong>Rischio pi&ugrave; basso (7-9%)</strong>
-                                    <ul>
-                                        <li>Catalogo diversificato con molti brani</li>
-                                        <li>Flussi di cassa stabili e prevedibili</li>
-                                        <li>Artisti affermati con storico lungo</li>
-                                        <li>Mix di generi e mercati geografici</li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="risk-info-section">
-                                <span class="risk-arrow risk-arrow-high">&#x2191;</span>
-                                <div>
-                                    <strong>Rischio pi&ugrave; alto (11-15%)</strong>
-                                    <ul>
-                                        <li>Catalogo concentrato su pochi brani/artisti</li>
-                                        <li>Flussi di cassa volatili anno su anno</li>
-                                        <li>Forte dipendenza da trend o viral</li>
-                                        <li>Artisti emergenti senza storico</li>
-                                        <li>Concentrazione su un singolo mercato</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Percorso switch -->
                 <div class="input-group">
                     <label class="input-label">Modalità di strutturazione</label>
@@ -677,6 +637,12 @@
     const NEW_CATALOG_RISK_RATE = 0.10;
     // Discount rate for a newly acquired catalog — used in Scenario C (reserved for future)
 
+    const RISK_BAND_MIN = 0.06;
+    // Lower bound of risk band: best-case catalog (diversified, stable cash flows)
+
+    const RISK_BAND_MAX = 0.15;
+    // Upper bound of risk band: worst-case catalog (concentrated, volatile cash flows)
+
     // =========================================
     //  STATE
     // =========================================
@@ -684,7 +650,7 @@
         annualCashFlow: 20000, // royalties annuali medie
         tokenPct: 100,
         timeHorizon: 10,
-        riskRate: 10, // royalty risk rate in %
+        riskRate: 10, // fixed internal default — no longer user-controlled (band uses RISK_BAND_MIN/MAX)
         path: 'aggregated', // 'instant' or 'aggregated'
     };
 
@@ -701,35 +667,66 @@
                     label: 'Anticipo sui Ricavi',
                     data: [],
                     borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.08)',
-                    fill: true,
+                    backgroundColor: 'rgba(59,130,246,0.15)',
+                    fill: '+1',
                     tension: 0.3,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    borderWidth: 1.5,
+                    borderDash: [],
+                },
+                {
+                    label: '_rsLower',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.15)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1.5,
+                    borderDash: [4, 4],
                 },
                 {
                     label: 'Vendita Catalogo',
                     data: [],
                     borderColor: '#10b981',
-                    backgroundColor: 'rgba(16,185,129,0.08)',
-                    fill: true,
+                    backgroundColor: 'rgba(16,185,129,0.15)',
+                    fill: '+1',
                     tension: 0.3,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    borderWidth: 1.5,
+                },
+                {
+                    label: '_saleLower',
+                    data: [],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.15)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1.5,
+                    borderDash: [4, 4],
                 },
                 {
                     label: 'Mantieni Catalogo',
                     data: [],
                     borderColor: '#f59e0b',
-                    backgroundColor: 'rgba(245,158,11,0.08)',
-                    fill: true,
+                    backgroundColor: 'rgba(245,158,11,0.15)',
+                    fill: '+1',
                     tension: 0.3,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    borderWidth: 2.5,
-                }
+                    pointRadius: 0,
+                    borderWidth: 1.5,
+                },
+                {
+                    label: '_holdLower',
+                    data: [],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245,158,11,0.15)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1.5,
+                    borderDash: [4, 4],
+                },
             ]
         },
         options: {
@@ -752,7 +749,10 @@
                     labels: {
                         usePointStyle: true,
                         padding: 16,
-                        font: { size: 12, weight: '600' }
+                        font: { size: 12, weight: '600' },
+                        filter: function(legendItem) {
+                            return !legendItem.text.startsWith('_');
+                        }
                     }
                 }
             },
@@ -778,6 +778,34 @@
     function annuityFactor(T, r) {
         if (r === 0) return T;
         return (1 - Math.pow(1 + r, -T)) / r;
+    }
+
+    // Builds cumulative time series for all 3 scenarios at a given riskRateOverride (decimal)
+    function computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, riskRateOverride, packageValue, nCatalogs, T, originationFeePerCatalog) {
+        const tier = TIERS.find(t => packageValue >= t.minValue);
+        const investorRate = tier.baseSpread + RISK_SENSITIVITY * riskRateOverride;
+        const investorPrice = royaltiesPerYear * annuityFactor(T, investorRate);
+        const royaltySaleCF0 = investorPrice - originationFeePerCatalog;
+        const saleRate = SALE_BASE_RATE + RISK_SENSITIVITY * riskRateOverride;
+        const saleCF0 = royaltiesPerYear / saleRate;
+
+        const rsCumulative = [];
+        const saleCumulative = [];
+        const holdCumulative = [];
+
+        for (let year = 0; year <= CHART_YEARS; year++) {
+            saleCumulative.push(saleCF0);
+            holdCumulative.push((royaltiesPerYear + thirdPartyPerYear) * year);
+            if (year === 0) {
+                rsCumulative.push(royaltySaleCF0);
+            } else if (year <= T) {
+                rsCumulative.push(royaltySaleCF0 + thirdPartyPerYear * year);
+            } else {
+                rsCumulative.push(royaltySaleCF0 + thirdPartyPerYear * year + royaltiesPerYear * (year - T));
+            }
+        }
+
+        return { rsCumulative, saleCumulative, holdCumulative };
     }
 
     function calculate(s) {
@@ -839,34 +867,15 @@
         // Hold: receive royalties + third-party for T years, NPV at catalog risk rate
         const holdNPV = (royaltiesPerYear + thirdPartyPerYear) * annuityFactor(T, s.riskRate / 100);
 
-        // Cumulative cash flows by year (fixed 15-year chart)
-        // After T years, royalties return to the editor in Royalty Sale scenario
+        // Build chart labels
         const labels = [];
-        const rsCumulative = [];
-        const saleCumulative = [];
-        const holdCumulative = [];
-
         for (let year = 0; year <= CHART_YEARS; year++) {
             labels.push('Anno ' + year);
-
-            // Sale: lump sum at Y0, catalog sold permanently, no future flows
-            saleCumulative.push(saleCF0);
-
-            // Hold: royalties + third-party revenues accumulate every year
-            holdCumulative.push((royaltiesPerYear + thirdPartyPerYear) * year);
-
-            // Royalty Sale: lump sum at Y0, no SIAE royalties during T years,
-            // but third-party revenues always flow; SIAE royalties return after T years
-            if (year === 0) {
-                rsCumulative.push(royaltySaleCF0);
-            } else if (year <= T) {
-                rsCumulative.push(royaltySaleCF0 + thirdPartyPerYear * year);
-            } else {
-                rsCumulative.push(royaltySaleCF0
-                    + thirdPartyPerYear * year
-                    + royaltiesPerYear * (year - T));
-            }
         }
+
+        // Risk band time series: upper = best-case (low risk), lower = worst-case (high risk)
+        const upperBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MIN, packageValue, nCatalogs, T, originationFeePerCatalog);
+        const lowerBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MAX, packageValue, nCatalogs, T, originationFeePerCatalog);
 
         // NPV: for lump sums at Y0, NPV = the amount itself
         const rsNPV = royaltySaleCF0;
@@ -892,9 +901,12 @@
             saleCF0,
             holdNPV,
             labels,
-            rsCumulative,
-            saleCumulative,
-            holdCumulative,
+            rsUpper: upperBand.rsCumulative,
+            rsLower: lowerBand.rsCumulative,
+            saleUpper: upperBand.saleCumulative,
+            saleLower: lowerBand.saleCumulative,
+            holdUpper: upperBand.holdCumulative,
+            holdLower: lowerBand.holdCumulative,
             rsNPV,
             saleNPV,
             liquidityCost,
@@ -935,11 +947,14 @@
 
         document.getElementById('holdMainValue').textContent = formatEuro(r.holdNPV);
 
-        // Chart
+        // Chart — 6 datasets: upper+lower band for each scenario
         chart.data.labels = r.labels;
-        chart.data.datasets[0].data = r.rsCumulative;
-        chart.data.datasets[1].data = r.saleCumulative;
-        chart.data.datasets[2].data = r.holdCumulative;
+        chart.data.datasets[0].data = r.rsUpper;
+        chart.data.datasets[1].data = r.rsLower;
+        chart.data.datasets[2].data = r.saleUpper;
+        chart.data.datasets[3].data = r.saleLower;
+        chart.data.datasets[4].data = r.holdUpper;
+        chart.data.datasets[5].data = r.holdLower;
         chart.update();
 
     }
@@ -990,12 +1005,6 @@
     document.getElementById('timeHorizon').addEventListener('input', function(e) {
         state.timeHorizon = parseInt(e.target.value);
         document.getElementById('timeHorizonDisplay').textContent = state.timeHorizon + ' anni';
-        updateUI();
-    });
-
-    document.getElementById('riskRate').addEventListener('input', function(e) {
-        state.riskRate = parseFloat(e.target.value);
-        document.getElementById('riskRateDisplay').textContent = state.riskRate + '%';
         updateUI();
     });
 
