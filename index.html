@@ -981,6 +981,45 @@
                     borderWidth: 1.5,
                     borderDash: [4, 4],
                 },
+                {
+                    label: 'Scenario A — Spese',
+                    data: [],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139,92,246,0.08)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 2.5,
+                    borderDash: [6, 3],
+                    hidden: true,
+                },
+                {
+                    label: 'Scenario B — BTP Italia',
+                    data: [],
+                    borderColor: '#ec4899',
+                    backgroundColor: 'rgba(236,72,153,0.08)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 2.5,
+                    borderDash: [6, 3],
+                    hidden: true,
+                },
+                {
+                    label: 'Scenario C — Nuovo catalogo',
+                    data: [],
+                    borderColor: '#14b8a6',
+                    backgroundColor: 'rgba(20,184,166,0.08)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 2.5,
+                    borderDash: [6, 3],
+                    hidden: true,
+                },
             ]
         },
         options: {
@@ -1131,6 +1170,61 @@
         const upperBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MIN, packageValue, nCatalogs, T, originationFeePerCatalog);
         const lowerBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MAX, packageValue, nCatalogs, T, originationFeePerCatalog);
 
+        // Scenario A/B/C time series — use of CF0 (computed at fixed riskRate=10)
+        const nonTokenizedPerYear = royaltiesPerYear * (1 - s.tokenPct / 100);
+        const newCatalogSIAE = royaltySaleCF0 / ROYALTY_RATIO;
+        const newCatalogTotal = newCatalogSIAE * (1 + THIRD_PARTY_RATIO);
+
+        const scenarioACumulative = [];
+        const scenarioBCumulative = [];
+        const scenarioCCumulative = [];
+
+        for (let t = 0; t <= CHART_YEARS; t++) {
+            // Scenario A: CF0 spent; publisher keeps third-party + non-tokenized; resumes after T
+            if (t === 0) {
+                scenarioACumulative[t] = royaltySaleCF0;
+            } else if (t <= T) {
+                scenarioACumulative[t] = royaltySaleCF0
+                    + thirdPartyPerYear * t
+                    + nonTokenizedPerYear * t;
+            } else {
+                scenarioACumulative[t] = royaltySaleCF0
+                    + thirdPartyPerYear * t
+                    + nonTokenizedPerYear * T
+                    + (nonTokenizedPerYear + royaltiesPerYear + thirdPartyPerYear) * (t - T);
+            }
+
+            // Scenario B: CF0 invested in BTP at compound rate BTP_RATE
+            if (t === 0) {
+                scenarioBCumulative[t] = royaltySaleCF0;
+            } else if (t <= T) {
+                scenarioBCumulative[t] = royaltySaleCF0 * Math.pow(1 + BTP_RATE, t)
+                    + thirdPartyPerYear * t
+                    + nonTokenizedPerYear * t;
+            } else {
+                scenarioBCumulative[t] = royaltySaleCF0 * Math.pow(1 + BTP_RATE, t)
+                    + thirdPartyPerYear * t
+                    + nonTokenizedPerYear * T
+                    + (nonTokenizedPerYear + royaltiesPerYear + thirdPartyPerYear) * (t - T);
+            }
+
+            // Scenario C: CF0 used to purchase new catalog (generates newCatalogTotal/year)
+            if (t === 0) {
+                scenarioCCumulative[t] = royaltySaleCF0;
+            } else if (t <= T) {
+                scenarioCCumulative[t] = royaltySaleCF0
+                    + thirdPartyPerYear * t
+                    + nonTokenizedPerYear * t
+                    + newCatalogTotal * t;
+            } else {
+                scenarioCCumulative[t] = royaltySaleCF0
+                    + thirdPartyPerYear * T
+                    + nonTokenizedPerYear * T
+                    + newCatalogTotal * T
+                    + (royaltiesPerYear + thirdPartyPerYear + newCatalogTotal) * (t - T);
+            }
+        }
+
         // NPV: for lump sums at Y0, NPV = the amount itself
         const rsNPV = royaltySaleCF0;
         const saleNPV = saleCF0;
@@ -1165,6 +1259,9 @@
             saleNPV,
             liquidityCost,
             T,
+            scenarioACumulative,
+            scenarioBCumulative,
+            scenarioCCumulative,
         };
     }
 
@@ -1201,7 +1298,7 @@
 
         document.getElementById('holdMainValue').textContent = formatEuro(r.holdNPV);
 
-        // Chart — 6 datasets: upper+lower band for each scenario
+        // Chart — 9 datasets: 6 risk-band lines + 3 scenario lines
         chart.data.labels = r.labels;
         chart.data.datasets[0].data = r.rsUpper;
         chart.data.datasets[1].data = r.rsLower;
@@ -1209,6 +1306,17 @@
         chart.data.datasets[3].data = r.saleLower;
         chart.data.datasets[4].data = r.holdUpper;
         chart.data.datasets[5].data = r.holdLower;
+
+        // Scenario datasets
+        chart.data.datasets[6].data = r.scenarioACumulative;
+        chart.data.datasets[7].data = r.scenarioBCumulative;
+        chart.data.datasets[8].data = r.scenarioCCumulative;
+
+        // Show/hide based on chosenScenario
+        chart.data.datasets[6].hidden = (state.chosenScenario !== 'A');
+        chart.data.datasets[7].hidden = (state.chosenScenario !== 'B');
+        chart.data.datasets[8].hidden = (state.chosenScenario !== 'C');
+
         chart.update();
 
     }
