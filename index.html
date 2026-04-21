@@ -903,6 +903,8 @@
         financingTarget: 0,   // X — desired liquidity amount (€)
         actualCashFlow: 0,    // Z — actual annual cash flow of the catalog (€)
         chosenScenario: null, // 'A' | 'B' | 'C' — how the publisher intends to use CF0
+        nCatalogs: 1,         // number of catalogs in the aggregated package
+        feePerPublisher: ORIGINATION_FEE, // origination fee for this publisher
     };
 
     // =========================================
@@ -1140,12 +1142,8 @@
         const effectiveDiscount = 1 - investorPrice / effectiveValue;
 
         // Step 5: Origination fee per catalog
-        let originationFeePerCatalog;
-        if (effectivePath === 'instant') {
-            originationFeePerCatalog = ORIGINATION_FEE;
-        } else {
-            originationFeePerCatalog = ORIGINATION_FEE / nCatalogs;
-        }
+        // Uses the split fee from onboarding if available; falls back to computed value
+        const originationFeePerCatalog = s.feePerPublisher || (effectivePath === 'instant' ? ORIGINATION_FEE : ORIGINATION_FEE / nCatalogs);
 
         // Step 6: Cash flows for three options
         // Royalty Sale: investor buys T years of royalties
@@ -1444,6 +1442,8 @@
         state.annualCashFlow = result.annualCashFlow;
         state.tokenPct = result.tokenPct;
         state.path = result.path;
+        state.nCatalogs = result.nCatalogs;
+        state.feePerPublisher = result.feePerPublisher;
     }
 
     function obConfirm() {
@@ -1460,39 +1460,61 @@
     }
 
     function backCalculate(X, Z) {
-        // X = desired financing target (€)
-        // Z = actual annual cash flow (€)
-        // Y = required annual cash flow to obtain X after origination fee
-        const DEFAULT_RISK_RATE = 0.10;
-        const Y = (X + ORIGINATION_FEE) / annuityFactor(10, DEFAULT_RISK_RATE);
-        let message, annualCashFlow, tokenPct, path;
+        // Z = actual annual cash flow of the publisher's catalog (€/year)
+        // X = desired net financing amount (€)
 
-        if (Z < Y) {
-            const nNeeded = Math.ceil(Y / Z);
-            annualCashFlow = Z;
-            tokenPct = 100;
+        // Step 1: Determine aggregation based on MIN_PACKAGE_VALUE (same as calculate(s))
+        const catalogValue = Z * ROYALTY_RATIO;
+        const nCatalogs = catalogValue >= MIN_PACKAGE_VALUE
+            ? 1
+            : Math.max(1, Math.ceil(MIN_PACKAGE_VALUE / catalogValue));
+
+        // Step 2: Split origination fee across catalogs
+        const feePerPublisher = ORIGINATION_FEE / nCatalogs;
+
+        // Step 3: Compute required annual flow Y for this publisher
+        const DEFAULT_RISK_RATE = 0.10;
+        const Y = (X + feePerPublisher) / annuityFactor(10, DEFAULT_RISK_RATE);
+
+        // Step 4: Determine tokenPct
+        let tokenPct, path, message;
+        if (nCatalogs > 1) {
+            // Aggregated path — tokenPct is determined by Y vs Z
+            const pct = Math.min(100, Math.round((Y / Z) * 100));
+            tokenPct = pct <= 100 ? pct : 100;
             path = 'aggregated';
+            const othersNeeded = nCatalogs - 1;
             message = `
                 <strong>Il tuo catalogo genera €${Math.round(Z).toLocaleString('it-IT')}/anno.</strong><br>
-                Per ottenere <strong>${formatEuro(X)}</strong> sono necessari circa
-                <strong>€${Math.round(Y).toLocaleString('it-IT')}/anno</strong> di flussi tokenizzati.<br>
-                Dovrai aggregare il tuo catalogo con altri editori (stima: <strong>${nNeeded} cataloghi simili</strong>).
+                Per ottenere <strong>${formatEuro(X)}</strong>, la tua fee di strutturazione è
+                <strong>${formatEuro(feePerPublisher)}</strong> (ripartita su ${nCatalogs} cataloghi).<br>
+                Il tuo catalogo deve essere aggregato con altri
+                <strong>${othersNeeded} ${othersNeeded === 1 ? 'catalogo simile' : 'cataloghi simili'}
+                di altri editori</strong> per raggiungere la soglia minima di €800.000.<br>
                 Il simulatore è stato pre-configurato in modalità <strong>Aggregato</strong>.
             `;
         } else {
+            // Instant path — single catalog is sufficient
             const pct = Math.min(100, Math.round((Y / Z) * 100));
-            annualCashFlow = Z;
             tokenPct = pct;
             path = 'instant';
             message = `
                 <strong>Ottimo!</strong> Il tuo catalogo è sufficiente da solo.<br>
                 Dovrai tokenizzare il <strong>${pct}%</strong> del catalogo per ottenere
                 <strong>${formatEuro(X)}</strong>.<br>
+                La fee di strutturazione è <strong>${formatEuro(ORIGINATION_FEE)}</strong>.<br>
                 Il simulatore è stato pre-configurato con questi valori.
             `;
         }
 
-        return { message, annualCashFlow, tokenPct, path };
+        return {
+            message,
+            annualCashFlow: Z,
+            tokenPct,
+            path,
+            nCatalogs,
+            feePerPublisher,
+        };
     }
 
     // =========================================
