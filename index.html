@@ -1171,13 +1171,18 @@
         const riskRate = s.riskRate / 100;
 
         // Step 3: Determine package size and tier
-        // For threshold/aggregation, use market value (effectiveValue) as reference
-        const belowThreshold = effectiveValue < MIN_PACKAGE_VALUE;
+        // Threshold uses full catalog value (not tokenized portion) to avoid false aggregation
+        const fullCatalogValueForThreshold = s.annualCashFlow * ROYALTY_RATIO;
+        const belowThreshold = fullCatalogValueForThreshold < MIN_PACKAGE_VALUE;
         const effectivePath = belowThreshold ? 'aggregated' : s.path;
 
+        // Use nCatalogs from onboarding state if set; otherwise recompute from full catalog value
         let nCatalogs;
-        if (effectivePath === 'aggregated') {
-            nCatalogs = Math.max(1, Math.ceil(AGGREGATED_TARGET / effectiveValue - 0.01));
+        if (s.nCatalogs && s.nCatalogs > 1) {
+            nCatalogs = s.nCatalogs;
+        } else if (effectivePath === 'aggregated') {
+            const fullValForAgg = s.annualCashFlow * ROYALTY_RATIO;
+            nCatalogs = Math.max(1, Math.ceil(MIN_PACKAGE_VALUE / fullValForAgg));
         } else {
             nCatalogs = 1;
         }
@@ -1577,8 +1582,12 @@
         const feePerPublisher = ORIGINATION_FEE / nCatalogs;
 
         // Step 3: Compute required annual flow Y for this publisher
+        // Use the same investor rate as calculate(s) for consistency
+        const fullPackageValue = Z * ROYALTY_RATIO * nCatalogs;
+        const tier = TIERS.find(t => fullPackageValue >= t.minValue);
         const DEFAULT_RISK_RATE = 0.10;
-        const Y = (X + feePerPublisher) / annuityFactor(10, DEFAULT_RISK_RATE);
+        const actualInvestorRate = tier.baseSpread + RISK_SENSITIVITY * DEFAULT_RISK_RATE;
+        const Y = (X + feePerPublisher) / annuityFactor(10, actualInvestorRate);
 
         // Step 4: Determine tokenPct
         let tokenPct, path, message;
