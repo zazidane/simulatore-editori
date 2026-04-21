@@ -475,8 +475,9 @@
             align-items: center;
             justify-content: center;
             min-height: calc(100vh - 80px);
+            height: calc(100vh - 80px);
             padding: 40px 24px;
-            max-width: 640px;
+            max-width: 780px;
             margin: 0 auto;
         }
 
@@ -487,35 +488,35 @@
             display: none;
             width: 100%;
             background: #ffffff;
-            border-radius: 16px;
-            padding: 40px;
+            border-radius: 20px;
+            padding: 56px;
             box-shadow: var(--shadow-lg);
         }
 
         .onboarding-step.active { display: block; }
 
         .onboarding-title {
-            font-size: 1.4rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: var(--primary);
             margin-bottom: 8px;
         }
 
         .onboarding-subtitle {
-            font-size: 0.9rem;
+            font-size: 1.05rem;
             color: var(--text-muted);
-            margin-bottom: 32px;
-            line-height: 1.6;
+            margin-bottom: 40px;
+            line-height: 1.7;
         }
 
         .onboarding-btn {
             display: inline-block;
-            padding: 12px 28px;
+            padding: 14px 36px;
             background: var(--accent);
             color: #fff;
             border: none;
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             margin-top: 24px;
@@ -587,8 +588,8 @@
         }
 
         .step-dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: var(--border);
         }
@@ -606,7 +607,7 @@
 
         @media (max-width: 560px) {
             .scenario-grid { grid-template-columns: 1fr; }
-            .onboarding-step { padding: 24px; }
+            .onboarding-step { padding: 28px; }
         }
     </style>
 </head>
@@ -664,10 +665,8 @@
                 Indica l'importo che vorresti ricevere subito dalla tokenizzazione
                 del tuo catalogo (es. "100.000" per €100.000).
             </div>
-            <div class="input-euro-wrapper">
-                <input type="text" id="ob-financing-target" class="input-number"
-                       placeholder="es. 80.000" inputmode="numeric" style="font-size:1.1rem; padding:14px 16px;">
-            </div>
+            <input type="text" id="ob-financing-target" class="input-number"
+                   placeholder="es. 80.000" inputmode="numeric" style="font-size:1.1rem; padding:14px 16px;">
             <button class="onboarding-btn" onclick="obGoStep3()">Continua</button>
         </div>
 
@@ -684,10 +683,8 @@
                 Indica le royalties medie annuali che il tuo catalogo genera (somma SIAE + terze parti).
                 Puoi trovare questo dato nei rendiconti SIAE degli ultimi anni.
             </div>
-            <div class="input-euro-wrapper">
-                <input type="text" id="ob-actual-cashflow" class="input-number"
-                       placeholder="es. 22.222" inputmode="numeric" style="font-size:1.1rem; padding:14px 16px;">
-            </div>
+            <input type="text" id="ob-actual-cashflow" class="input-number"
+                   placeholder="es. 22.222" inputmode="numeric" style="font-size:1.1rem; padding:14px 16px;">
             <button class="onboarding-btn" onclick="obGoStep4()">Continua</button>
             <button class="onboarding-btn-secondary" onclick="obGoBackTo(2)">Indietro</button>
         </div>
@@ -1074,13 +1071,13 @@
     }
 
     // Builds cumulative time series for all 3 scenarios at a given riskRateOverride (decimal)
-    function computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, riskRateOverride, packageValue, nCatalogs, T, originationFeePerCatalog) {
+    function computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, riskRateOverride, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, fullThirdParty) {
         const tier = TIERS.find(t => packageValue >= t.minValue);
         const investorRate = tier.baseSpread + RISK_SENSITIVITY * riskRateOverride;
         const investorPrice = royaltiesPerYear * annuityFactor(T, investorRate);
         const royaltySaleCF0 = investorPrice - originationFeePerCatalog;
         const saleRate = SALE_BASE_RATE + RISK_SENSITIVITY * riskRateOverride;
-        const saleCF0 = royaltiesPerYear / saleRate;
+        const saleCF0 = fullCashFlow / saleRate;
 
         const rsCumulative = [];
         const saleCumulative = [];
@@ -1088,7 +1085,7 @@
 
         for (let year = 0; year <= CHART_YEARS; year++) {
             saleCumulative.push(saleCF0);
-            holdCumulative.push((royaltiesPerYear + thirdPartyPerYear) * year);
+            holdCumulative.push((fullCashFlow + fullThirdParty) * year);
             if (year === 0) {
                 rsCumulative.push(royaltySaleCF0);
             } else if (year <= T) {
@@ -1108,6 +1105,9 @@
         // Step 2: Effective royalties after tokenization %
         const royaltiesPerYear = s.annualCashFlow * (s.tokenPct / 100);
         const thirdPartyPerYear = royaltiesPerYear * THIRD_PARTY_RATIO;
+        // Full catalog cash flow — used for Vendita and Mantieni scenarios (always 100%)
+        const fullCashFlow = s.annualCashFlow;
+        const fullThirdParty = fullCashFlow * THIRD_PARTY_RATIO;
         // Third-party revenue: always received by the publisher, including during tokenization
         // Market value (9× multiple, fixed convention) — used for Sale
         const effectiveValue = royaltiesPerYear * ROYALTY_RATIO;
@@ -1155,10 +1155,10 @@
         // Higher risk = lower multiple = lower catalog price
         const saleRate = SALE_BASE_RATE + RISK_SENSITIVITY * riskRate;
         const saleMultiple = 1 / saleRate;
-        const saleCF0 = royaltiesPerYear * saleMultiple;
+        const saleCF0 = fullCashFlow * saleMultiple;
 
-        // Hold: receive royalties + third-party for T years, NPV at catalog risk rate
-        const holdNPV = (royaltiesPerYear + thirdPartyPerYear) * annuityFactor(T, s.riskRate / 100);
+        // Hold: receive royalties + third-party for T years, NPV at catalog risk rate (full catalog)
+        const holdNPV = (fullCashFlow + fullThirdParty) * annuityFactor(T, s.riskRate / 100);
 
         // Build chart labels
         const labels = [];
@@ -1167,8 +1167,8 @@
         }
 
         // Risk band time series: upper = best-case (low risk), lower = worst-case (high risk)
-        const upperBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MIN, packageValue, nCatalogs, T, originationFeePerCatalog);
-        const lowerBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MAX, packageValue, nCatalogs, T, originationFeePerCatalog);
+        const upperBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MIN, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, fullThirdParty);
+        const lowerBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MAX, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, fullThirdParty);
 
         // Scenario A/B/C time series — use of CF0 (computed at fixed riskRate=10)
         const nonTokenizedPerYear = royaltiesPerYear * (1 - s.tokenPct / 100);
