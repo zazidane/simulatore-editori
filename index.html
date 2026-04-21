@@ -26,6 +26,8 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html { height: 100%; }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             background: var(--bg);
@@ -474,11 +476,10 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: calc(100vh - 80px);
-            height: calc(100vh - 80px);
-            padding: 40px 24px;
-            max-width: 780px;
-            margin: 0 auto;
+            width: 100%;
+            min-height: 100vh;
+            padding: 48px 24px;
+            box-sizing: border-box;
         }
 
         #onboarding.hidden { display: none; }
@@ -487,26 +488,28 @@
         .onboarding-step {
             display: none;
             width: 100%;
+            max-width: 720px;
             background: #ffffff;
             border-radius: 20px;
-            padding: 56px;
+            padding: 56px 64px;
             box-shadow: var(--shadow-lg);
+            box-sizing: border-box;
         }
 
         .onboarding-step.active { display: block; }
 
         .onboarding-title {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 700;
             color: var(--primary);
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .onboarding-subtitle {
             font-size: 1.05rem;
             color: var(--text-muted);
             margin-bottom: 40px;
-            line-height: 1.7;
+            line-height: 1.75;
         }
 
         .onboarding-btn {
@@ -526,12 +529,12 @@
 
         .onboarding-btn-secondary {
             display: inline-block;
-            padding: 12px 24px;
+            padding: 14px 28px;
             background: transparent;
             color: var(--text-muted);
             border: 1px solid var(--border);
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 1rem;
             cursor: pointer;
             margin-top: 24px;
             margin-right: 12px;
@@ -607,7 +610,8 @@
 
         @media (max-width: 560px) {
             .scenario-grid { grid-template-columns: 1fr; }
-            .onboarding-step { padding: 28px; }
+            .onboarding-step { padding: 32px 24px; }
+            .onboarding-title { font-size: 1.5rem; }
         }
     </style>
 </head>
