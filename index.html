@@ -1079,9 +1079,10 @@
                     position: 'top',
                     align: 'center',
                     labels: {
-                        usePointStyle: false,
-                        boxWidth: 12,
-                        boxHeight: 12,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        pointStyleWidth: 14,
+                        boxHeight: 14,
                         padding: 20,
                         font: { size: 12, weight: '600' },
                         generateLabels: function(chart) {
@@ -1092,14 +1093,17 @@
                                 .map(({ ds, i }) => {
                                     const isPermanent = (i === 0 || i === 2);
                                     const meta = chart.getDatasetMeta(i);
-                                    const isVisible = !meta.hidden;
+                                    // meta.hidden is null initially; treat null as not hidden
+                                    const isHidden = meta.hidden === true;
                                     return {
-                                        text: isPermanent
-                                            ? ds.label
-                                            : (isVisible ? '✅ ' : '○ ') + ds.label,
-                                        fillStyle: ds.borderColor,
+                                        text: ds.label,
+                                        // Filled circle for visible/permanent, empty for hidden
+                                        fillStyle: (isPermanent || !isHidden)
+                                            ? ds.borderColor
+                                            : 'transparent',
                                         strokeStyle: ds.borderColor,
                                         lineWidth: 2,
+                                        pointStyle: 'circle',
                                         hidden: false,
                                         index: i,
                                         datasetIndex: i,
@@ -1454,16 +1458,16 @@
         chart.data.datasets[9].data = r.scenarioCUpper;
         chart.data.datasets[10].data = r.scenarioCLower;
 
-        // Show/hide based on chosenScenario
-        chart.data.datasets[4].hidden = (state.chosenScenario !== 'A');
-        chart.data.datasets[5].hidden = (state.chosenScenario !== 'B');
-        chart.data.datasets[6].hidden = (state.chosenScenario !== 'C');
-        chart.data.datasets[7].hidden = (state.chosenScenario !== 'B');
-        chart.data.datasets[8].hidden = (state.chosenScenario !== 'B');
-        chart.data.datasets[9].hidden = (state.chosenScenario !== 'C');
-        chart.data.datasets[10].hidden = (state.chosenScenario !== 'C');
+        // Scenarios: use meta.hidden (runtime source of truth in Chart.js v4)
+        chart.getDatasetMeta(4).hidden = (state.chosenScenario !== 'A');
+        chart.getDatasetMeta(5).hidden = (state.chosenScenario !== 'B');
+        chart.getDatasetMeta(6).hidden = (state.chosenScenario !== 'C');
+        chart.getDatasetMeta(7).hidden = (state.chosenScenario !== 'B');
+        chart.getDatasetMeta(8).hidden = (state.chosenScenario !== 'B');
+        chart.getDatasetMeta(9).hidden = (state.chosenScenario !== 'C');
+        chart.getDatasetMeta(10).hidden = (state.chosenScenario !== 'C');
 
-        // Ensure Vendita and Mantieni bands are always visible (never togglable)
+        // Ensure Vendita and Mantieni bands are always visible
         [0, 1, 2, 3].forEach(i => {
             chart.getDatasetMeta(i).hidden = false;
         });
