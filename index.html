@@ -836,6 +836,7 @@
             <!-- Cumulative cash flow chart -->
             <div class="card">
                 <div class="card-title">Flussi di cassa cumulati</div>
+                <p id="legendHint" style="font-size:0.78rem; color:#6b7280; text-align:center; margin-bottom:4px; margin-top:0; letter-spacing:0.01em;">Clicca sulla legenda per confrontare gli scenari</p>
                 <div class="chart-wrapper">
                     <canvas id="cashFlowChart"></canvas>
                 </div>
@@ -885,7 +886,7 @@
     const NEW_CATALOG_RISK_RATE = 0.10;
     // Discount rate for a newly acquired catalog — used in Scenario C (reserved for future)
 
-    const RISK_BAND_MIN = 0.06;
+    const RISK_BAND_MIN = 0.07;
     // Lower bound of risk band: best-case catalog (diversified, stable cash flows)
 
     const RISK_BAND_MAX = 0.15;
@@ -916,28 +917,7 @@
         data: {
             labels: [],
             datasets: [
-                {
-                    label: 'Anticipo sui Ricavi',
-                    data: [],
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.15)',
-                    fill: '+1',
-                    tension: 0.3,
-                    pointRadius: 0,
-                    borderWidth: 1.5,
-                    borderDash: [],
-                },
-                {
-                    label: '_rsLower',
-                    data: [],
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.15)',
-                    fill: false,
-                    tension: 0.3,
-                    pointRadius: 0,
-                    borderWidth: 1.5,
-                    borderDash: [4, 4],
-                },
+                // [0] Vendita upper band
                 {
                     label: 'Vendita Catalogo',
                     data: [],
@@ -948,6 +928,7 @@
                     pointRadius: 0,
                     borderWidth: 1.5,
                 },
+                // [1] Vendita lower band
                 {
                     label: '_saleLower',
                     data: [],
@@ -959,6 +940,7 @@
                     borderWidth: 1.5,
                     borderDash: [4, 4],
                 },
+                // [2] Mantieni upper band
                 {
                     label: 'Mantieni Catalogo',
                     data: [],
@@ -969,6 +951,7 @@
                     pointRadius: 0,
                     borderWidth: 1.5,
                 },
+                // [3] Mantieni lower band
                 {
                     label: '_holdLower',
                     data: [],
@@ -980,6 +963,7 @@
                     borderWidth: 1.5,
                     borderDash: [4, 4],
                 },
+                // [4] Scenario A — single line
                 {
                     label: 'Scenario A — Spese',
                     data: [],
@@ -993,6 +977,7 @@
                     borderDash: [6, 3],
                     hidden: true,
                 },
+                // [5] Scenario B — central line
                 {
                     label: 'Scenario B — BTP Italia',
                     data: [],
@@ -1000,12 +985,12 @@
                     backgroundColor: 'rgba(236,72,153,0.08)',
                     fill: false,
                     tension: 0.3,
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    borderWidth: 2.5,
-                    borderDash: [6, 3],
+                    pointRadius: 2,
+                    pointHoverRadius: 4,
+                    borderWidth: 1.5,
                     hidden: true,
                 },
+                // [6] Scenario C — central line
                 {
                     label: 'Scenario C — Nuovo catalogo',
                     data: [],
@@ -1013,10 +998,59 @@
                     backgroundColor: 'rgba(20,184,166,0.08)',
                     fill: false,
                     tension: 0.3,
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    borderWidth: 2.5,
-                    borderDash: [6, 3],
+                    pointRadius: 2,
+                    pointHoverRadius: 4,
+                    borderWidth: 1.5,
+                    hidden: true,
+                },
+                // [7] Scenario B — upper band
+                {
+                    label: '_scenarioBUpper',
+                    data: [],
+                    borderColor: '#ec4899',
+                    backgroundColor: 'rgba(236,72,153,0.10)',
+                    fill: '+1',
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1,
+                    hidden: true,
+                },
+                // [8] Scenario B — lower band
+                {
+                    label: '_scenarioBLower',
+                    data: [],
+                    borderColor: '#ec4899',
+                    backgroundColor: 'rgba(236,72,153,0.10)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1,
+                    borderDash: [3, 3],
+                    hidden: true,
+                },
+                // [9] Scenario C — upper band
+                {
+                    label: '_scenarioCUpper',
+                    data: [],
+                    borderColor: '#14b8a6',
+                    backgroundColor: 'rgba(20,184,166,0.10)',
+                    fill: '+1',
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1,
+                    hidden: true,
+                },
+                // [10] Scenario C — lower band
+                {
+                    label: '_scenarioCLower',
+                    data: [],
+                    borderColor: '#14b8a6',
+                    backgroundColor: 'rgba(20,184,166,0.10)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1,
+                    borderDash: [3, 3],
                     hidden: true,
                 },
             ]
@@ -1045,6 +1079,25 @@
                         filter: function(legendItem) {
                             return !legendItem.text.startsWith('_');
                         }
+                    },
+                    onClick: function(e, legendItem, legend) {
+                        const index = legendItem.datasetIndex;
+                        const ci = legend.chart;
+                        // Scenario B (index 5): also toggle bands at 7 and 8
+                        if (index === 5) {
+                            [5, 7, 8].forEach(i => {
+                                ci.data.datasets[i].hidden = !ci.data.datasets[i].hidden;
+                            });
+                        // Scenario C (index 6): also toggle bands at 9 and 10
+                        } else if (index === 6) {
+                            [6, 9, 10].forEach(i => {
+                                ci.data.datasets[i].hidden = !ci.data.datasets[i].hidden;
+                            });
+                        // Default behavior for other datasets
+                        } else {
+                            ci.data.datasets[index].hidden = !ci.data.datasets[index].hidden;
+                        }
+                        ci.update();
                     }
                 }
             },
@@ -1223,6 +1276,47 @@
             }
         }
 
+        // Build discounted cumulative Hold series (PV of flows received year by year)
+        const annualHoldFlow = fullCashFlow + fullThirdParty;
+        const holdUpperArr = new Array(CHART_YEARS + 1).fill(0);
+        const holdLowerArr = new Array(CHART_YEARS + 1).fill(0);
+        for (let t = 1; t <= CHART_YEARS; t++) {
+            // Upper = discounted at RISK_BAND_MIN (7%) — lower risk = higher PV
+            holdUpperArr[t] = holdUpperArr[t-1] + annualHoldFlow / Math.pow(1 + RISK_BAND_MIN, t);
+            // Lower = discounted at RISK_BAND_MAX (15%) — higher risk = lower PV
+            holdLowerArr[t] = holdLowerArr[t-1] + annualHoldFlow / Math.pow(1 + RISK_BAND_MAX, t);
+        }
+
+        // Scenario B bands: ±2% around BTP_RATE
+        const BTP_UPPER_RATE = BTP_RATE + 0.02;  // 5.5%
+        const BTP_LOWER_RATE = Math.max(0.001, BTP_RATE - 0.02);  // 1.5%
+        const scenarioBUpper = [];
+        const scenarioBLower = [];
+        for (let t = 0; t <= CHART_YEARS; t++) {
+            if (t === 0) {
+                scenarioBUpper[t] = royaltySaleCF0;
+                scenarioBLower[t] = royaltySaleCF0;
+            } else if (t <= T) {
+                scenarioBUpper[t] = royaltySaleCF0 * Math.pow(1 + BTP_UPPER_RATE, t)
+                    + thirdPartyPerYear * t + nonTokenizedPerYear * t;
+                scenarioBLower[t] = royaltySaleCF0 * Math.pow(1 + BTP_LOWER_RATE, t)
+                    + thirdPartyPerYear * t + nonTokenizedPerYear * t;
+            } else {
+                scenarioBUpper[t] = royaltySaleCF0 * Math.pow(1 + BTP_UPPER_RATE, t)
+                    + thirdPartyPerYear * t
+                    + nonTokenizedPerYear * T
+                    + (nonTokenizedPerYear + royaltiesPerYear + thirdPartyPerYear) * (t - T);
+                scenarioBLower[t] = royaltySaleCF0 * Math.pow(1 + BTP_LOWER_RATE, t)
+                    + thirdPartyPerYear * t
+                    + nonTokenizedPerYear * T
+                    + (nonTokenizedPerYear + royaltiesPerYear + thirdPartyPerYear) * (t - T);
+            }
+        }
+
+        // Scenario C bands: ±10% approximation
+        const scenarioCUpper = scenarioCCumulative.map(v => v * 1.10);
+        const scenarioCLower = scenarioCCumulative.map(v => v * 0.90);
+
         // NPV: for lump sums at Y0, NPV = the amount itself
         const rsNPV = royaltySaleCF0;
         const saleNPV = saleCF0;
@@ -1247,12 +1341,10 @@
             saleCF0,
             holdNPV,
             labels,
-            rsUpper: upperBand.rsCumulative,
-            rsLower: lowerBand.rsCumulative,
             saleUpper: upperBand.saleCumulative,
             saleLower: lowerBand.saleCumulative,
-            holdUpper: upperBand.holdCumulative,
-            holdLower: lowerBand.holdCumulative,
+            holdUpper: holdUpperArr,
+            holdLower: holdLowerArr,
             rsNPV,
             saleNPV,
             liquidityCost,
@@ -1260,6 +1352,10 @@
             scenarioACumulative,
             scenarioBCumulative,
             scenarioCCumulative,
+            scenarioBUpper,
+            scenarioBLower,
+            scenarioCUpper,
+            scenarioCLower,
         };
     }
 
@@ -1296,24 +1392,32 @@
 
         document.getElementById('holdMainValue').textContent = formatEuro(r.holdNPV);
 
-        // Chart — 9 datasets: 6 risk-band lines + 3 scenario lines
+        // Chart — 11 datasets: 4 base bands + 3 scenario central lines + 4 scenario bands
         chart.data.labels = r.labels;
-        chart.data.datasets[0].data = r.rsUpper;
-        chart.data.datasets[1].data = r.rsLower;
-        chart.data.datasets[2].data = r.saleUpper;
-        chart.data.datasets[3].data = r.saleLower;
-        chart.data.datasets[4].data = r.holdUpper;
-        chart.data.datasets[5].data = r.holdLower;
+        chart.data.datasets[0].data = r.saleUpper;
+        chart.data.datasets[1].data = r.saleLower;
+        chart.data.datasets[2].data = r.holdUpper;
+        chart.data.datasets[3].data = r.holdLower;
 
-        // Scenario datasets
-        chart.data.datasets[6].data = r.scenarioACumulative;
-        chart.data.datasets[7].data = r.scenarioBCumulative;
-        chart.data.datasets[8].data = r.scenarioCCumulative;
+        // Scenario datasets — central lines
+        chart.data.datasets[4].data = r.scenarioACumulative;
+        chart.data.datasets[5].data = r.scenarioBCumulative;
+        chart.data.datasets[6].data = r.scenarioCCumulative;
+
+        // Scenario bands
+        chart.data.datasets[7].data = r.scenarioBUpper;
+        chart.data.datasets[8].data = r.scenarioBLower;
+        chart.data.datasets[9].data = r.scenarioCUpper;
+        chart.data.datasets[10].data = r.scenarioCLower;
 
         // Show/hide based on chosenScenario
-        chart.data.datasets[6].hidden = (state.chosenScenario !== 'A');
+        chart.data.datasets[4].hidden = (state.chosenScenario !== 'A');
+        chart.data.datasets[5].hidden = (state.chosenScenario !== 'B');
+        chart.data.datasets[6].hidden = (state.chosenScenario !== 'C');
         chart.data.datasets[7].hidden = (state.chosenScenario !== 'B');
-        chart.data.datasets[8].hidden = (state.chosenScenario !== 'C');
+        chart.data.datasets[8].hidden = (state.chosenScenario !== 'B');
+        chart.data.datasets[9].hidden = (state.chosenScenario !== 'C');
+        chart.data.datasets[10].hidden = (state.chosenScenario !== 'C');
 
         chart.update();
 
