@@ -836,7 +836,7 @@
             <!-- Cumulative cash flow chart -->
             <div class="card">
                 <div class="card-title">Flussi di cassa cumulati</div>
-                <p id="legendHint" style="font-size:0.78rem; color:#6b7280; text-align:center; margin-bottom:4px; margin-top:0; letter-spacing:0.01em;">Clicca sulla legenda per confrontare gli scenari</p>
+                <p id="legendHint" style="font-size:0.78rem; color:#6b7280; text-align:center; margin-bottom:4px; margin-top:0; letter-spacing:0.01em;">Clicca sugli scenari per confrontarli nel grafico</p>
                 <div class="chart-wrapper">
                     <canvas id="cashFlowChart"></canvas>
                 </div>
@@ -1071,34 +1071,69 @@
                     }
                 },
                 legend: {
+                    display: true,
                     position: 'top',
+                    align: 'center',
                     labels: {
-                        usePointStyle: true,
-                        padding: 16,
+                        usePointStyle: false,
+                        boxWidth: 12,
+                        boxHeight: 12,
+                        padding: 20,
                         font: { size: 12, weight: '600' },
-                        filter: function(legendItem) {
-                            return !legendItem.text.startsWith('_');
-                        }
+                        generateLabels: function(chart) {
+                            const datasets = chart.data.datasets;
+                            return datasets
+                                .map((ds, i) => ({ ds, i }))
+                                .filter(({ ds }) => !ds.label.startsWith('_'))
+                                .map(({ ds, i }) => {
+                                    const isPermanent = (i === 0 || i === 2);
+                                    const meta = chart.getDatasetMeta(i);
+                                    const isVisible = !meta.hidden;
+                                    return {
+                                        text: isPermanent
+                                            ? ds.label
+                                            : (isVisible ? '✅ ' : '○ ') + ds.label,
+                                        fillStyle: ds.borderColor,
+                                        strokeStyle: ds.borderColor,
+                                        lineWidth: 2,
+                                        hidden: false,
+                                        index: i,
+                                        datasetIndex: i,
+                                    };
+                                });
+                        },
                     },
                     onClick: function(e, legendItem, legend) {
                         const index = legendItem.datasetIndex;
                         const ci = legend.chart;
-                        // Scenario B (index 5): also toggle bands at 7 and 8
-                        if (index === 5) {
-                            [5, 7, 8].forEach(i => {
-                                ci.data.datasets[i].hidden = !ci.data.datasets[i].hidden;
-                            });
-                        // Scenario C (index 6): also toggle bands at 9 and 10
-                        } else if (index === 6) {
-                            [6, 9, 10].forEach(i => {
-                                ci.data.datasets[i].hidden = !ci.data.datasets[i].hidden;
-                            });
-                        // Default behavior for other datasets
-                        } else {
-                            ci.data.datasets[index].hidden = !ci.data.datasets[index].hidden;
+
+                        // Block toggling for permanent datasets: Vendita (0,1) and Mantieni (2,3)
+                        if (index === 0 || index === 1 || index === 2 || index === 3) {
+                            return;
                         }
+
+                        // Scenario A (index 4): toggle only dataset 4
+                        if (index === 4) {
+                            const meta = ci.getDatasetMeta(4);
+                            meta.hidden = !meta.hidden;
+                        }
+                        // Scenario B (index 5): toggle central line (5) and bands (7, 8)
+                        else if (index === 5) {
+                            const currentlyHidden = ci.getDatasetMeta(5).hidden;
+                            [5, 7, 8].forEach(i => {
+                                ci.getDatasetMeta(i).hidden = !currentlyHidden;
+                            });
+                        }
+                        // Scenario C (index 6): toggle central line (6) and bands (9, 10)
+                        else if (index === 6) {
+                            const currentlyHidden = ci.getDatasetMeta(6).hidden;
+                            [6, 9, 10].forEach(i => {
+                                ci.getDatasetMeta(i).hidden = !currentlyHidden;
+                            });
+                        }
+
                         ci.update();
-                    }
+                    },
                 }
             },
             scales: {
@@ -1423,6 +1458,11 @@
         chart.data.datasets[8].hidden = (state.chosenScenario !== 'B');
         chart.data.datasets[9].hidden = (state.chosenScenario !== 'C');
         chart.data.datasets[10].hidden = (state.chosenScenario !== 'C');
+
+        // Ensure Vendita and Mantieni bands are always visible (never togglable)
+        [0, 1, 2, 3].forEach(i => {
+            chart.getDatasetMeta(i).hidden = false;
+        });
 
         chart.update();
 
