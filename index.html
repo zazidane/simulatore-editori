@@ -314,7 +314,6 @@
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.04em;
-            margin-bottom: 14px;
         }
         .result-card .rc-detail {
             display: flex;
@@ -924,34 +923,22 @@
                 <!-- Royalty Sale -->
                 <div class="result-card royalty-sale">
                     <div class="rc-label">Anticipo sui Ricavi</div>
-                    <div class="rc-main-value" id="rsMainValue">—</div>
-                    <div class="rc-sub-label">NPV</div>
-                    <div class="rc-detail">
-                        <span class="rc-detail-label">Flusso di cassa ad anno 0</span>
-                        <span class="rc-detail-value" id="rsCF0">—</span>
-                    </div>
+                    <div class="rc-main-value" id="rsCF0">—</div>
+                    <div class="rc-sub-label">Flusso di cassa ad anno 0</div>
                 </div>
 
                 <!-- Sale -->
                 <div class="result-card sale">
                     <div class="rc-label">Vendita Catalogo</div>
-                    <div class="rc-main-value" id="saleMainValue">—</div>
-                    <div class="rc-sub-label">NPV</div>
-                    <div class="rc-detail">
-                        <span class="rc-detail-label">Flusso di cassa ad anno 0</span>
-                        <span class="rc-detail-value" id="saleCF0">—</span>
-                    </div>
+                    <div class="rc-main-value" id="saleCF0">—</div>
+                    <div class="rc-sub-label">Flusso di cassa ad anno 0</div>
                 </div>
 
                 <!-- Hold -->
                 <div class="result-card hold">
                     <div class="rc-label">Mantieni Catalogo</div>
-                    <div class="rc-main-value" id="holdMainValue">—</div>
-                    <div class="rc-sub-label">NPV</div>
-                    <div class="rc-detail">
-                        <span class="rc-detail-label">Flusso di cassa ad anno 0</span>
-                        <span class="rc-detail-value">€0</span>
-                    </div>
+                    <div class="rc-main-value">€0</div>
+                    <div class="rc-sub-label">Flusso di cassa ad anno 0</div>
                 </div>
             </div>
 
@@ -1581,13 +1568,9 @@
         }
 
         // Result cards — NPV as main value, CF0 as detail
-        document.getElementById('rsMainValue').textContent = formatEuro(r.rsNPV);
         document.getElementById('rsCF0').textContent = formatEuro(r.royaltySaleCF0);
 
-        document.getElementById('saleMainValue').textContent = formatEuro(r.saleNPV);
         document.getElementById('saleCF0').textContent = formatEuro(r.saleCF0);
-
-        document.getElementById('holdMainValue').textContent = formatEuro(r.holdNPV);
 
         // Chart — 11 datasets: 4 base bands + 3 scenario central lines + 4 scenario bands
         chart.data.labels = r.labels;
