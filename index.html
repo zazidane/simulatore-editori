@@ -804,7 +804,7 @@
                 </div>
                 <div class="scenario-card" id="sc-B" onclick="obSelectScenario('B')">
                     <div class="sc-letter">B</div>
-                    <div class="sc-label">Investimento in BTP Italia</div>
+                    <div class="sc-label">Acquisto BTP Italia</div>
                 </div>
                 <div class="scenario-card" id="sc-C" onclick="obSelectScenario('C')">
                     <div class="sc-letter">C</div>
@@ -864,17 +864,17 @@
                         <button class="scenario-toggle-btn" id="toggleScenarioA"
                                 data-scenario="A">
                             <span class="scenario-dot" id="dotA"></span>
-                            Scenario A — Spese personali
+                            Anticipo su ricavi e spese personali o aziendali
                         </button>
                         <button class="scenario-toggle-btn" id="toggleScenarioB"
                                 data-scenario="B">
                             <span class="scenario-dot" id="dotB"></span>
-                            Scenario B — BTP Italia
+                            Anticipo su ricavi e acquisto BTP Italia
                         </button>
                         <button class="scenario-toggle-btn" id="toggleScenarioC"
                                 data-scenario="C">
                             <span class="scenario-dot" id="dotC"></span>
-                            Scenario C — Nuovo catalogo
+                            Anticipo su ricavi e acquisto nuovo catalogo
                         </button>
                     </div>
                 </div>
@@ -962,9 +962,15 @@
                     <canvas id="cashFlowChart"></canvas>
                 </div>
                 <p class="chart-note">
-                  Nota: durante il periodo di anticipo sui ricavi, l'editore continua
+                  Nota 1: durante il periodo di anticipo sui ricavi, l'editore continua
                   a percepire i flussi generati da fonti non SIAE (stimati al 10%
                   dei ricavi annuali del catalogo).
+                </p>
+                <p class="chart-note">
+                  Nota 2: lo scenario "Vendita Catalogo" è calcolato ipotizzando
+                  la cessione integrale del catalogo. Il valore rappresenta il
+                  corrispettivo una tantum percepito a fronte della rinuncia
+                  definitiva a tutti i ricavi futuri.
                 </p>
             </div>
 
@@ -1091,7 +1097,7 @@
                 },
                 // [4] Scenario A — single line
                 {
-                    label: 'Scenario A — Spese',
+                    label: 'Anticipo e spese',
                     data: [],
                     borderColor: '#8b5cf6',
                     backgroundColor: 'rgba(139,92,246,0.08)',
@@ -1105,7 +1111,7 @@
                 },
                 // [5] Scenario B — central line
                 {
-                    label: 'Scenario B — BTP Italia',
+                    label: 'Anticipo e BTP',
                     data: [],
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59,130,246,0.08)',
@@ -1118,7 +1124,7 @@
                 },
                 // [6] Scenario C — central line
                 {
-                    label: 'Scenario C — Nuovo catalogo',
+                    label: 'Anticipo e nuovo catalogo',
                     data: [],
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16,185,129,0.08)',
@@ -1209,15 +1215,15 @@
 
                             const isSale = lower.includes('vendita');
                             const isHold = lower.includes('mantieni');
-                            const isB    = lower.includes('scenario b');
-                            const isC    = lower.includes('scenario c');
+                            const isB    = lower.includes('anticipo e btp');
+                            const isC    = lower.includes('anticipo e nuovo catalogo');
 
                             let displayValue = context.parsed.y;
 
                             if (isSale || isHold || isB || isC) {
                                 const groupFragment = isSale ? 'vendita' :
                                                       isHold ? 'mantieni' :
-                                                      isB    ? 'scenario b' : 'scenario c';
+                                                      isB    ? 'anticipo e btp' : 'anticipo e nuovo catalogo';
                                 const groupDatasets = chart.data.datasets
                                     .filter(ds => (ds.label || '').toLowerCase().includes(groupFragment));
 
@@ -1628,13 +1634,13 @@
     }
 
     function getScenarioIndices(scenario) {
-        if (scenario === 'A') return getDatasetIndicesByLabelFragment('Scenario A');
+        if (scenario === 'A') return getDatasetIndicesByLabelFragment('anticipo e spese');
         if (scenario === 'B') return [
-            ...getDatasetIndicesByLabelFragment('Scenario B'),
+            ...getDatasetIndicesByLabelFragment('anticipo e btp'),
             ...getDatasetIndicesByLabelFragment('_scenariob')
         ];
         if (scenario === 'C') return [
-            ...getDatasetIndicesByLabelFragment('Scenario C'),
+            ...getDatasetIndicesByLabelFragment('anticipo e nuovo catalogo'),
             ...getDatasetIndicesByLabelFragment('_scenarioc')
         ];
         return [];
