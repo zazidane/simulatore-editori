@@ -651,6 +651,13 @@
             font-size: 0.85rem;
             font-weight: 500;
         }
+        .vp-bridge {
+            font-size: 1rem;
+            color: #475569;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
 
         .scenario-toggles {
             display: flex;
@@ -703,7 +710,7 @@
     <div id="onboarding">
 
         <!-- Step 1: Interest check -->
-        <div class="onboarding-step active" id="ob-step-1">
+        <div class="onboarding-step active" id="ob-step-1" style="text-align:center;">
             <div class="onboarding-step-indicator">
                 <div class="step-dot active" id="dot-1"></div>
                 <div class="step-dot" id="dot-2"></div>
@@ -724,29 +731,12 @@
                     <span class="vp-pill">✓ Catalogo sempre tuo</span>
                     <span class="vp-pill">✓ Nessuna banca coinvolta</span>
                 </div>
+                <p class="vp-bridge">
+                    Rispondi a tre domande e calcoliamo insieme l'anticipo
+                    su misura per il tuo catalogo.
+                </p>
             </div>
-            <div class="onboarding-title">Benvenuto nel Simulatore Editori</div>
-            <div class="onboarding-subtitle">
-                Questa piattaforma ti aiuta a confrontare le opzioni finanziarie per il tuo
-                catalogo musicale. Prima di procedere, hai interesse a esplorare l'anticipo sui
-                ricavi del tuo catalogo musicale?
-            </div>
-            <button class="onboarding-btn" onclick="obNext(1, true)">Sì, voglio esplorare</button>
-            <button class="onboarding-btn-secondary" onclick="obNext(1, false)">No, non ora</button>
-        </div>
-
-        <!-- Step 1b: No interest message -->
-        <div class="onboarding-step" id="ob-step-1b">
-            <div class="onboarding-stop-message">
-                <div style="font-size:2rem; margin-bottom:16px;">👋</div>
-                <div>Grazie per aver visitato il simulatore.</div>
-                <div style="margin-top:12px;">
-                    Se cambi idea, torna quando vuoi — siamo qui per aiutarti a valutare
-                    le opportunità di finanziamento per il tuo catalogo.
-                </div>
-                <button class="onboarding-btn" style="margin-top:32px;"
-                        onclick="obRestart()">Ricomincia</button>
-            </div>
+            <button class="onboarding-btn" onclick="obNext(1, true)">Scopri il tuo anticipo</button>
         </div>
 
         <!-- Step 2: Financing target -->
@@ -1738,10 +1728,6 @@
         }
     }
 
-    function obRestart() {
-        obShowStep(1);
-    }
-
     function obGoStep3() {
         const raw = document.getElementById('ob-financing-target').value;
         const val = parseEuroInput(raw);
@@ -1829,14 +1815,15 @@
             const pct = Math.min(100, Math.round((Y / Z) * 100));
             tokenPct = pct <= 100 ? pct : 100;
             path = 'aggregated';
-            const othersNeeded = nCatalogs - 1;
+            const othersCount = nCatalogs - 1;
+            const aggregationText = othersCount === 1
+                ? `Il tuo catalogo deve essere aggregato con <strong>1 catalogo simile</strong> per raggiungere la soglia minima di €800.000.`
+                : `Il tuo catalogo deve essere aggregato con <strong>${othersCount} cataloghi simili</strong> per raggiungere la soglia minima di €800.000.`;
             message = `
                 <strong>Il tuo catalogo genera €${Math.round(Z).toLocaleString('it-IT')}/anno.</strong><br>
                 Per ottenere <strong>${formatEuro(X)}</strong>, la tua fee di strutturazione è
                 <strong>${formatEuro(feePerPublisher)}</strong> (ripartita su ${nCatalogs} cataloghi).<br>
-                Il tuo catalogo deve essere aggregato con altri
-                <strong>${othersNeeded} ${othersNeeded === 1 ? 'catalogo simile' : 'cataloghi simili'}
-                di altri editori</strong> per raggiungere la soglia minima di €800.000.<br>
+                ${aggregationText}<br>
                 Il simulatore è stato pre-configurato in modalità <strong>Aggregato</strong>.
             `;
         } else {
