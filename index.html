@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulatore Editori — Confronto Opzioni Catalogo</title>
+    <title>Synthonia — Anticipo sui Ricavi del Catalogo</title>
     <script src="chart.min.js"></script>
     <style>
         :root {
@@ -635,8 +635,8 @@
             <div class="onboarding-title">Benvenuto nel Simulatore Editori</div>
             <div class="onboarding-subtitle">
                 Questa piattaforma ti aiuta a confrontare le opzioni finanziarie per il tuo
-                catalogo musicale. Prima di procedere, hai interesse a esplorare la
-                tokenizzazione dei tuoi diritti editoriali?
+                catalogo musicale. Prima di procedere, hai interesse a esplorare l'anticipo sui
+                ricavi del tuo catalogo musicale?
             </div>
             <button class="onboarding-btn" onclick="obNext(1, true)">Sì, voglio esplorare</button>
             <button class="onboarding-btn-secondary" onclick="obNext(1, false)">No, non ora</button>
@@ -666,7 +666,7 @@
             </div>
             <div class="onboarding-title">Qual è il tuo obiettivo di liquidità?</div>
             <div class="onboarding-subtitle">
-                Indica l'importo che vorresti ricevere subito dalla tokenizzazione
+                Indica l'importo che vorresti ricevere subito come anticipo sui ricavi
                 del tuo catalogo (es. "100.000" per €100.000).
             </div>
             <input type="text" id="ob-financing-target" class="input-number"
@@ -745,7 +745,7 @@
 
                 <!-- % tokenizzazione -->
                 <div class="input-group">
-                    <label class="input-label">Quota del catalogo da tokenizzare</label>
+                    <label class="input-label">Quota del catalogo in anticipo</label>
                     <div class="slider-row">
                         <input type="range" id="tokenPct" min="10" max="100" value="100" step="5">
                         <span class="slider-value" id="tokenPctDisplay">100%</span>
@@ -791,7 +791,7 @@
                         <span class="ev-value" id="evCatalogValue">—</span>
                     </div>
                     <div class="ev-row">
-                        <span class="ev-name">Valore effettivo tokenizzato</span>
+                        <span class="ev-name">Valore effettivo in anticipo</span>
                         <span class="ev-value" id="evTokenized">—</span>
                     </div>
                 </div>
@@ -1661,7 +1661,7 @@
             path = 'instant';
             message = `
                 <strong>Ottimo!</strong> Il tuo catalogo è sufficiente da solo.<br>
-                Dovrai tokenizzare il <strong>${pct}%</strong> del catalogo per ottenere
+                Dovrai strutturare in anticipo il <strong>${pct}%</strong> del catalogo per ottenere
                 <strong>${formatEuro(X)}</strong>.<br>
                 La fee di strutturazione è <strong>${formatEuro(ORIGINATION_FEE)}</strong>.<br>
                 Il simulatore è stato pre-configurato con questi valori.
