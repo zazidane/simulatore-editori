@@ -651,6 +651,46 @@
             font-size: 0.85rem;
             font-weight: 500;
         }
+
+        .scenario-toggles {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .scenario-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text);
+            padding: 0.25rem 0;
+            text-align: left;
+            font-family: inherit;
+        }
+        .scenario-toggle-btn:hover {
+            color: var(--primary);
+        }
+        .scenario-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            flex-shrink: 0;
+            display: inline-block;
+        }
+        .scenario-dot.active {
+            background-color: currentColor;
+        }
+        /* Colori allineati alla legenda del grafico */
+        #toggleScenarioA .scenario-dot { border-color: #8b5cf6; }
+        #toggleScenarioA .scenario-dot.active { background-color: #8b5cf6; }
+        #toggleScenarioB .scenario-dot { border-color: #3b82f6; }
+        #toggleScenarioB .scenario-dot.active { background-color: #3b82f6; }
+        #toggleScenarioC .scenario-dot { border-color: #10b981; }
+        #toggleScenarioC .scenario-dot.active { background-color: #10b981; }
     </style>
 </head>
 <body>
@@ -811,6 +851,27 @@
                     <div class="slider-row">
                         <input type="range" id="timeHorizon" min="3" max="10" value="10" step="1">
                         <span class="slider-value" id="timeHorizonDisplay">10 anni</span>
+                    </div>
+                </div>
+
+                <div class="input-group" id="scenariPanel">
+                    <label class="input-label">Scenari di confronto</label>
+                    <div class="scenario-toggles">
+                        <button class="scenario-toggle-btn" id="toggleScenarioA"
+                                data-scenario="A">
+                            <span class="scenario-dot" id="dotA"></span>
+                            Scenario A — Spese personali
+                        </button>
+                        <button class="scenario-toggle-btn" id="toggleScenarioB"
+                                data-scenario="B">
+                            <span class="scenario-dot" id="dotB"></span>
+                            Scenario B — BTP Italia
+                        </button>
+                        <button class="scenario-toggle-btn" id="toggleScenarioC"
+                                data-scenario="C">
+                            <span class="scenario-dot" id="dotC"></span>
+                            Scenario C — Nuovo catalogo
+                        </button>
                     </div>
                 </div>
 
@@ -1527,6 +1588,63 @@
 
         chart.update();
 
+        initScenarioPanel();
+    }
+
+    function getDatasetIndicesByLabelFragment(fragment) {
+        return chart.data.datasets
+            .map((ds, i) => ({ i, label: ds.label || '' }))
+            .filter(d => d.label.toLowerCase().includes(fragment.toLowerCase()))
+            .map(d => d.i);
+    }
+
+    function getScenarioIndices(scenario) {
+        if (scenario === 'A') return getDatasetIndicesByLabelFragment('Scenario A');
+        if (scenario === 'B') return [
+            ...getDatasetIndicesByLabelFragment('Scenario B'),
+            ...getDatasetIndicesByLabelFragment('_scenariob')
+        ];
+        if (scenario === 'C') return [
+            ...getDatasetIndicesByLabelFragment('Scenario C'),
+            ...getDatasetIndicesByLabelFragment('_scenarioc')
+        ];
+        return [];
+    }
+
+    let _scenarioPanelWired = false;
+
+    function initScenarioPanel() {
+        const scenarios = ['A', 'B', 'C'];
+
+        // Sync dot visual state with current chart visibility
+        scenarios.forEach(s => {
+            const indices = getScenarioIndices(s);
+            if (indices.length === 0) return;
+            const dot = document.getElementById('dot' + s);
+            if (!dot) return;
+            const isVisible = chart.getDatasetMeta(indices[0]).hidden !== true;
+            dot.classList.toggle('active', isVisible);
+        });
+
+        if (_scenarioPanelWired) return;
+        _scenarioPanelWired = true;
+
+        scenarios.forEach(s => {
+            const btn = document.getElementById('toggleScenario' + s);
+            if (!btn) return;
+            btn.addEventListener('click', () => {
+                const indices = getScenarioIndices(s);
+                if (indices.length === 0) return;
+                const currentlyHidden = chart.getDatasetMeta(indices[0]).hidden === true;
+                const newHidden = !currentlyHidden;
+                indices.forEach(i => {
+                    chart.getDatasetMeta(i).hidden = newHidden;
+                });
+                const dot = document.getElementById('dot' + s);
+                if (dot) dot.classList.toggle('active', !newHidden);
+                chart.update();
+            });
+        });
     }
 
     // =========================================
