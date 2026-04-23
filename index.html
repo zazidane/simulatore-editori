@@ -698,6 +698,14 @@
         #toggleScenarioB .scenario-dot.active { background-color: #3b82f6; }
         #toggleScenarioC .scenario-dot { border-color: #10b981; }
         #toggleScenarioC .scenario-dot.active { background-color: #10b981; }
+        .chart-note {
+          font-size: 0.78rem;
+          color: #6b7280;
+          margin-top: 0.5rem;
+          margin-bottom: 0;
+          line-height: 1.5;
+          text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -729,7 +737,7 @@
                 <div class="vp-pills">
                     <span class="vp-pill">✓ Liquidità immediata</span>
                     <span class="vp-pill">✓ Catalogo sempre tuo</span>
-                    <span class="vp-pill">✓ Nessuna banca coinvolta</span>
+                    <span class="vp-pill">✓ Continuità aziendale garantita</span>
                 </div>
                 <p class="vp-bridge">
                     Rispondi a tre domande e calcoliamo insieme l'anticipo
@@ -767,7 +775,7 @@
             </div>
             <div class="onboarding-title">Qual è il flusso annuale del tuo catalogo?</div>
             <div class="onboarding-subtitle">
-                Indica le royalties medie annuali che il tuo catalogo genera (somma SIAE + terze parti).
+                Indica le royalties medie annuali che il tuo catalogo genera.
                 Puoi trovare questo dato nei rendiconti SIAE degli ultimi anni.
             </div>
             <input type="text" id="ob-actual-cashflow" class="input-number"
@@ -953,6 +961,11 @@
                 <div class="chart-wrapper">
                     <canvas id="cashFlowChart"></canvas>
                 </div>
+                <p class="chart-note">
+                  Nota: durante il periodo di anticipo sui ricavi, l'editore continua
+                  a percepire i flussi generati da fonti non SIAE (stimati al 10%
+                  dei ricavi annuali del catalogo).
+                </p>
             </div>
 
         </div>
@@ -1817,12 +1830,10 @@
             path = 'aggregated';
             const othersCount = nCatalogs - 1;
             const aggregationText = othersCount === 1
-                ? `Il tuo catalogo deve essere aggregato con <strong>1 catalogo simile</strong> per raggiungere la soglia minima di €800.000.`
-                : `Il tuo catalogo deve essere aggregato con <strong>${othersCount} cataloghi simili</strong> per raggiungere la soglia minima di €800.000.`;
+                ? `Il tuo catalogo sarà aggregato con <strong>1 catalogo simile</strong> per raggiungere la soglia minima di €800.000.`
+                : `Il tuo catalogo sarà aggregato con <strong>${othersCount} cataloghi simili</strong> per raggiungere la soglia minima di €800.000.`;
             message = `
                 <strong>Il tuo catalogo genera €${Math.round(Z).toLocaleString('it-IT')}/anno.</strong><br>
-                Per ottenere <strong>${formatEuro(X)}</strong>, la tua fee di strutturazione è
-                <strong>${formatEuro(feePerPublisher)}</strong> (ripartita su ${nCatalogs} cataloghi).<br>
                 ${aggregationText}<br>
                 Il simulatore è stato pre-configurato in modalità <strong>Aggregato</strong>.
             `;
