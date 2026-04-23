@@ -954,7 +954,6 @@
             <!-- Cumulative cash flow chart -->
             <div class="card">
                 <div class="card-title">Flussi di cassa cumulati</div>
-                <p id="legendHint" style="font-size:0.78rem; color:#6b7280; text-align:center; margin-bottom:4px; margin-top:0; letter-spacing:0.01em;">Clicca sugli scenari per confrontarli nel grafico</p>
                 <div class="chart-wrapper">
                     <canvas id="cashFlowChart"></canvas>
                 </div>
@@ -1200,62 +1199,30 @@
                         padding: 20,
                         font: { size: 12, weight: '600' },
                         generateLabels: function(chart) {
-                            const datasets = chart.data.datasets;
-                            return datasets
-                                .map((ds, i) => ({ ds, i }))
-                                .filter(({ ds }) => !ds.label.startsWith('_'))
-                                .map(({ ds, i }) => {
-                                    const isPermanent = (i === 0 || i === 2);
+                            return chart.data.datasets
+                                .map(function(ds, i) {
                                     const meta = chart.getDatasetMeta(i);
-                                    // meta.hidden is null initially; treat null as not hidden
+                                    const label = ds.label || '';
+                                    const isInternal = label.startsWith('_') ||
+                                        label.toLowerCase().includes('upper') ||
+                                        label.toLowerCase().includes('lower');
                                     const isHidden = meta.hidden === true;
+                                    if (isInternal || isHidden) return null;
                                     return {
-                                        text: ds.label,
-                                        // Filled circle for visible/permanent, empty for hidden
-                                        fillStyle: (isPermanent || !isHidden)
-                                            ? ds.borderColor
-                                            : 'transparent',
+                                        text: label,
+                                        fillStyle: ds.borderColor,
                                         strokeStyle: ds.borderColor,
                                         lineWidth: 2,
-                                        pointStyle: 'circle',
                                         hidden: false,
-                                        index: i,
-                                        datasetIndex: i,
+                                        pointStyle: 'circle',
+                                        usePointStyle: true,
+                                        datasetIndex: i
                                     };
-                                });
+                                })
+                                .filter(function(item) { return item !== null; });
                         },
                     },
-                    onClick: function(e, legendItem, legend) {
-                        const index = legendItem.datasetIndex;
-                        const ci = legend.chart;
-
-                        // Block toggling for permanent datasets: Vendita (0,1) and Mantieni (2,3)
-                        if (index === 0 || index === 1 || index === 2 || index === 3) {
-                            return;
-                        }
-
-                        // Scenario A (index 4): toggle only dataset 4
-                        if (index === 4) {
-                            const meta = ci.getDatasetMeta(4);
-                            meta.hidden = !meta.hidden;
-                        }
-                        // Scenario B (index 5): toggle central line (5) and bands (7, 8)
-                        else if (index === 5) {
-                            const currentlyHidden = ci.getDatasetMeta(5).hidden;
-                            [5, 7, 8].forEach(i => {
-                                ci.getDatasetMeta(i).hidden = !currentlyHidden;
-                            });
-                        }
-                        // Scenario C (index 6): toggle central line (6) and bands (9, 10)
-                        else if (index === 6) {
-                            const currentlyHidden = ci.getDatasetMeta(6).hidden;
-                            [6, 9, 10].forEach(i => {
-                                ci.getDatasetMeta(i).hidden = !currentlyHidden;
-                            });
-                        }
-
-                        ci.update();
-                    },
+                    onClick: function() {},
                 }
             },
             scales: {
