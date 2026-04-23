@@ -1400,6 +1400,18 @@
         const upperBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MIN, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, fullThirdParty);
         const lowerBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MAX, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, fullThirdParty);
 
+        // Vendita Catalogo band: in Scenario B the sale proceeds are reinvested in BTP,
+        // so the band grows at compound BTP_RATE. Scenarios A/C remain flat.
+        const saleUpperValue = upperBand.saleCumulative[0];
+        const saleLowerValue = lowerBand.saleCumulative[0];
+        for (let t = 0; t <= CHART_YEARS; t++) {
+            const btpMultiplier = (s.chosenScenario === 'B')
+                ? Math.pow(1 + BTP_RATE, t)
+                : 1;
+            upperBand.saleCumulative[t] = saleUpperValue * btpMultiplier;
+            lowerBand.saleCumulative[t] = saleLowerValue * btpMultiplier;
+        }
+
         // Scenario A/B/C time series — use of CF0 (computed at fixed riskRate=10)
         const nonTokenizedPerYear = royaltiesPerYear * (1 - s.tokenPct / 100);
         const newCatalogSIAE = royaltySaleCF0 / ROYALTY_RATIO;
