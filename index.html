@@ -1181,9 +1181,50 @@
             },
             plugins: {
                 tooltip: {
+                    filter: function(tooltipItem) {
+                        const label = tooltipItem.dataset.label || '';
+                        return !label.startsWith('_') &&
+                               !label.toLowerCase().includes('upper') &&
+                               !label.toLowerCase().includes('lower');
+                    },
                     callbacks: {
+                        title: function(items) {
+                            if (items.length > 0) return items[0].label;
+                            return '';
+                        },
                         label: function(context) {
-                            return context.dataset.label + ': ' + formatEuro(context.parsed.y);
+                            const label = context.dataset.label || '';
+                            const chart = context.chart;
+                            const dataIndex = context.dataIndex;
+                            const lower = label.toLowerCase();
+
+                            const isSale = lower.includes('vendita');
+                            const isHold = lower.includes('mantieni');
+                            const isB    = lower.includes('scenario b');
+                            const isC    = lower.includes('scenario c');
+
+                            let displayValue = context.parsed.y;
+
+                            if (isSale || isHold || isB || isC) {
+                                const groupFragment = isSale ? 'vendita' :
+                                                      isHold ? 'mantieni' :
+                                                      isB    ? 'scenario b' : 'scenario c';
+                                const groupDatasets = chart.data.datasets
+                                    .filter(ds => (ds.label || '').toLowerCase().includes(groupFragment));
+
+                                const values = groupDatasets
+                                    .map(ds => {
+                                        const data = ds.data;
+                                        return (data && data[dataIndex] !== undefined) ? data[dataIndex] : null;
+                                    })
+                                    .filter(v => v !== null && !isNaN(v));
+
+                                if (values.length > 0) {
+                                    displayValue = values.reduce((a, b) => a + b, 0) / values.length;
+                                }
+                            }
+
+                            return label + ': ' + formatEuro(displayValue);
                         }
                     }
                 },
