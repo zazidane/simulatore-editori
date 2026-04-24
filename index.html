@@ -532,7 +532,7 @@
         }
         .scenario-toggle-btn {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 10px;
             background: transparent;
             border: 1px solid transparent;
@@ -550,6 +550,19 @@
             background: var(--bg-subtle);
             color: var(--text-primary);
         }
+        .scenario-text {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+        }
+        .scenario-description {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            line-height: 1.5;
+            margin-top: 4px;
+            font-weight: 400;
+        }
         .scenario-dot {
             width: 10px;
             height: 10px;
@@ -557,6 +570,7 @@
             border: 2px solid currentColor;
             flex-shrink: 0;
             display: inline-block;
+            margin-top: 4px;
         }
         .scenario-dot.active { background-color: currentColor; }
         #toggleScenarioA .scenario-dot { border-color: var(--color-scenario-a); }
@@ -586,47 +600,6 @@
             font-size: 12px;
             line-height: 1.5;
             color: var(--warning-text);
-        }
-
-        /* ===== EFFECTIVE VALUE TILES ===== */
-        .effective-value-display {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 6px;
-        }
-        .effective-value-display .ev-label {
-            grid-column: 1 / -1;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--text-tertiary);
-            margin-bottom: 2px;
-        }
-        .effective-value-display .ev-row {
-            display: flex;
-            flex-direction: column-reverse;
-            gap: 6px;
-            background: var(--accent-light);
-            border: 1px solid rgba(37,99,235,0.15);
-            border-radius: var(--radius-md);
-            padding: 14px 16px;
-        }
-        .effective-value-display .ev-name {
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 0.07em;
-            text-transform: uppercase;
-            color: var(--accent-primary);
-            line-height: 1.3;
-        }
-        .effective-value-display .ev-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text-primary);
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -0.01em;
         }
 
         /* ===== OUTPUT PANEL ===== */
@@ -767,7 +740,6 @@
             .vp-headline { font-size: 22px; }
             .onboarding-title { font-size: 20px; }
             .scenario-grid { grid-template-columns: 1fr; }
-            .effective-value-display { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -997,17 +969,26 @@
                         <button class="scenario-toggle-btn" id="toggleScenarioA"
                                 data-scenario="A">
                             <span class="scenario-dot" id="dotA"></span>
-                            Anticipo su ricavi e spese personali o aziendali
+                            <span class="scenario-text">
+                                <span class="scenario-label">Spese personali o aziendali</span>
+                                <span class="scenario-description">Utilizza la liquidità ricevuta per coprire spese immediate, mantenendo la piena proprietà del catalogo.</span>
+                            </span>
                         </button>
                         <button class="scenario-toggle-btn" id="toggleScenarioB"
                                 data-scenario="B">
                             <span class="scenario-dot" id="dotB"></span>
-                            Anticipo su ricavi e acquisto BTP Italia
+                            <span class="scenario-text">
+                                <span class="scenario-label">Acquisto BTP Italia</span>
+                                <span class="scenario-description">Reinvesti l'anticipo in titoli di Stato italiani al tasso fisso del 3,5% annuo, con capitalizzazione composta.</span>
+                            </span>
                         </button>
                         <button class="scenario-toggle-btn" id="toggleScenarioC"
                                 data-scenario="C">
                             <span class="scenario-dot" id="dotC"></span>
-                            Anticipo su ricavi e acquisto nuovo catalogo
+                            <span class="scenario-text">
+                                <span class="scenario-label">Acquisto di un nuovo catalogo</span>
+                                <span class="scenario-description">Impiega la liquidità per acquisire un secondo catalogo musicale e ampliare il tuo portafoglio editoriale.</span>
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -1034,18 +1015,6 @@
                     </div>
                 </div>
 
-                <!-- Effective value summary -->
-                <div class="effective-value-display">
-                    <div class="ev-label">Riepilogo valori</div>
-                    <div class="ev-row">
-                        <span class="ev-name">Valore catalogo stimato (9×)</span>
-                        <span class="ev-value" id="evCatalogValue">—</span>
-                    </div>
-                    <div class="ev-row">
-                        <span class="ev-name">Valore effettivo in anticipo</span>
-                        <span class="ev-value" id="evTokenized">—</span>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -1702,10 +1671,6 @@
     // =========================================
     function updateUI() {
         const r = calculate(state);
-
-        // Update effective value display
-        document.getElementById('evCatalogValue').textContent = formatEuro(r.fullCatalogValue);
-        document.getElementById('evTokenized').textContent = formatEuro(r.effectiveValue);
 
         // Warning banner
         const warning = document.getElementById('warningBanner');
