@@ -1489,9 +1489,8 @@
         // Effective discount (derived, for display)
         const effectiveDiscount = 1 - investorPrice / effectiveValue;
 
-        // Step 5: Origination fee per catalog
-        // Uses the split fee from onboarding if available; falls back to computed value
-        const originationFeePerCatalog = s.feePerPublisher || (effectivePath === 'instant' ? ORIGINATION_FEE : ORIGINATION_FEE / nCatalogs);
+        // Step 5: Origination fee per catalog — always derived from current path/nCatalogs
+        const originationFeePerCatalog = effectivePath === 'instant' ? ORIGINATION_FEE : ORIGINATION_FEE / nCatalogs;
 
         // Step 6: Cash flows for three options
         // Royalty Sale: investor buys T years of royalties
