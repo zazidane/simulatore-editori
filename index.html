@@ -1449,7 +1449,9 @@
 
         // Step 2: Effective royalties after tokenization %
         const royaltiesPerYear = s.annualCashFlow * (s.tokenPct / 100);
-        const thirdPartyPerYear = royaltiesPerYear * THIRD_PARTY_RATIO;
+        // Third-party revenue is always earned on the FULL catalog (publisher share),
+        // independent of how much of the royalty stream is tokenized.
+        const thirdPartyPerYear = s.annualCashFlow * THIRD_PARTY_RATIO;
         // Full catalog cash flow — used for Vendita and Mantieni scenarios (always 100%)
         const fullCashFlow = s.annualCashFlow;
         const fullThirdParty = fullCashFlow * THIRD_PARTY_RATIO;
