@@ -1161,6 +1161,8 @@
         chosenScenario: null, // 'A' | 'B' | 'C' — how the publisher intends to use CF0
         nCatalogs: 1,         // number of catalogs in the aggregated package
         feePerPublisher: ORIGINATION_FEE, // origination fee for this publisher
+        investmentGrossRate: INVESTMENT_RATE_MIN, // gross reinvestment rate (default 3%)
+        investmentRate: netInvestmentRate(INVESTMENT_RATE_MIN), // derived net rate (default 0.02625)
     };
 
     // =========================================
@@ -1449,7 +1451,7 @@
     }
 
     // Builds cumulative time series for all 3 scenarios at a given riskRateOverride (decimal)
-    function computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, duringTokenizationPerYear, afterTokenizationPerYear, riskRateOverride, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow) {
+    function computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, duringTokenizationPerYear, afterTokenizationPerYear, riskRateOverride, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, r) {
         const tier = TIERS.find(t => packageValue >= t.minValue);
         const investorRate = tier.baseSpread + RISK_SENSITIVITY * riskRateOverride;
         const investorPrice = royaltiesPerYear * annuityFactor(T, investorRate);
@@ -1457,18 +1459,24 @@
         const saleRate = SALE_BASE_RATE + RISK_SENSITIVITY * riskRateOverride;
         const saleCF0 = fullCashFlow / saleRate;
 
+        // Future Value of Annuity: value at time n of €1/year reinvested at `rate`
+        const fva = (n, rate) => rate === 0 ? n : (Math.pow(1 + rate, n) - 1) / rate;
+
         const rsCumulative = [];
         const saleCumulative = [];
         const holdCumulative = [];
 
         for (let year = 0; year <= CHART_YEARS; year++) {
             saleCumulative.push(saleCF0);
-            holdCumulative.push((royaltiesPerYear + thirdPartyPerYear) * year);
-            rsCumulative.push(
-                royaltySaleCF0
-                + duringTokenizationPerYear * Math.min(year, T)
-                + afterTokenizationPerYear * Math.max(0, year - T)
-            );
+            holdCumulative.push((royaltiesPerYear + thirdPartyPerYear) * fva(year, r));
+            if (year <= T) {
+                rsCumulative.push(royaltySaleCF0 + duringTokenizationPerYear * fva(year, r));
+            } else {
+                const accumulatedAtT = duringTokenizationPerYear * fva(T, r);
+                const grownAccumulated = accumulatedAtT * Math.pow(1 + r, year - T);
+                const newAnnuity = afterTokenizationPerYear * fva(year - T, r);
+                rsCumulative.push(royaltySaleCF0 + grownAccumulated + newAnnuity);
+            }
         }
 
         return { rsCumulative, saleCumulative, holdCumulative };
@@ -1550,9 +1558,13 @@
             labels.push('Anno ' + year);
         }
 
+        // Step 8: derive net reinvestment rate from gross rate (refresh derived state)
+        s.investmentRate = netInvestmentRate(s.investmentGrossRate);
+        const r = s.investmentRate;
+
         // Risk band time series: upper = best-case (low risk), lower = worst-case (high risk)
-        const upperBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, duringTokenizationPerYear, afterTokenizationPerYear, RISK_BAND_MIN, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow);
-        const lowerBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, duringTokenizationPerYear, afterTokenizationPerYear, RISK_BAND_MAX, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow);
+        const upperBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, duringTokenizationPerYear, afterTokenizationPerYear, RISK_BAND_MIN, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, r);
+        const lowerBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, duringTokenizationPerYear, afterTokenizationPerYear, RISK_BAND_MAX, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, r);
 
         // Vendita Catalogo band: in Scenario B the sale proceeds are reinvested in BTP,
         // so the band grows at compound BTP_RATE. Scenarios A/C remain flat.
