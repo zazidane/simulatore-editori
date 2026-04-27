@@ -1098,9 +1098,26 @@
         { name: 'Small',  minValue: 0,       baseSpread: 0.150 - RISK_SENSITIVITY * 0.10 }, // inv_rate=15.0% at r=10%
     ];
 
-    const THIRD_PARTY_RATIO = 0.10;
-    // Additional annual revenue from third parties (estimated at 10% of SIAE royalties)
-    // Always received by the publisher, even during the full tokenization period
+    const THIRD_PARTY_RATIO = 0.20;
+    // Estimated additional revenue from non-SIAE third-party sources (20% of SIAE flows)
+    // Updated from 0.10 — corrected to reflect actual market benchmark
+
+    const TAX_LOW = 0.125;
+    // Preferential tax rate applied to gross investment returns in range 3%–5%
+    // (Italian "imposta sostitutiva" on government bonds and equivalent instruments)
+
+    const TAX_HIGH = 0.26;
+    // Standard tax rate applied to gross investment returns above 5%
+    // (Italian capital gains tax on financial instruments)
+
+    const INVESTMENT_TAX_THRESHOLD = 0.05;
+    // Gross rate threshold separating TAX_LOW regime (≤ threshold) from TAX_HIGH (> threshold)
+
+    const INVESTMENT_RATE_MIN = 0.03;
+    // Minimum gross investment rate for the future investment-rate slider (3%)
+
+    const INVESTMENT_RATE_MAX = 0.12;
+    // Maximum gross investment rate for the future investment-rate slider (12%)
 
     const BTP_RATE = 0.035;
     // Annual yield of BTP Italia — used in Scenario B (reserved for future implementation)
@@ -1113,6 +1130,22 @@
 
     const RISK_BAND_MAX = 0.15;
     // Upper bound of risk band: worst-case catalog (concentrated, volatile cash flows)
+
+    /**
+     * netInvestmentRate — converts a gross investment rate to net-of-tax rate.
+     * Uses TAX_LOW (12.5%) for grossRate ≤ INVESTMENT_TAX_THRESHOLD (5%),
+     * TAX_HIGH (26%) for grossRate > INVESTMENT_TAX_THRESHOLD.
+     * This function is a pure helper: no side effects, no DOM access.
+     * @param {number} grossRate — gross annual return rate (e.g. 0.035 for 3.5%)
+     * @returns {number} net annual return rate after applicable tax
+     */
+    function netInvestmentRate(grossRate) {
+      if (grossRate <= INVESTMENT_TAX_THRESHOLD) {
+        return grossRate * (1 - TAX_LOW);
+      } else {
+        return grossRate * (1 - TAX_HIGH);
+      }
+    }
 
     // =========================================
     //  STATE
