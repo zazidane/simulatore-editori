@@ -1449,7 +1449,7 @@
     }
 
     // Builds cumulative time series for all 3 scenarios at a given riskRateOverride (decimal)
-    function computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, riskRateOverride, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, fullThirdParty) {
+    function computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, duringTokenizationPerYear, afterTokenizationPerYear, riskRateOverride, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow) {
         const tier = TIERS.find(t => packageValue >= t.minValue);
         const investorRate = tier.baseSpread + RISK_SENSITIVITY * riskRateOverride;
         const investorPrice = royaltiesPerYear * annuityFactor(T, investorRate);
@@ -1463,14 +1463,12 @@
 
         for (let year = 0; year <= CHART_YEARS; year++) {
             saleCumulative.push(saleCF0);
-            holdCumulative.push((fullCashFlow + fullThirdParty) * year);
-            if (year === 0) {
-                rsCumulative.push(royaltySaleCF0);
-            } else if (year <= T) {
-                rsCumulative.push(royaltySaleCF0 + thirdPartyPerYear * year);
-            } else {
-                rsCumulative.push(royaltySaleCF0 + thirdPartyPerYear * year + royaltiesPerYear * (year - T));
-            }
+            holdCumulative.push((royaltiesPerYear + thirdPartyPerYear) * year);
+            rsCumulative.push(
+                royaltySaleCF0
+                + duringTokenizationPerYear * Math.min(year, T)
+                + afterTokenizationPerYear * Math.max(0, year - T)
+            );
         }
 
         return { rsCumulative, saleCumulative, holdCumulative };
@@ -1482,9 +1480,15 @@
 
         // Step 2: Effective royalties after tokenization %
         const royaltiesPerYear = s.annualCashFlow * (s.tokenPct / 100);
+        const retainedSIAEPerYear = s.annualCashFlow * (1 - s.tokenPct / 100);
+        // SIAE flows the editor retains during tokenization (non-tokenized portion)
         // Third-party revenue is always earned on the FULL catalog (publisher share),
         // independent of how much of the royalty stream is tokenized.
         const thirdPartyPerYear = s.annualCashFlow * THIRD_PARTY_RATIO;
+        const duringTokenizationPerYear = retainedSIAEPerYear + thirdPartyPerYear;
+        // Total annual flow perceived during tokenization (retained SIAE + third-party)
+        const afterTokenizationPerYear = s.annualCashFlow + thirdPartyPerYear;
+        // Total annual flow perceived AFTER tokenization period ends (full SIAE + third-party)
         // Full catalog cash flow — used for Vendita and Mantieni scenarios (always 100%)
         const fullCashFlow = s.annualCashFlow;
         const fullThirdParty = fullCashFlow * THIRD_PARTY_RATIO;
@@ -1547,8 +1551,8 @@
         }
 
         // Risk band time series: upper = best-case (low risk), lower = worst-case (high risk)
-        const upperBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MIN, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, fullThirdParty);
-        const lowerBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, RISK_BAND_MAX, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, fullThirdParty);
+        const upperBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, duringTokenizationPerYear, afterTokenizationPerYear, RISK_BAND_MIN, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow);
+        const lowerBand = computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, duringTokenizationPerYear, afterTokenizationPerYear, RISK_BAND_MAX, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow);
 
         // Vendita Catalogo band: in Scenario B the sale proceeds are reinvested in BTP,
         // so the band grows at compound BTP_RATE. Scenarios A/C remain flat.
