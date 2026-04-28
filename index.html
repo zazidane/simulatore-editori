@@ -1065,7 +1065,21 @@
                 <!-- Hold -->
                 <div class="result-card hold">
                     <div class="rc-label">Mantieni Catalogo</div>
-                    <div class="rc-main-value">€0</div>
+                    <div class="rc-main-value" id="holdMainValue">€0</div>
+                    <div id="holdNotFeasibleBadge"
+                         style="display:none;
+                                background:#e5e7eb;
+                                color:#6b7280;
+                                font-size:12px;
+                                font-weight:600;
+                                letter-spacing:0.05em;
+                                padding:4px 10px;
+                                border-radius:6px;
+                                text-transform:uppercase;
+                                margin-top:4px;
+                                width:fit-content;">
+                        Non applicabile
+                    </div>
                     <div class="rc-sub-label">Flusso di cassa ad anno 0</div>
                 </div>
             </div>
@@ -1713,35 +1727,59 @@
             holdLowerArr[t] = holdLowerArr[t-1] + annualHoldFlow / Math.pow(1 + RISK_BAND_MAX, t);
         }
 
-        // Scenario B bands: ±2% around r (net reinvestment rate)
-        const BTP_UPPER_RATE = r + 0.02;
-        const BTP_LOWER_RATE = Math.max(0.001, r - 0.02);
-        const scenarioBUpper = [];
-        const scenarioBLower = [];
-        for (let t = 0; t <= CHART_YEARS; t++) {
-            if (t === 0) {
-                scenarioBUpper[t] = royaltySaleCF0;
-                scenarioBLower[t] = royaltySaleCF0;
-            } else if (t <= T) {
-                scenarioBUpper[t] = royaltySaleCF0 * Math.pow(1 + BTP_UPPER_RATE, t)
-                    + thirdPartyPerYear * t + nonTokenizedPerYear * t;
-                scenarioBLower[t] = royaltySaleCF0 * Math.pow(1 + BTP_LOWER_RATE, t)
-                    + thirdPartyPerYear * t + nonTokenizedPerYear * t;
-            } else {
-                scenarioBUpper[t] = royaltySaleCF0 * Math.pow(1 + BTP_UPPER_RATE, t)
-                    + thirdPartyPerYear * t
-                    + nonTokenizedPerYear * T
-                    + (nonTokenizedPerYear + royaltiesPerYear + thirdPartyPerYear) * (t - T);
-                scenarioBLower[t] = royaltySaleCF0 * Math.pow(1 + BTP_LOWER_RATE, t)
-                    + thirdPartyPerYear * t
-                    + nonTokenizedPerYear * T
-                    + (nonTokenizedPerYear + royaltiesPerYear + thirdPartyPerYear) * (t - T);
-            }
-        }
+        // Wave 6 patch — Confidence bands around FAIR central lines.
+        // Re-evaluate STEPS 4-6 at fixed risk rates (RISK_BAND_MIN/MAX) to obtain
+        // band-version royaltySaleCF0/saleCF0, then build bands using the SAME
+        // structural formulas as fairRS_B / fairRS_C (so bands wrap the central line).
+        const computeBandInputs = (fixedRiskRate) => {
+            const investorRate_b  = tier.baseSpread + RISK_SENSITIVITY * fixedRiskRate;
+            const investorPrice_b = royaltiesPerYear * annuityFactor(T, investorRate_b);
+            const royaltySaleCF0_band = investorPrice_b - originationFeePerCatalog;
+            const saleRate_b = SALE_BASE_RATE + RISK_SENSITIVITY * fixedRiskRate;
+            const saleCF0_band = fullCashFlow / saleRate_b;
+            return { royaltySaleCF0_band, saleCF0_band };
+        };
+        const upperInputs = computeBandInputs(RISK_BAND_MIN);
+        const lowerInputs = computeBandInputs(RISK_BAND_MAX);
 
-        // Scenario C bands: ±10% approximation
-        const scenarioCUpper = scenarioCCumulative.map(v => v * 1.10);
-        const scenarioCLower = scenarioCCumulative.map(v => v * 0.90);
+        const buildFairRS_B = (cf0) => {
+            const arr = new Array(CHART_YEARS + 1);
+            for (let t = 0; t <= CHART_YEARS; t++) {
+                if (t === 0) {
+                    arr[0] = cf0;
+                } else if (t <= T) {
+                    arr[t] = cf0 * Math.pow(1 + r, t)
+                        + duringTokenizationPerYear * fva(t, r);
+                } else {
+                    arr[t] = cf0 * Math.pow(1 + r, t)
+                        + duringTokenizationPerYear * fva(T, r) * Math.pow(1 + r, t - T)
+                        + afterTokenizationPerYear  * fva(t - T, r);
+                }
+            }
+            return arr;
+        };
+
+        const buildFairRS_C = (cf0) => {
+            const ncTotal = (cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO);
+            const arr = new Array(CHART_YEARS + 1);
+            for (let t = 0; t <= CHART_YEARS; t++) {
+                if (t === 0) {
+                    arr[0] = cf0;
+                } else if (t <= T) {
+                    arr[t] = cf0 + (duringTokenizationPerYear + ncTotal) * t;
+                } else {
+                    arr[t] = cf0
+                        + (duringTokenizationPerYear + ncTotal) * T
+                        + (afterTokenizationPerYear  + ncTotal) * (t - T);
+                }
+            }
+            return arr;
+        };
+
+        const scenarioBUpper = buildFairRS_B(upperInputs.royaltySaleCF0_band);
+        const scenarioBLower = buildFairRS_B(lowerInputs.royaltySaleCF0_band);
+        const scenarioCUpper = buildFairRS_C(upperInputs.royaltySaleCF0_band);
+        const scenarioCLower = buildFairRS_C(lowerInputs.royaltySaleCF0_band);
 
         // Wave 5 — central series (no risk-rate band) used by FAIR comparison
         // holdCumulative is identical across upper/lower bands (depends on `r`, not riskRate)
@@ -1837,13 +1875,13 @@
         }
         if (state.activeScenarios.has('B')) {
             chart.data.datasets[5].data = r.fairRS_B;
-            chart.data.datasets[7].data = r.fairSale_B;
-            chart.data.datasets[8].data = r.holdCumulative;
+            chart.data.datasets[7].data = r.scenarioBUpper;
+            chart.data.datasets[8].data = r.scenarioBLower;
         }
         if (state.activeScenarios.has('C')) {
             chart.data.datasets[6].data = r.fairRS_C;
-            chart.data.datasets[9].data = r.saleCumulative;
-            chart.data.datasets[10].data = r.fairHold_C;
+            chart.data.datasets[9].data = r.scenarioCUpper;
+            chart.data.datasets[10].data = r.scenarioCLower;
         }
 
         // Scenarios: use meta.hidden (runtime source of truth in Chart.js v4)
@@ -1858,6 +1896,38 @@
         // Ensure Vendita and Mantieni bands are always visible
         [0, 1, 2, 3].forEach(i => {
             chart.getDatasetMeta(i).hidden = false;
+        });
+
+        // Wave 6 — Hold feasibility visual treatment
+        const feasible = r.isHoldFeasible;
+
+        const holdValueEl = document.getElementById('holdMainValue');
+        const holdBadgeEl = document.getElementById('holdNotFeasibleBadge');
+        if (holdValueEl) {
+            holdValueEl.textContent = formatEuro(r.holdNPV);
+            holdValueEl.style.display = feasible ? '' : 'none';
+        }
+        if (holdBadgeEl) holdBadgeEl.style.display = feasible ? 'none' : 'block';
+
+        // Hold base band datasets ([2] upper, [3] lower) — restyle when not feasible
+        const holdBandIndices = [
+            { idx: 2, originalDash: [] },
+            { idx: 3, originalDash: [4, 4] },
+        ];
+        holdBandIndices.forEach(({ idx, originalDash }) => {
+            const ds = chart.data.datasets[idx];
+            if (!ds) return;
+            if (!feasible) {
+                ds.borderColor          = '#d1d5db';
+                ds.backgroundColor      = 'rgba(209,213,219,0.15)';
+                ds.borderDash           = [6, 4];
+                ds.pointBackgroundColor = '#d1d5db';
+            } else {
+                ds.borderColor          = '#d97706';
+                ds.backgroundColor      = 'rgba(217,119,6,0.10)';
+                ds.borderDash           = originalDash;
+                ds.pointBackgroundColor = '#d97706';
+            }
         });
 
         chart.update();
