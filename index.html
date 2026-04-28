@@ -982,6 +982,31 @@
                                 <span class="scenario-description">Reinvesti l'anticipo in titoli di Stato italiani al tasso fisso del 3,5% annuo, con capitalizzazione composta.</span>
                             </span>
                         </button>
+                        <div id="investmentSliderContainer" style="display:none; margin-top:12px;">
+                            <input
+                                type="range"
+                                id="investmentRateSlider"
+                                min="0.03"
+                                max="0.12"
+                                step="0.01"
+                                value="0.03"
+                                style="width:100%; cursor:pointer;"
+                            />
+                            <div style="margin-top:8px; font-size:13px; line-height:1.8;">
+                                <div>
+                                    Rendimento lordo:
+                                    <strong id="displayGrossRate">3,0%</strong>
+                                </div>
+                                <div>
+                                    Aliquota applicata:
+                                    <strong id="displayTaxRate" style="color:#10b981;">12,5%</strong>
+                                </div>
+                                <div>
+                                    Rendimento netto:
+                                    <strong id="displayNetRate">2,63%</strong>
+                                </div>
+                            </div>
+                        </div>
                         <button class="scenario-toggle-btn" id="toggleScenarioC"
                                 data-scenario="C">
                             <span class="scenario-dot" id="dotC"></span>
@@ -1158,7 +1183,7 @@
         path: 'aggregated', // 'instant' or 'aggregated'
         financingTarget: 0,   // X — desired liquidity amount (€)
         actualCashFlow: 0,    // Z — actual annual cash flow of the catalog (€)
-        chosenScenario: null, // 'A' | 'B' | 'C' — how the publisher intends to use CF0
+        activeScenarios: new Set(['A']), // multi-select scenario set; min 1 active
         nCatalogs: 1,         // number of catalogs in the aggregated package
         feePerPublisher: ORIGINATION_FEE, // origination fee for this publisher
         investmentGrossRate: INVESTMENT_RATE_MIN, // gross reinvestment rate (default 3%)
@@ -1571,8 +1596,8 @@
         const saleUpperValue = upperBand.saleCumulative[0];
         const saleLowerValue = lowerBand.saleCumulative[0];
         for (let t = 0; t <= CHART_YEARS; t++) {
-            const btpMultiplier = (s.chosenScenario === 'B')
-                ? Math.pow(1 + BTP_RATE, t)
+            const btpMultiplier = s.activeScenarios.has('B')
+                ? Math.pow(1 + r, t)
                 : 1;
             upperBand.saleCumulative[t] = saleUpperValue * btpMultiplier;
             lowerBand.saleCumulative[t] = saleLowerValue * btpMultiplier;
@@ -1602,15 +1627,15 @@
                     + (nonTokenizedPerYear + royaltiesPerYear + thirdPartyPerYear) * (t - T);
             }
 
-            // Scenario B: CF0 invested in BTP at compound rate BTP_RATE
+            // Scenario B: CF0 invested at compound net reinvestment rate r
             if (t === 0) {
                 scenarioBCumulative[t] = royaltySaleCF0;
             } else if (t <= T) {
-                scenarioBCumulative[t] = royaltySaleCF0 * Math.pow(1 + BTP_RATE, t)
+                scenarioBCumulative[t] = royaltySaleCF0 * Math.pow(1 + r, t)
                     + thirdPartyPerYear * t
                     + nonTokenizedPerYear * t;
             } else {
-                scenarioBCumulative[t] = royaltySaleCF0 * Math.pow(1 + BTP_RATE, t)
+                scenarioBCumulative[t] = royaltySaleCF0 * Math.pow(1 + r, t)
                     + thirdPartyPerYear * t
                     + nonTokenizedPerYear * T
                     + (nonTokenizedPerYear + royaltiesPerYear + thirdPartyPerYear) * (t - T);
@@ -1644,9 +1669,9 @@
             holdLowerArr[t] = holdLowerArr[t-1] + annualHoldFlow / Math.pow(1 + RISK_BAND_MAX, t);
         }
 
-        // Scenario B bands: ±2% around BTP_RATE
-        const BTP_UPPER_RATE = BTP_RATE + 0.02;  // 5.5%
-        const BTP_LOWER_RATE = Math.max(0.001, BTP_RATE - 0.02);  // 1.5%
+        // Scenario B bands: ±2% around r (net reinvestment rate)
+        const BTP_UPPER_RATE = r + 0.02;
+        const BTP_LOWER_RATE = Math.max(0.001, r - 0.02);
         const scenarioBUpper = [];
         const scenarioBLower = [];
         for (let t = 0; t <= CHART_YEARS; t++) {
@@ -1760,13 +1785,13 @@
         chart.data.datasets[10].data = r.scenarioCLower;
 
         // Scenarios: use meta.hidden (runtime source of truth in Chart.js v4)
-        chart.getDatasetMeta(4).hidden = (state.chosenScenario !== 'A');
-        chart.getDatasetMeta(5).hidden = (state.chosenScenario !== 'B');
-        chart.getDatasetMeta(6).hidden = (state.chosenScenario !== 'C');
-        chart.getDatasetMeta(7).hidden = (state.chosenScenario !== 'B');
-        chart.getDatasetMeta(8).hidden = (state.chosenScenario !== 'B');
-        chart.getDatasetMeta(9).hidden = (state.chosenScenario !== 'C');
-        chart.getDatasetMeta(10).hidden = (state.chosenScenario !== 'C');
+        chart.getDatasetMeta(4).hidden = !state.activeScenarios.has('A');
+        chart.getDatasetMeta(5).hidden = !state.activeScenarios.has('B');
+        chart.getDatasetMeta(6).hidden = !state.activeScenarios.has('C');
+        chart.getDatasetMeta(7).hidden = !state.activeScenarios.has('B');
+        chart.getDatasetMeta(8).hidden = !state.activeScenarios.has('B');
+        chart.getDatasetMeta(9).hidden = !state.activeScenarios.has('C');
+        chart.getDatasetMeta(10).hidden = !state.activeScenarios.has('C');
 
         // Ensure Vendita and Mantieni bands are always visible
         [0, 1, 2, 3].forEach(i => {
@@ -1776,6 +1801,31 @@
         chart.update();
 
         initScenarioPanel();
+
+        // Wave 4 — investment slider display sync
+        const gRate = state.investmentGrossRate;
+        const grossPct = (gRate * 100).toLocaleString('it-IT', {minimumFractionDigits:1, maximumFractionDigits:1});
+        const netPct = (state.investmentRate * 100).toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2});
+        const isBelowThreshold = gRate <= INVESTMENT_TAX_THRESHOLD;
+
+        const elGross = document.getElementById('displayGrossRate');
+        const elTax = document.getElementById('displayTaxRate');
+        const elNet = document.getElementById('displayNetRate');
+
+        if (elGross) elGross.textContent = grossPct + '%';
+        if (elTax) {
+            elTax.textContent = isBelowThreshold ? '12,5%' : '26%';
+            elTax.style.color = isBelowThreshold ? '#10b981' : '#f59e0b';
+        }
+        if (elNet) elNet.textContent = netPct + '%';
+
+        const sliderContainer = document.getElementById('investmentSliderContainer');
+        if (sliderContainer) {
+            sliderContainer.style.display = state.activeScenarios.has('B') ? 'block' : 'none';
+        }
+
+        const sliderEl = document.getElementById('investmentRateSlider');
+        if (sliderEl) sliderEl.value = state.investmentGrossRate;
     }
 
     function getDatasetIndicesByLabelFragment(fragment) {
@@ -1803,14 +1853,11 @@
     function initScenarioPanel() {
         const scenarios = ['A', 'B', 'C'];
 
-        // Sync dot visual state with current chart visibility
+        // Sync dot visual state with active scenarios set
         scenarios.forEach(s => {
-            const indices = getScenarioIndices(s);
-            if (indices.length === 0) return;
             const dot = document.getElementById('dot' + s);
             if (!dot) return;
-            const isVisible = chart.getDatasetMeta(indices[0]).hidden !== true;
-            dot.classList.toggle('active', isVisible);
+            dot.classList.toggle('active', state.activeScenarios.has(s));
         });
 
         if (_scenarioPanelWired) return;
@@ -1820,16 +1867,14 @@
             const btn = document.getElementById('toggleScenario' + s);
             if (!btn) return;
             btn.addEventListener('click', () => {
-                const indices = getScenarioIndices(s);
-                if (indices.length === 0) return;
-                const currentlyHidden = chart.getDatasetMeta(indices[0]).hidden === true;
-                const newHidden = !currentlyHidden;
-                indices.forEach(i => {
-                    chart.getDatasetMeta(i).hidden = newHidden;
-                });
-                const dot = document.getElementById('dot' + s);
-                if (dot) dot.classList.toggle('active', !newHidden);
-                chart.update();
+                if (state.activeScenarios.has(s)) {
+                    if (state.activeScenarios.size > 1) {
+                        state.activeScenarios.delete(s);
+                    }
+                } else {
+                    state.activeScenarios.add(s);
+                }
+                updateUI();
             });
         });
     }
@@ -1880,6 +1925,13 @@
     document.getElementById('timeHorizon').addEventListener('input', function(e) {
         state.timeHorizon = parseInt(e.target.value);
         document.getElementById('timeHorizonDisplay').textContent = state.timeHorizon + ' anni';
+        updateUI();
+    });
+
+    document.getElementById('investmentRateSlider').addEventListener('input', function() {
+        const grossRate = parseFloat(this.value);
+        state.investmentGrossRate = grossRate;
+        state.investmentRate = netInvestmentRate(grossRate);
         updateUI();
     });
 
@@ -1934,7 +1986,7 @@
         document.getElementById('ob-backcalc-result').style.display = 'none';
         document.getElementById('ob-confirm-btn').style.display = 'none';
         document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
-        state.chosenScenario = null;
+        state.activeScenarios = new Set();
     }
 
     function obGoBackTo(step) {
@@ -1942,7 +1994,7 @@
     }
 
     function obSelectScenario(scenario) {
-        state.chosenScenario = scenario;
+        state.activeScenarios = new Set([scenario]);
         document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
         document.getElementById('sc-' + scenario).classList.add('selected');
         const result = backCalculate(state.financingTarget, state.actualCashFlow);
