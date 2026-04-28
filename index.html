@@ -1612,6 +1612,15 @@
         const scenarioBCumulative = [];
         const scenarioCCumulative = [];
 
+        // Wave 5 — FAIR comparison arrays (cumulative perceived value per scenario)
+        const fva = (n, rate) => rate === 0 ? n : (Math.pow(1 + rate, n) - 1) / rate;
+        const fairRS_A   = new Array(CHART_YEARS + 1);
+        const fairSale_A = new Array(CHART_YEARS + 1);
+        const fairRS_B   = new Array(CHART_YEARS + 1);
+        const fairSale_B = new Array(CHART_YEARS + 1);
+        const fairRS_C   = new Array(CHART_YEARS + 1);
+        const fairHold_C = new Array(CHART_YEARS + 1);
+
         for (let t = 0; t <= CHART_YEARS; t++) {
             // Scenario A: CF0 spent; publisher keeps third-party + non-tokenized; resumes after T
             if (t === 0) {
@@ -1656,6 +1665,41 @@
                     + newCatalogTotal * T
                     + (royaltiesPerYear + thirdPartyPerYear + newCatalogTotal) * (t - T);
             }
+
+            // Wave 5 — FAIR comparison series (per scenario, all three exit paths)
+            if (t === 0) {
+                fairRS_A[0] = fairRS_B[0] = fairRS_C[0] = royaltySaleCF0;
+                fairSale_A[0] = fairSale_B[0] = saleCF0;
+                fairHold_C[0] = 0;
+            } else {
+                // Scenario A — linear, no compounding
+                fairRS_A[t] = royaltySaleCF0
+                    + duringTokenizationPerYear * Math.min(t, T)
+                    + afterTokenizationPerYear  * Math.max(0, t - T);
+                fairSale_A[t] = saleCF0;
+
+                // Scenario B — CF0 and periodic flows compounded at r
+                if (t <= T) {
+                    fairRS_B[t] = royaltySaleCF0 * Math.pow(1 + r, t)
+                        + duringTokenizationPerYear * fva(t, r);
+                } else {
+                    fairRS_B[t] = royaltySaleCF0 * Math.pow(1 + r, t)
+                        + duringTokenizationPerYear * fva(T, r) * Math.pow(1 + r, t - T)
+                        + afterTokenizationPerYear  * fva(t - T, r);
+                }
+                fairSale_B[t] = saleCF0 * Math.pow(1 + r, t);
+
+                // Scenario C — CF0 buys new catalog, linear accumulation
+                if (t <= T) {
+                    fairRS_C[t] = royaltySaleCF0
+                        + (duringTokenizationPerYear + newCatalogTotal) * t;
+                } else {
+                    fairRS_C[t] = royaltySaleCF0
+                        + (duringTokenizationPerYear + newCatalogTotal) * T
+                        + (afterTokenizationPerYear  + newCatalogTotal) * (t - T);
+                }
+                fairHold_C[t] = (royaltiesPerYear + thirdPartyPerYear) * t;
+            }
         }
 
         // Build discounted cumulative Hold series (PV of flows received year by year)
@@ -1699,6 +1743,11 @@
         const scenarioCUpper = scenarioCCumulative.map(v => v * 1.10);
         const scenarioCLower = scenarioCCumulative.map(v => v * 0.90);
 
+        // Wave 5 — central series (no risk-rate band) used by FAIR comparison
+        // holdCumulative is identical across upper/lower bands (depends on `r`, not riskRate)
+        const holdCumulativeCentral = upperBand.holdCumulative;
+        const saleCumulativeCentral = new Array(CHART_YEARS + 1).fill(saleCF0);
+
         // NPV: for lump sums at Y0, NPV = the amount itself
         const rsNPV = royaltySaleCF0;
         const saleNPV = saleCF0;
@@ -1738,6 +1787,15 @@
             scenarioBLower,
             scenarioCUpper,
             scenarioCLower,
+            fairRS_A,
+            fairSale_A,
+            fairRS_B,
+            fairSale_B,
+            fairRS_C,
+            fairHold_C,
+            holdCumulative: holdCumulativeCentral,
+            saleCumulative: saleCumulativeCentral,
+            isHoldFeasible: !s.activeScenarios.has('A'),
         };
     }
 
@@ -1773,16 +1831,20 @@
         chart.data.datasets[2].data = r.holdUpper;
         chart.data.datasets[3].data = r.holdLower;
 
-        // Scenario datasets — central lines
-        chart.data.datasets[4].data = r.scenarioACumulative;
-        chart.data.datasets[5].data = r.scenarioBCumulative;
-        chart.data.datasets[6].data = r.scenarioCCumulative;
-
-        // Scenario bands
-        chart.data.datasets[7].data = r.scenarioBUpper;
-        chart.data.datasets[8].data = r.scenarioBLower;
-        chart.data.datasets[9].data = r.scenarioCUpper;
-        chart.data.datasets[10].data = r.scenarioCLower;
+        // Wave 5 — FAIR comparison: each active scenario plots its three exit paths
+        if (state.activeScenarios.has('A')) {
+            chart.data.datasets[4].data = r.fairRS_A;
+        }
+        if (state.activeScenarios.has('B')) {
+            chart.data.datasets[5].data = r.fairRS_B;
+            chart.data.datasets[7].data = r.fairSale_B;
+            chart.data.datasets[8].data = r.holdCumulative;
+        }
+        if (state.activeScenarios.has('C')) {
+            chart.data.datasets[6].data = r.fairRS_C;
+            chart.data.datasets[9].data = r.saleCumulative;
+            chart.data.datasets[10].data = r.fairHold_C;
+        }
 
         // Scenarios: use meta.hidden (runtime source of truth in Chart.js v4)
         chart.getDatasetMeta(4).hidden = !state.activeScenarios.has('A');
