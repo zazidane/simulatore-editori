@@ -1007,6 +1007,56 @@
                                 </div>
                             </div>
                         </div>
+                        <div id="hybridControlsContainer" style="display:none; margin-top:16px;">
+
+                            <div id="expenseAmountPanel" style="display:none;">
+                                <label for="expenseAmountInput" style="font-size:13px; font-weight:600;
+                                    color:#374151; display:block; margin-bottom:6px;">
+                                    Importo destinato a spese
+                                    <span style="font-weight:400; color:#6b7280;">(€)</span>
+                                </label>
+                                <p style="font-size:12px; color:#6b7280; margin:0 0 8px 0;">
+                                    Quota dell'anticipo destinata a spese immediate. Il remainder viene
+                                    destinato allo scenario finanziario selezionato.
+                                </p>
+                                <input type="text" id="expenseAmountInput"
+                                    style="width:100%; padding:8px 12px; border:1px solid #d1d5db;
+                                        border-radius:6px; font-size:14px; box-sizing:border-box;"
+                                    placeholder="es. 50.000" />
+                                <div style="margin-top:8px;">
+                                    <input type="range" id="expenseAmountSlider"
+                                        min="0" max="100" step="1" value="50"
+                                        style="width:100%;" />
+                                    <div style="display:flex; justify-content:space-between;
+                                        font-size:11px; color:#9ca3af; margin-top:2px;">
+                                        <span>€0</span>
+                                        <span id="expenseAmountPct">50%</span>
+                                        <span id="expenseAmountMax">—</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="hybridAllocationPanel" style="display:none; margin-top:12px;">
+                                <label style="font-size:13px; font-weight:600; color:#374151;
+                                    display:block; margin-bottom:6px;">
+                                    Allocazione tra scenari B e C
+                                </label>
+                                <p style="font-size:12px; color:#6b7280; margin:0 0 8px 0;">
+                                    Quota dell'anticipo destinata all'investimento (B). Il resto va
+                                    all'acquisto del nuovo catalogo (C).
+                                </p>
+                                <input type="range" id="hybridAllocationSlider"
+                                    min="0" max="100" step="1" value="50"
+                                    style="width:100%;" />
+                                <div style="display:flex; justify-content:space-between;
+                                    font-size:11px; color:#9ca3af; margin-top:2px;">
+                                    <span>100% Catalogo (C)</span>
+                                    <span id="hybridAllocationDisplay">50% B / 50% C</span>
+                                    <span>100% Investimento (B)</span>
+                                </div>
+                            </div>
+
+                        </div>
                         <button class="scenario-toggle-btn" id="toggleScenarioC"
                                 data-scenario="C">
                             <span class="scenario-dot" id="dotC"></span>
@@ -1201,6 +1251,9 @@
         feePerPublisher: ORIGINATION_FEE, // origination fee for this publisher
         investmentGrossRate: INVESTMENT_RATE_MIN, // gross reinvestment rate (default 3%)
         investmentRate: netInvestmentRate(INVESTMENT_RATE_MIN), // derived net rate (default 0.02625)
+        hybridScenario:   null,
+        hybridAllocation: 0.5,
+        expenseAmount:    null,
     };
 
     // =========================================
@@ -1999,6 +2052,32 @@
             sliderContainer.style.display = state.activeScenarios.has('B') ? 'block' : 'none';
         }
 
+        const hs = state.hybridScenario;
+        const showHybridContainer = hs !== null;
+        document.getElementById('hybridControlsContainer').style.display =
+            showHybridContainer ? 'block' : 'none';
+
+        const showExpense = hs && hs.includes('A');
+        document.getElementById('expenseAmountPanel').style.display =
+            showExpense ? 'block' : 'none';
+
+        const showAllocation = hs === 'BC';
+        document.getElementById('hybridAllocationPanel').style.display =
+            showAllocation ? 'block' : 'none';
+
+        if (showExpense && state.expenseAmount === null) {
+            state.expenseAmount = Math.round(r.royaltySaleCF0 * 0.5);
+            document.getElementById('expenseAmountInput').value =
+                formatEuro(state.expenseAmount);
+            document.getElementById('expenseAmountSlider').value = 50;
+            document.getElementById('expenseAmountPct').textContent = '50%';
+        }
+
+        if (showExpense) {
+            document.getElementById('expenseAmountMax').textContent =
+                formatEuroShort(r.royaltySaleCF0);
+        }
+
         const sliderEl = document.getElementById('investmentRateSlider');
         if (sliderEl) sliderEl.value = state.investmentGrossRate;
     }
@@ -2049,6 +2128,12 @@
                 } else {
                     state.activeScenarios.add(s);
                 }
+                const prevHybrid = state.hybridScenario;
+                state.hybridScenario = deriveHybridScenario(state.activeScenarios);
+                if (prevHybrid && prevHybrid.includes('A') &&
+                    (!state.hybridScenario || !state.hybridScenario.includes('A'))) {
+                    state.expenseAmount = null;
+                }
                 updateUI();
             });
         });
@@ -2083,6 +2168,18 @@
         return parseFloat(cleaned) || 0;
     }
 
+    function deriveHybridScenario(activeScenarios) {
+        const hasA = activeScenarios.has('A');
+        const hasB = activeScenarios.has('B');
+        const hasC = activeScenarios.has('C');
+        const count = [hasA, hasB, hasC].filter(Boolean).length;
+        if (count !== 2) return null;
+        if (hasA && hasB) return 'AB';
+        if (hasA && hasC) return 'AC';
+        if (hasB && hasC) return 'BC';
+        return null;
+    }
+
     // =========================================
     //  EVENT HANDLERS
     // =========================================
@@ -2109,6 +2206,46 @@
         state.investmentRate = netInvestmentRate(grossRate);
         updateUI();
     });
+
+    document.getElementById('expenseAmountInput').addEventListener('input',
+        function() {
+            const parsed = parseEuroInput(this.value);
+            if (!isNaN(parsed) && parsed >= 0) {
+                state.expenseAmount = parsed;
+                const r = calculate(state);
+                const maxVal = r.royaltySaleCF0 || 1;
+                const pct = Math.min(100, Math.round((parsed / maxVal) * 100));
+                document.getElementById('expenseAmountSlider').value = pct;
+                document.getElementById('expenseAmountPct').textContent = pct + '%';
+                updateUI();
+            }
+        }
+    );
+
+    document.getElementById('expenseAmountSlider').addEventListener('input',
+        function() {
+            const r = calculate(state);
+            const maxVal = r.royaltySaleCF0 || 0;
+            const pct = parseInt(this.value);
+            state.expenseAmount = Math.round((pct / 100) * maxVal);
+            document.getElementById('expenseAmountPct').textContent = pct + '%';
+            document.getElementById('expenseAmountInput').value =
+                formatEuro(state.expenseAmount);
+            updateUI();
+        }
+    );
+
+    document.getElementById('hybridAllocationSlider').addEventListener('input',
+        function() {
+            const pct = parseInt(this.value);
+            state.hybridAllocation = pct / 100;
+            const bPct = pct;
+            const cPct = 100 - pct;
+            document.getElementById('hybridAllocationDisplay').textContent =
+                bPct + '% B / ' + cPct + '% C';
+            updateUI();
+        }
+    );
 
     function setPath(path) {
         if (path === 'instant' && document.getElementById('btnInstant').disabled) return;
