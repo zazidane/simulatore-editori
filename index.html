@@ -974,6 +974,37 @@
                                 <span class="scenario-description">Utilizza la liquidità ricevuta per coprire spese immediate, mantenendo la piena proprietà del catalogo.</span>
                             </span>
                         </button>
+                        <div id="expenseAmountContainer" style="display:none; margin-top:10px;
+                            background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px;
+                            padding:16px; box-shadow:0 4px 12px rgba(59,130,246,0.13),
+                            0 1px 3px rgba(0,0,0,0.07);">
+
+                            <label for="expenseAmountInput" style="font-size:13px; font-weight:600;
+                                color:#1e40af; display:block; margin-bottom:6px;">
+                                Importo destinato a spese
+                                <span style="font-weight:400; color:#6b7280;">(€)</span>
+                            </label>
+                            <p style="font-size:12px; color:#6b7280; margin:0 0 8px 0;">
+                                Quota dell'anticipo destinata a spese immediate. Il remainder viene
+                                destinato allo scenario finanziario selezionato.
+                            </p>
+                            <input type="text" id="expenseAmountInput"
+                                style="width:100%; padding:8px 12px; border:1px solid #bfdbfe;
+                                    border-radius:6px; font-size:14px; box-sizing:border-box;
+                                    background:#fff;"
+                                placeholder="es. 50.000" />
+                            <div style="margin-top:8px;">
+                                <input type="range" id="expenseAmountSlider"
+                                    min="0" max="100" step="1" value="50"
+                                    style="width:100%;" />
+                                <div style="display:flex; justify-content:space-between;
+                                    font-size:11px; color:#9ca3af; margin-top:2px;">
+                                    <span>€0</span>
+                                    <span id="expenseAmountPct">50%</span>
+                                    <span id="expenseAmountMax">—</span>
+                                </div>
+                            </div>
+                        </div>
                         <button class="scenario-toggle-btn" id="toggleScenarioB"
                                 data-scenario="B">
                             <span class="scenario-dot" id="dotB"></span>
@@ -1007,53 +1038,43 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="hybridControlsContainer" style="display:none; margin-top:16px;">
+                        <div id="hybridAllocationContainer" style="display:none; margin:10px 0;
+                            background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px;
+                            padding:16px; box-shadow:0 4px 12px rgba(59,130,246,0.13),
+                            0 1px 3px rgba(0,0,0,0.07);">
 
-                            <div id="expenseAmountPanel" style="display:none;">
-                                <label for="expenseAmountInput" style="font-size:13px; font-weight:600;
-                                    color:#374151; display:block; margin-bottom:6px;">
-                                    Importo destinato a spese
-                                    <span style="font-weight:400; color:#6b7280;">(€)</span>
-                                </label>
-                                <p style="font-size:12px; color:#6b7280; margin:0 0 8px 0;">
-                                    Quota dell'anticipo destinata a spese immediate. Il remainder viene
-                                    destinato allo scenario finanziario selezionato.
-                                </p>
-                                <input type="text" id="expenseAmountInput"
-                                    style="width:100%; padding:8px 12px; border:1px solid #d1d5db;
-                                        border-radius:6px; font-size:14px; box-sizing:border-box;"
-                                    placeholder="es. 50.000" />
-                                <div style="margin-top:8px;">
-                                    <input type="range" id="expenseAmountSlider"
-                                        min="0" max="100" step="1" value="50"
-                                        style="width:100%;" />
-                                    <div style="display:flex; justify-content:space-between;
-                                        font-size:11px; color:#9ca3af; margin-top:2px;">
-                                        <span>€0</span>
-                                        <span id="expenseAmountPct">50%</span>
-                                        <span id="expenseAmountMax">—</span>
+                            <p style="font-size:12px; color:#6b7280; margin:0 0 12px 0;">
+                                Quote dell'anticipo destinate ad investimento (B) e all'acquisto
+                                di un nuovo catalogo (C).
+                            </p>
+
+                            <div style="display:flex; gap:12px; margin-bottom:14px;">
+                                <div style="flex:1; background:#fff; border:1px solid #bfdbfe;
+                                    border-radius:8px; padding:10px; text-align:center;">
+                                    <div style="font-size:11px; color:#6b7280; margin-bottom:4px;">
+                                        Investimento (B)
                                     </div>
+                                    <div id="hybridBAmount" style="font-size:16px; font-weight:700;
+                                        color:#3b82f6;">—</div>
+                                </div>
+                                <div style="flex:1; background:#fff; border:1px solid #bfdbfe;
+                                    border-radius:8px; padding:10px; text-align:center;">
+                                    <div style="font-size:11px; color:#6b7280; margin-bottom:4px;">
+                                        Nuovo catalogo (C)
+                                    </div>
+                                    <div id="hybridCAmount" style="font-size:16px; font-weight:700;
+                                        color:#10b981;">—</div>
                                 </div>
                             </div>
 
-                            <div id="hybridAllocationPanel" style="display:none; margin-top:12px;">
-                                <label style="font-size:13px; font-weight:600; color:#374151;
-                                    display:block; margin-bottom:6px;">
-                                    Allocazione tra scenari B e C
-                                </label>
-                                <p style="font-size:12px; color:#6b7280; margin:0 0 8px 0;">
-                                    Quota dell'anticipo destinata all'investimento (B). Il resto va
-                                    all'acquisto del nuovo catalogo (C).
-                                </p>
-                                <input type="range" id="hybridAllocationSlider"
-                                    min="0" max="100" step="1" value="50"
-                                    style="width:100%;" />
-                                <div style="display:flex; justify-content:space-between;
-                                    font-size:11px; color:#9ca3af; margin-top:2px;">
-                                    <span>100% Catalogo (C)</span>
-                                    <span id="hybridAllocationDisplay">50% B / 50% C</span>
-                                    <span>100% Investimento (B)</span>
-                                </div>
+                            <input type="range" id="hybridAllocationSlider"
+                                min="0" max="100" step="1" value="50"
+                                style="width:100%;" />
+                            <div style="display:flex; justify-content:space-between;
+                                font-size:11px; color:#9ca3af; margin-top:4px;">
+                                <span>Investimento (B)</span>
+                                <span id="hybridAllocationDisplay">50%</span>
+                                <span>Nuovo catalogo (C)</span>
                             </div>
 
                         </div>
@@ -2053,16 +2074,13 @@
         }
 
         const hs = state.hybridScenario;
-        const showHybridContainer = hs !== null;
-        document.getElementById('hybridControlsContainer').style.display =
-            showHybridContainer ? 'block' : 'none';
 
         const showExpense = hs && hs.includes('A');
-        document.getElementById('expenseAmountPanel').style.display =
+        document.getElementById('expenseAmountContainer').style.display =
             showExpense ? 'block' : 'none';
 
         const showAllocation = hs === 'BC';
-        document.getElementById('hybridAllocationPanel').style.display =
+        document.getElementById('hybridAllocationContainer').style.display =
             showAllocation ? 'block' : 'none';
 
         if (showExpense && state.expenseAmount === null) {
@@ -2076,6 +2094,19 @@
         if (showExpense) {
             document.getElementById('expenseAmountMax').textContent =
                 formatEuroShort(r.royaltySaleCF0);
+        }
+
+        if (showAllocation) {
+            const pct = Math.round(state.hybridAllocation * 100);
+            const totalCF0 = r.royaltySaleCF0 || 0;
+            const bAmount = Math.round(state.hybridAllocation * totalCF0);
+            const cAmount = totalCF0 - bAmount;
+            document.getElementById('hybridBAmount').textContent =
+                formatEuro(bAmount);
+            document.getElementById('hybridCAmount').textContent =
+                formatEuro(cAmount);
+            document.getElementById('hybridAllocationDisplay').textContent =
+                pct + '%';
         }
 
         const sliderEl = document.getElementById('investmentRateSlider');
@@ -2239,10 +2270,15 @@
         function() {
             const pct = parseInt(this.value);
             state.hybridAllocation = pct / 100;
-            const bPct = pct;
-            const cPct = 100 - pct;
-            document.getElementById('hybridAllocationDisplay').textContent =
-                bPct + '% B / ' + cPct + '% C';
+            const r = calculate(state);
+            const totalCF0 = r.royaltySaleCF0 || 0;
+            const bAmount = Math.round(state.hybridAllocation * totalCF0);
+            const cAmount = totalCF0 - bAmount;
+            document.getElementById('hybridAllocationDisplay').textContent = pct + '%';
+            document.getElementById('hybridBAmount').textContent =
+                formatEuro(bAmount);
+            document.getElementById('hybridCAmount').textContent =
+                formatEuro(cAmount);
             updateUI();
         }
     );
