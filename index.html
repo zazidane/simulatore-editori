@@ -1297,8 +1297,8 @@
                 {
                     label: 'Vendita Catalogo',
                     data: [],
-                    borderColor: '#dc2626',
-                    backgroundColor: 'rgba(220,38,38,0.10)',
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239,68,68,0.10)',
                     fill: '+1',
                     tension: 0.3,
                     pointRadius: 0,
@@ -1308,8 +1308,8 @@
                 {
                     label: '_saleLower',
                     data: [],
-                    borderColor: '#dc2626',
-                    backgroundColor: 'rgba(220,38,38,0.10)',
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239,68,68,0.10)',
                     fill: false,
                     tension: 0.3,
                     pointRadius: 0,
@@ -1453,6 +1453,18 @@
                     pointRadius: 0,
                     borderWidth: 1,
                     borderDash: [3, 3],
+                    hidden: true,
+                },
+                // [13] Hybrid center curve (Wave 7b Patch 3)
+                {
+                    label: 'Curva ibrida',
+                    data: [],
+                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(249,115,22,0.12)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 2.5,
                     hidden: true,
                 },
             ]
@@ -2118,127 +2130,217 @@
         if (state.hybridScenario !== null) {
 
             const hs = state.hybridScenario;
+            const RBD = RISK_BAND_DELTA;
+            const interp = (a, b, pct) =>
+                a.map((v, i) => v * pct + (b[i] || 0) * (1 - pct));
+            const scale = (a, f) => a.map(v => v * f);
 
-            // Clear boundary datasets by default; each branch overwrites them
-            chart.data.datasets[3].data = [];
-            chart.data.datasets[4].data = [];
-            // Hide all band datasets
-            for (let i = 5; i < chart.data.datasets.length; i++) {
-                chart.data.datasets[i].data = [];
-            }
+            // Per-scenario inputs (pct: 1 → first ref, 0 → second ref)
+            let pct, refData1, refData2, refColor1, refColor2, refLabel1, refLabel2;
+            let hybridMain, hybridVend, hybUpper, hybLower;
 
             if (hs === 'AB') {
-
-                chart.data.datasets[0].data            = r.hybridCurrent_AB;
-                chart.data.datasets[0].label           = 'Anticipo + Investimento';
-                chart.data.datasets[0].borderColor     = '#8b5cf6';
-                chart.data.datasets[0].backgroundColor = 'rgba(139,92,246,0.07)';
-                chart.data.datasets[0].borderWidth     = 2.5;
-                chart.data.datasets[0].borderDash      = [];
-
-                chart.data.datasets[1].data            = r.hybridVendita_AB;
-                chart.data.datasets[1].label           = 'Vendita + Investimento';
-                chart.data.datasets[1].borderColor     = '#10b981';
-                chart.data.datasets[1].backgroundColor = 'rgba(16,185,129,0.07)';
-                chart.data.datasets[1].borderWidth     = 2;
-                chart.data.datasets[1].borderDash      = [];
-
-                chart.data.datasets[2].data            = r.fairHold_C;
-                chart.data.datasets[2].label           = 'Mantieni Catalogo';
-                chart.data.datasets[2].borderColor     = '#d1d5db';
-                chart.data.datasets[2].backgroundColor = 'rgba(209,213,219,0.04)';
-                chart.data.datasets[2].borderWidth     = 1.5;
-                chart.data.datasets[2].borderDash      = [6, 4];
-
-                chart.data.datasets[3].data            = r.hybridInvest_AB;
-                chart.data.datasets[3].label           = 'Limite: 100% investito';
-                chart.data.datasets[3].borderColor     = 'rgba(139,92,246,0.55)';
-                chart.data.datasets[3].borderDash      = [6, 3];
-
-                chart.data.datasets[4].data            = r.hybridSpend_AB;
-                chart.data.datasets[4].label           = 'Limite: 100% speso';
-                chart.data.datasets[4].borderColor     = 'rgba(139,92,246,0.35)';
-                chart.data.datasets[4].borderDash      = [3, 3];
-
+                pct = r.royaltySaleCF0 > 0
+                    ? Math.min(1, Math.max(0, (state.expenseAmount || 0) / r.royaltySaleCF0))
+                    : 0;
+                refData1 = r.fairRS_A; refColor1 = '#8b5cf6';
+                refLabel1 = 'Riferimento A: 100% spese';
+                refData2 = r.fairRS_B; refColor2 = '#3b82f6';
+                refLabel2 = 'Riferimento B: 100% investimento';
+                hybridMain = r.hybridCurrent_AB;
+                hybridVend = r.hybridVendita_AB;
+                hybUpper   = interp(r.rsUpper_A, r.rsUpper_B, pct);
+                hybLower   = interp(r.rsLower_A, r.rsLower_B, pct);
             } else if (hs === 'AC') {
-
-                chart.data.datasets[0].data            = r.hybridCurrent_AC;
-                chart.data.datasets[0].label           = 'Anticipo + Nuovo Catalogo';
-                chart.data.datasets[0].borderColor     = '#8b5cf6';
-                chart.data.datasets[0].backgroundColor = 'rgba(139,92,246,0.07)';
-                chart.data.datasets[0].borderWidth     = 2.5;
-                chart.data.datasets[0].borderDash      = [];
-
-                chart.data.datasets[1].data            = r.hybridVendita_AC;
-                chart.data.datasets[1].label           = 'Vendita + Nuovo Catalogo';
-                chart.data.datasets[1].borderColor     = '#10b981';
-                chart.data.datasets[1].backgroundColor = 'rgba(16,185,129,0.07)';
-                chart.data.datasets[1].borderWidth     = 2;
-                chart.data.datasets[1].borderDash      = [];
-
-                chart.data.datasets[2].data            = r.fairHold_C;
-                chart.data.datasets[2].label           = 'Mantieni Catalogo';
-                chart.data.datasets[2].borderColor     = '#d1d5db';
-                chart.data.datasets[2].backgroundColor = 'rgba(209,213,219,0.04)';
-                chart.data.datasets[2].borderWidth     = 1.5;
-                chart.data.datasets[2].borderDash      = [6, 4];
-
-                chart.data.datasets[3].data            = r.hybridFullCatalog_AC;
-                chart.data.datasets[3].label           = 'Limite: 100% catalogo';
-                chart.data.datasets[3].borderColor     = 'rgba(139,92,246,0.55)';
-                chart.data.datasets[3].borderDash      = [6, 3];
-
-                chart.data.datasets[4].data            = r.hybridSpend_AC;
-                chart.data.datasets[4].label           = 'Limite: 100% speso';
-                chart.data.datasets[4].borderColor     = 'rgba(139,92,246,0.35)';
-                chart.data.datasets[4].borderDash      = [3, 3];
-
-            } else if (hs === 'BC') {
-
-                chart.data.datasets[0].data            = r.hybridCurrent_BC;
-                chart.data.datasets[0].label           = 'Anticipo + B/C ibrido';
-                chart.data.datasets[0].borderColor     = '#8b5cf6';
-                chart.data.datasets[0].backgroundColor = 'rgba(139,92,246,0.07)';
-                chart.data.datasets[0].borderWidth     = 2.5;
-                chart.data.datasets[0].borderDash      = [];
-
-                chart.data.datasets[1].data            = r.hybridVendita_BC;
-                chart.data.datasets[1].label           = 'Vendita + B/C ibrido';
-                chart.data.datasets[1].borderColor     = '#10b981';
-                chart.data.datasets[1].backgroundColor = 'rgba(16,185,129,0.07)';
-                chart.data.datasets[1].borderWidth     = 2;
-                chart.data.datasets[1].borderDash      = [];
-
-                chart.data.datasets[2].data            = r.fairHold_C;
-                chart.data.datasets[2].label           = 'Mantieni Catalogo';
-                chart.data.datasets[2].borderColor     = '#f59e0b';
-                chart.data.datasets[2].backgroundColor = 'rgba(245,158,11,0.07)';
-                chart.data.datasets[2].borderWidth     = 2;
-                chart.data.datasets[2].borderDash      = [];
-
-                chart.data.datasets[3].data            = r.hybridInvest_BC;
-                chart.data.datasets[3].label           = 'Limite: 100% Investimento (B)';
-                chart.data.datasets[3].borderColor     = 'rgba(139,92,246,0.55)';
-                chart.data.datasets[3].borderDash      = [6, 3];
-
-                chart.data.datasets[4].data            = r.hybridCatalog_BC;
-                chart.data.datasets[4].label           = 'Limite: 100% Catalogo (C)';
-                chart.data.datasets[4].borderColor     = 'rgba(139,92,246,0.35)';
-                chart.data.datasets[4].borderDash      = [3, 3];
-
+                pct = r.royaltySaleCF0 > 0
+                    ? Math.min(1, Math.max(0, (state.expenseAmount || 0) / r.royaltySaleCF0))
+                    : 0;
+                refData1 = r.fairRS_A; refColor1 = '#8b5cf6';
+                refLabel1 = 'Riferimento A: 100% spese';
+                refData2 = r.fairRS_C; refColor2 = '#10b981';
+                refLabel2 = 'Riferimento C: 100% nuovo catalogo';
+                hybridMain = r.hybridCurrent_AC;
+                hybridVend = r.hybridVendita_AC;
+                hybUpper   = interp(r.rsUpper_A, r.rsUpper_C, pct);
+                hybLower   = interp(r.rsLower_A, r.rsLower_C, pct);
+            } else { // BC
+                pct = state.hybridAllocation;
+                refData1 = r.fairRS_B; refColor1 = '#3b82f6';
+                refLabel1 = 'Riferimento B: 100% investimento';
+                refData2 = r.fairRS_C; refColor2 = '#10b981';
+                refLabel2 = 'Riferimento C: 100% nuovo catalogo';
+                hybridMain = r.hybridCurrent_BC;
+                hybridVend = r.hybridVendita_BC;
+                hybUpper   = interp(r.rsUpper_B, r.rsUpper_C, pct);
+                hybLower   = interp(r.rsLower_B, r.rsLower_C, pct);
             }
 
+            const holdFeasible = (hs === 'BC');
+
+            // [0][1] Vendita band — red, fill +1 → -1
+            chart.data.datasets[0].data            = scale(hybridVend, 1 + RBD);
+            chart.data.datasets[0].label           = 'Vendita Catalogo';
+            chart.data.datasets[0].borderColor     = '#ef4444';
+            chart.data.datasets[0].backgroundColor = 'rgba(239,68,68,0.10)';
+            chart.data.datasets[0].borderWidth     = 2;
+            chart.data.datasets[0].borderDash      = [];
+            chart.data.datasets[0].fill            = '+1';
+
+            chart.data.datasets[1].data            = scale(hybridVend, 1 - RBD);
+            chart.data.datasets[1].label           = '_venditaLowerH';
+            chart.data.datasets[1].borderColor     = '#ef4444';
+            chart.data.datasets[1].backgroundColor = 'rgba(239,68,68,0.10)';
+            chart.data.datasets[1].borderWidth     = 1;
+            chart.data.datasets[1].borderDash      = [4, 4];
+            chart.data.datasets[1].fill            = false;
+
+            // [2][5] Hold — amber band (BC, feasible) or grey dashed line (AB/AC)
+            if (holdFeasible) {
+                chart.data.datasets[2].data            = r.holdUpper_B;
+                chart.data.datasets[2].label           = 'Mantieni Catalogo';
+                chart.data.datasets[2].borderColor     = '#f59e0b';
+                chart.data.datasets[2].backgroundColor = 'rgba(245,158,11,0.10)';
+                chart.data.datasets[2].borderWidth     = 2;
+                chart.data.datasets[2].borderDash      = [];
+                chart.data.datasets[2].fill            = '+3';
+
+                chart.data.datasets[5].data            = r.holdLower_B;
+                chart.data.datasets[5].label           = '_holdLowerH';
+                chart.data.datasets[5].borderColor     = '#f59e0b';
+                chart.data.datasets[5].backgroundColor = 'rgba(245,158,11,0.10)';
+                chart.data.datasets[5].borderWidth     = 1;
+                chart.data.datasets[5].borderDash      = [4, 4];
+                chart.data.datasets[5].fill            = false;
+            } else {
+                chart.data.datasets[2].data            = r.fairHold_C;
+                chart.data.datasets[2].label           = 'Mantieni Catalogo';
+                chart.data.datasets[2].borderColor     = '#d1d5db';
+                chart.data.datasets[2].backgroundColor = 'transparent';
+                chart.data.datasets[2].borderWidth     = 1.5;
+                chart.data.datasets[2].borderDash      = [6, 4];
+                chart.data.datasets[2].fill            = false;
+
+                chart.data.datasets[5].data = [];
+                chart.data.datasets[5].fill = false;
+            }
+
+            // [3] Reference 1 — dashed, scenario color
+            chart.data.datasets[3].data            = refData1;
+            chart.data.datasets[3].label           = refLabel1;
+            chart.data.datasets[3].borderColor     = refColor1;
+            chart.data.datasets[3].backgroundColor = 'transparent';
+            chart.data.datasets[3].borderWidth     = 1.5;
+            chart.data.datasets[3].borderDash      = [5, 3];
+            chart.data.datasets[3].fill            = false;
+
+            // [4] Reference 2 — dashed, scenario color
+            chart.data.datasets[4].data            = refData2;
+            chart.data.datasets[4].label           = refLabel2;
+            chart.data.datasets[4].borderColor     = refColor2;
+            chart.data.datasets[4].backgroundColor = 'transparent';
+            chart.data.datasets[4].borderWidth     = 1.5;
+            chart.data.datasets[4].borderDash      = [5, 3];
+            chart.data.datasets[4].fill            = false;
+
+            // [6][7][8] scenario lines hidden in hybrid mode
+            chart.data.datasets[6].data = [];
+            chart.data.datasets[7].data = [];
+            chart.data.datasets[8].data = [];
+
+            // [9][10] Hybrid main confidence band — orange fill, no border
+            chart.data.datasets[9].data            = hybUpper;
+            chart.data.datasets[9].label           = '_hybridUpper';
+            chart.data.datasets[9].borderColor     = 'rgba(249,115,22,0)';
+            chart.data.datasets[9].backgroundColor = 'rgba(249,115,22,0.12)';
+            chart.data.datasets[9].borderWidth     = 0;
+            chart.data.datasets[9].borderDash      = [];
+            chart.data.datasets[9].fill            = '+1';
+
+            chart.data.datasets[10].data            = hybLower;
+            chart.data.datasets[10].label           = '_hybridLower';
+            chart.data.datasets[10].borderColor     = 'rgba(249,115,22,0)';
+            chart.data.datasets[10].backgroundColor = 'rgba(249,115,22,0.12)';
+            chart.data.datasets[10].borderWidth     = 0;
+            chart.data.datasets[10].borderDash      = [];
+            chart.data.datasets[10].fill            = false;
+
+            // [11][12] hidden
+            chart.data.datasets[11].data = [];
+            chart.data.datasets[12].data = [];
+
+            // [13] Hybrid main center curve — orange solid
+            chart.data.datasets[13].data            = hybridMain;
+            chart.data.datasets[13].label           = 'Curva ibrida';
+            chart.data.datasets[13].borderColor     = '#f97316';
+            chart.data.datasets[13].backgroundColor = 'rgba(249,115,22,0.12)';
+            chart.data.datasets[13].borderWidth     = 2.5;
+            chart.data.datasets[13].borderDash      = [];
+            chart.data.datasets[13].fill            = false;
+
+            // Visibility
+            chart.getDatasetMeta(0).hidden = false;
+            chart.getDatasetMeta(1).hidden = false;
+            chart.getDatasetMeta(2).hidden = false;
             chart.getDatasetMeta(3).hidden = false;
             chart.getDatasetMeta(4).hidden = false;
+            chart.getDatasetMeta(5).hidden = !holdFeasible;
+            chart.getDatasetMeta(6).hidden = true;
+            chart.getDatasetMeta(7).hidden = true;
+            chart.getDatasetMeta(8).hidden = true;
+            chart.getDatasetMeta(9).hidden = false;
+            chart.getDatasetMeta(10).hidden = false;
+            chart.getDatasetMeta(11).hidden = true;
+            chart.getDatasetMeta(12).hidden = true;
+            chart.getDatasetMeta(13).hidden = false;
 
             chart.update();
 
         } else {
-            // Restore boundary datasets to empty in non-hybrid mode
+            // ─── Reset properties that hybrid mode may have changed ─────────
+            // [0] Vendita upper edge → non-hybrid defaults
+            chart.data.datasets[0].label       = 'Vendita Catalogo';
+            chart.data.datasets[0].borderColor = '#ef4444';
+            chart.data.datasets[0].backgroundColor = 'rgba(239,68,68,0.10)';
+            chart.data.datasets[0].borderWidth = 1.5;
+            chart.data.datasets[0].borderDash  = [];
+            chart.data.datasets[0].fill        = '+1';
+
+            // [1] Vendita lower edge → non-hybrid defaults
+            chart.data.datasets[1].label       = '_saleLower';
+            chart.data.datasets[1].borderColor = '#ef4444';
+            chart.data.datasets[1].backgroundColor = 'rgba(239,68,68,0.10)';
+            chart.data.datasets[1].borderWidth = 1.5;
+            chart.data.datasets[1].borderDash  = [4, 4];
+            chart.data.datasets[1].fill        = false;
+
+            // [5] Mantieni lower edge → non-hybrid defaults (color set later by feasibility logic)
+            chart.data.datasets[5].label       = '_holdLower';
+            chart.data.datasets[5].borderWidth = 1.5;
+            chart.data.datasets[5].fill        = false;
+
+            // [9] Scenario B upper band → non-hybrid defaults
+            chart.data.datasets[9].label       = '_scenarioBUpper';
+            chart.data.datasets[9].borderColor = '#3b82f6';
+            chart.data.datasets[9].backgroundColor = 'rgba(59,130,246,0.10)';
+            chart.data.datasets[9].borderWidth = 1;
+            chart.data.datasets[9].borderDash  = [];
+            chart.data.datasets[9].fill        = '+1';
+
+            // [10] Scenario B lower band → non-hybrid defaults
+            chart.data.datasets[10].label       = '_scenarioBLower';
+            chart.data.datasets[10].borderColor = '#3b82f6';
+            chart.data.datasets[10].backgroundColor = 'rgba(59,130,246,0.10)';
+            chart.data.datasets[10].borderWidth = 1;
+            chart.data.datasets[10].borderDash  = [3, 3];
+            chart.data.datasets[10].fill        = false;
+
+            // Boundary references and hybrid center hidden in non-hybrid mode
             chart.data.datasets[3].data = [];
             chart.data.datasets[4].data = [];
+            chart.data.datasets[13].data = [];
             chart.getDatasetMeta(3).hidden = true;
             chart.getDatasetMeta(4).hidden = true;
+            chart.getDatasetMeta(13).hidden = true;
 
             // Wave 6b — base Sale band reflects the "most informative" active scenario:
             // B (compounding at investment rate) > C/A (constant). Sale_A and Sale_C are equal.
