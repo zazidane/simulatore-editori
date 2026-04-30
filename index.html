@@ -978,6 +978,11 @@
                             background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px;
                             padding:16px; box-shadow:0 4px 12px rgba(59,130,246,0.13),
                             0 1px 3px rgba(0,0,0,0.07);">
+                            <div id="expenseConstraintBanner"
+                                style="display:none; background:#fef2f2; border:1px solid #fecaca;
+                                    border-radius:8px; padding:10px 12px; margin-bottom:12px;
+                                    font-size:12px; color:#991b1b; line-height:1.5;">
+                            </div>
 
                             <label for="expenseAmountInput" style="font-size:13px; font-weight:600;
                                 color:#1e40af; display:block; margin-bottom:6px;">
@@ -1317,12 +1322,38 @@
                     data: [],
                     borderColor: '#d97706',
                     backgroundColor: 'rgba(217,119,6,0.10)',
-                    fill: '+1',
+                    fill: '+3',
                     tension: 0.3,
                     pointRadius: 0,
                     borderWidth: 1.5,
                 },
-                // [3] Mantieni lower band
+                // [3] Hybrid upper boundary (Wave 7b)
+                {
+                    label: 'Limite superiore',
+                    data: [],
+                    borderColor: 'rgba(139,92,246,0.55)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 1.5,
+                    borderDash: [6, 3],
+                    pointRadius: 0,
+                    tension: 0.3,
+                    fill: false,
+                    hidden: true,
+                },
+                // [4] Hybrid lower boundary (Wave 7b)
+                {
+                    label: 'Limite inferiore',
+                    data: [],
+                    borderColor: 'rgba(139,92,246,0.35)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 1.5,
+                    borderDash: [3, 3],
+                    pointRadius: 0,
+                    tension: 0.3,
+                    fill: false,
+                    hidden: true,
+                },
+                // [5] Mantieni lower band
                 {
                     label: '_holdLower',
                     data: [],
@@ -1334,7 +1365,7 @@
                     borderWidth: 1.5,
                     borderDash: [4, 4],
                 },
-                // [4] Scenario A — single line
+                // [6] Scenario A — single line
                 {
                     label: 'Anticipo e spese',
                     data: [],
@@ -1348,7 +1379,7 @@
                     borderDash: [6, 3],
                     hidden: true,
                 },
-                // [5] Scenario B — central line
+                // [7] Scenario B — central line
                 {
                     label: 'Anticipo e BTP',
                     data: [],
@@ -1361,7 +1392,7 @@
                     borderWidth: 1.5,
                     hidden: true,
                 },
-                // [6] Scenario C — central line
+                // [8] Scenario C — central line
                 {
                     label: 'Anticipo e nuovo catalogo',
                     data: [],
@@ -1374,7 +1405,7 @@
                     borderWidth: 1.5,
                     hidden: true,
                 },
-                // [7] Scenario B — upper band
+                // [9] Scenario B — upper band
                 {
                     label: '_scenarioBUpper',
                     data: [],
@@ -1386,7 +1417,7 @@
                     borderWidth: 1,
                     hidden: true,
                 },
-                // [8] Scenario B — lower band
+                // [10] Scenario B — lower band
                 {
                     label: '_scenarioBLower',
                     data: [],
@@ -1399,7 +1430,7 @@
                     borderDash: [3, 3],
                     hidden: true,
                 },
-                // [9] Scenario C — upper band
+                // [11] Scenario C — upper band
                 {
                     label: '_scenarioCUpper',
                     data: [],
@@ -1411,7 +1442,7 @@
                     borderWidth: 1,
                     hidden: true,
                 },
-                // [10] Scenario C — lower band
+                // [12] Scenario C — lower band
                 {
                     label: '_scenarioCLower',
                     data: [],
@@ -1574,7 +1605,11 @@
         const saleCF0 = fullCashFlow / saleRate;
 
         // Future Value of Annuity: value at time n of €1/year reinvested at `rate`
-        const fva = (n, rate) => rate === 0 ? n : (Math.pow(1 + rate, n) - 1) / rate;
+        const fva = (n, rate) => {
+            if (n <= 0) return 0;
+            if (rate === 0) return n;
+            return (Math.pow(1 + rate, n) - 1) / rate;
+        };
 
         const rsCumulative = [];
         const saleCumulative = [];
@@ -1686,7 +1721,11 @@
         const scenarioCCumulative = [];
 
         // Wave 5 — FAIR comparison arrays (cumulative perceived value per scenario)
-        const fva = (n, rate) => rate === 0 ? n : (Math.pow(1 + rate, n) - 1) / rate;
+        const fva = (n, rate) => {
+            if (n <= 0) return 0;
+            if (rate === 0) return n;
+            return (Math.pow(1 + rate, n) - 1) / rate;
+        };
         const fairRS_A   = new Array(CHART_YEARS + 1);
         const fairSale_A = new Array(CHART_YEARS + 1);
         const fairRS_B   = new Array(CHART_YEARS + 1);
@@ -1896,6 +1935,114 @@
         // Implicit cost of immediate liquidity (Hold NPV vs Royalty Sale NPV)
         const liquidityCost = holdNPV - rsNPV;
 
+        // ─── STEP 10 — Hybrid scenario time-series ───────────────────────────
+        const invRate  = s.investmentRate;
+        const riskRateH = s.riskRate / 100;
+        const expAmt   = s.expenseAmount || 0;
+        const alpha    = s.hybridAllocation;
+
+        // Constraint check (AB and AC only)
+        const hybridConstraintViolated =
+            (s.hybridScenario === 'AB' || s.hybridScenario === 'AC') &&
+            expAmt > royaltySaleCF0;
+
+        // Remainders (clamped to 0 when constraint violated)
+        const rem_anticipo = Math.max(0, royaltySaleCF0 - expAmt);
+        const rem_vendita  = Math.max(0, saleCF0 - expAmt);
+
+        // BC split
+        const invPart_anticipo_BC      = alpha * royaltySaleCF0;
+        const catPart_anticipo_BC      = (1 - alpha) * royaltySaleCF0;
+        const invPart_vendita_BC       = alpha * saleCF0;
+        const catPart_vendita_BC       = (1 - alpha) * saleCF0;
+        const newCatalogFlow_anticipo_BC = catPart_anticipo_BC / ROYALTY_RATIO;
+        const newCatalogFlow_vendita_BC  = catPart_vendita_BC  / ROYALTY_RATIO;
+
+        // Initialise 12 arrays
+        const hybridInvest_AB      = new Array(CHART_YEARS + 1).fill(0);
+        const hybridCurrent_AB     = new Array(CHART_YEARS + 1).fill(0);
+        const hybridSpend_AB       = new Array(CHART_YEARS + 1).fill(0);
+        const hybridVendita_AB     = new Array(CHART_YEARS + 1).fill(0);
+        const hybridFullCatalog_AC = new Array(CHART_YEARS + 1).fill(0);
+        const hybridCurrent_AC     = new Array(CHART_YEARS + 1).fill(0);
+        const hybridSpend_AC       = new Array(CHART_YEARS + 1).fill(0);
+        const hybridVendita_AC     = new Array(CHART_YEARS + 1).fill(0);
+        const hybridInvest_BC      = new Array(CHART_YEARS + 1).fill(0);
+        const hybridCurrent_BC     = new Array(CHART_YEARS + 1).fill(0);
+        const hybridCatalog_BC     = new Array(CHART_YEARS + 1).fill(0);
+        const hybridVendita_BC     = new Array(CHART_YEARS + 1).fill(0);
+
+        for (let t = 0; t <= CHART_YEARS; t++) {
+
+            // Retained original catalog flows
+            const retainedDuring = duringTokenizationPerYear * fva(Math.min(t, T), invRate);
+            const retainedAfter  = t > T
+                ? afterTokenizationPerYear * fva(t - T, invRate)
+                : 0;
+            const retainedTotal  = retainedDuring + retainedAfter;
+
+            // ── A+B ──────────────────────────────────────────────────────────
+            // Upper boundary: 100% anticipo invested (fixed, expenseAmount=0)
+            hybridInvest_AB[t] =
+                royaltySaleCF0 * Math.pow(1 + invRate, t) + retainedTotal;
+
+            // Moving hybrid: remainder after expense invested at invRate
+            hybridCurrent_AB[t] =
+                rem_anticipo * Math.pow(1 + invRate, t) + retainedTotal;
+
+            // Lower boundary: 100% spent, nothing invested from anticipo (fixed)
+            hybridSpend_AB[t] = retainedTotal;
+
+            // Moving vendita: saleCF0 minus expense, remainder invested
+            hybridVendita_AB[t] =
+                rem_vendita * Math.pow(1 + invRate, t);
+
+            // ── A+C ──────────────────────────────────────────────────────────
+            // Upper boundary: 100% anticipo to new catalog (fixed, expenseAmount=0)
+            hybridFullCatalog_AC[t] =
+                royaltySaleCF0
+                + (royaltySaleCF0 / ROYALTY_RATIO) * fva(t, riskRateH)
+                + retainedTotal;
+
+            // Moving hybrid: rem_anticipo to new catalog + retained original flows
+            hybridCurrent_AC[t] =
+                rem_anticipo
+                + (rem_anticipo / ROYALTY_RATIO) * fva(t, riskRateH)
+                + retainedTotal;
+
+            // Lower boundary: 100% spent, nothing to catalog (fixed)
+            hybridSpend_AC[t] = retainedTotal;
+
+            // Moving vendita: rem_vendita to new catalog, no original flows
+            hybridVendita_AC[t] =
+                rem_vendita
+                + (rem_vendita / ROYALTY_RATIO) * fva(t, riskRateH);
+
+            // ── B+C ──────────────────────────────────────────────────────────
+            // Upper boundary: alpha=1, all royaltySaleCF0 to investment (fixed)
+            hybridInvest_BC[t] =
+                royaltySaleCF0 * Math.pow(1 + invRate, t) + retainedTotal;
+
+            // Moving hybrid: alpha split between investment and new catalog
+            hybridCurrent_BC[t] =
+                invPart_anticipo_BC * Math.pow(1 + invRate, t)
+                + catPart_anticipo_BC
+                + newCatalogFlow_anticipo_BC * fva(t, riskRateH)
+                + retainedTotal;
+
+            // Lower boundary: alpha=0, all to new catalog (fixed)
+            hybridCatalog_BC[t] =
+                royaltySaleCF0
+                + (royaltySaleCF0 / ROYALTY_RATIO) * fva(t, riskRateH)
+                + retainedTotal;
+
+            // Moving vendita: same alpha split with saleCF0, no original flows
+            hybridVendita_BC[t] =
+                invPart_vendita_BC * Math.pow(1 + invRate, t)
+                + catPart_vendita_BC
+                + newCatalogFlow_vendita_BC * fva(t, riskRateH);
+        }
+
         return {
             fullCatalogValue,
             effectiveValue,
@@ -1933,6 +2080,10 @@
             holdCumulative: holdCumulativeCentral,
             saleCumulative: saleCumulativeCentral,
             isHoldFeasible: !s.activeScenarios.has('A'),
+            hybridConstraintViolated,
+            hybridInvest_AB, hybridCurrent_AB, hybridSpend_AB, hybridVendita_AB,
+            hybridFullCatalog_AC, hybridCurrent_AC, hybridSpend_AC, hybridVendita_AC,
+            hybridInvest_BC, hybridCurrent_BC, hybridCatalog_BC, hybridVendita_BC,
         };
     }
 
@@ -1964,92 +2115,218 @@
         // Chart — 11 datasets: 4 base bands + 3 scenario central lines + 4 scenario bands
         chart.data.labels = r.labels;
 
-        // Wave 6b — base Sale band reflects the "most informative" active scenario:
-        // B (compounding at investment rate) > C/A (constant). Sale_A and Sale_C are equal.
-        if (state.activeScenarios.has('B')) {
-            chart.data.datasets[0].data = r.saleUpper_B;
-            chart.data.datasets[1].data = r.saleLower_B;
-        } else if (state.activeScenarios.has('C')) {
-            chart.data.datasets[0].data = r.saleUpper_C;
-            chart.data.datasets[1].data = r.saleLower_C;
-        } else {
-            chart.data.datasets[0].data = r.saleUpper_A;
-            chart.data.datasets[1].data = r.saleLower_A;
-        }
+        if (state.hybridScenario !== null) {
 
-        // Wave 6b — base Hold band: B (FVA at investment rate) > C (linear).
-        // Scenario A has no Hold band (NOT FEASIBLE) — fall back to C's linear shape
-        // for chart geometry; Wave 6 visual treatment grays it out.
-        if (state.activeScenarios.has('B')) {
-            chart.data.datasets[2].data = r.holdUpper_B;
-            chart.data.datasets[3].data = r.holdLower_B;
-        } else {
-            chart.data.datasets[2].data = r.holdUpper_C;
-            chart.data.datasets[3].data = r.holdLower_C;
-        }
+            const hs = state.hybridScenario;
 
-        // Wave 5 — FAIR comparison: each active scenario plots its three exit paths
-        if (state.activeScenarios.has('A')) {
-            chart.data.datasets[4].data = r.fairRS_A;
-        }
-        if (state.activeScenarios.has('B')) {
-            chart.data.datasets[5].data = r.fairRS_B;
-            chart.data.datasets[7].data = r.rsUpper_B;
-            chart.data.datasets[8].data = r.rsLower_B;
-        }
-        if (state.activeScenarios.has('C')) {
-            chart.data.datasets[6].data = r.fairRS_C;
-            chart.data.datasets[9].data = r.rsUpper_C;
-            chart.data.datasets[10].data = r.rsLower_C;
-        }
-
-        // Scenarios: use meta.hidden (runtime source of truth in Chart.js v4)
-        chart.getDatasetMeta(4).hidden = !state.activeScenarios.has('A');
-        chart.getDatasetMeta(5).hidden = !state.activeScenarios.has('B');
-        chart.getDatasetMeta(6).hidden = !state.activeScenarios.has('C');
-        chart.getDatasetMeta(7).hidden = !state.activeScenarios.has('B');
-        chart.getDatasetMeta(8).hidden = !state.activeScenarios.has('B');
-        chart.getDatasetMeta(9).hidden = !state.activeScenarios.has('C');
-        chart.getDatasetMeta(10).hidden = !state.activeScenarios.has('C');
-
-        // Ensure Vendita and Mantieni bands are always visible
-        [0, 1, 2, 3].forEach(i => {
-            chart.getDatasetMeta(i).hidden = false;
-        });
-
-        // Wave 6 — Hold feasibility visual treatment
-        const feasible = r.isHoldFeasible;
-
-        const holdValueEl = document.getElementById('holdMainValue');
-        const holdBadgeEl = document.getElementById('holdNotFeasibleBadge');
-        if (holdValueEl) {
-            holdValueEl.textContent = formatEuro(r.holdNPV);
-            holdValueEl.style.display = feasible ? '' : 'none';
-        }
-        if (holdBadgeEl) holdBadgeEl.style.display = feasible ? 'none' : 'block';
-
-        // Hold base band datasets ([2] upper, [3] lower) — restyle when not feasible
-        const holdBandIndices = [
-            { idx: 2, originalDash: [] },
-            { idx: 3, originalDash: [4, 4] },
-        ];
-        holdBandIndices.forEach(({ idx, originalDash }) => {
-            const ds = chart.data.datasets[idx];
-            if (!ds) return;
-            if (!feasible) {
-                ds.borderColor          = '#d1d5db';
-                ds.backgroundColor      = 'rgba(209,213,219,0.15)';
-                ds.borderDash           = [6, 4];
-                ds.pointBackgroundColor = '#d1d5db';
-            } else {
-                ds.borderColor          = '#d97706';
-                ds.backgroundColor      = 'rgba(217,119,6,0.10)';
-                ds.borderDash           = originalDash;
-                ds.pointBackgroundColor = '#d97706';
+            // Clear boundary datasets by default; each branch overwrites them
+            chart.data.datasets[3].data = [];
+            chart.data.datasets[4].data = [];
+            // Hide all band datasets
+            for (let i = 5; i < chart.data.datasets.length; i++) {
+                chart.data.datasets[i].data = [];
             }
-        });
 
-        chart.update();
+            if (hs === 'AB') {
+
+                chart.data.datasets[0].data            = r.hybridCurrent_AB;
+                chart.data.datasets[0].label           = 'Anticipo + Investimento';
+                chart.data.datasets[0].borderColor     = '#8b5cf6';
+                chart.data.datasets[0].backgroundColor = 'rgba(139,92,246,0.07)';
+                chart.data.datasets[0].borderWidth     = 2.5;
+                chart.data.datasets[0].borderDash      = [];
+
+                chart.data.datasets[1].data            = r.hybridVendita_AB;
+                chart.data.datasets[1].label           = 'Vendita + Investimento';
+                chart.data.datasets[1].borderColor     = '#10b981';
+                chart.data.datasets[1].backgroundColor = 'rgba(16,185,129,0.07)';
+                chart.data.datasets[1].borderWidth     = 2;
+                chart.data.datasets[1].borderDash      = [];
+
+                chart.data.datasets[2].data            = r.fairHold_C;
+                chart.data.datasets[2].label           = 'Mantieni Catalogo';
+                chart.data.datasets[2].borderColor     = '#d1d5db';
+                chart.data.datasets[2].backgroundColor = 'rgba(209,213,219,0.04)';
+                chart.data.datasets[2].borderWidth     = 1.5;
+                chart.data.datasets[2].borderDash      = [6, 4];
+
+                chart.data.datasets[3].data            = r.hybridInvest_AB;
+                chart.data.datasets[3].label           = 'Limite: 100% investito';
+                chart.data.datasets[3].borderColor     = 'rgba(139,92,246,0.55)';
+                chart.data.datasets[3].borderDash      = [6, 3];
+
+                chart.data.datasets[4].data            = r.hybridSpend_AB;
+                chart.data.datasets[4].label           = 'Limite: 100% speso';
+                chart.data.datasets[4].borderColor     = 'rgba(139,92,246,0.35)';
+                chart.data.datasets[4].borderDash      = [3, 3];
+
+            } else if (hs === 'AC') {
+
+                chart.data.datasets[0].data            = r.hybridCurrent_AC;
+                chart.data.datasets[0].label           = 'Anticipo + Nuovo Catalogo';
+                chart.data.datasets[0].borderColor     = '#8b5cf6';
+                chart.data.datasets[0].backgroundColor = 'rgba(139,92,246,0.07)';
+                chart.data.datasets[0].borderWidth     = 2.5;
+                chart.data.datasets[0].borderDash      = [];
+
+                chart.data.datasets[1].data            = r.hybridVendita_AC;
+                chart.data.datasets[1].label           = 'Vendita + Nuovo Catalogo';
+                chart.data.datasets[1].borderColor     = '#10b981';
+                chart.data.datasets[1].backgroundColor = 'rgba(16,185,129,0.07)';
+                chart.data.datasets[1].borderWidth     = 2;
+                chart.data.datasets[1].borderDash      = [];
+
+                chart.data.datasets[2].data            = r.fairHold_C;
+                chart.data.datasets[2].label           = 'Mantieni Catalogo';
+                chart.data.datasets[2].borderColor     = '#d1d5db';
+                chart.data.datasets[2].backgroundColor = 'rgba(209,213,219,0.04)';
+                chart.data.datasets[2].borderWidth     = 1.5;
+                chart.data.datasets[2].borderDash      = [6, 4];
+
+                chart.data.datasets[3].data            = r.hybridFullCatalog_AC;
+                chart.data.datasets[3].label           = 'Limite: 100% catalogo';
+                chart.data.datasets[3].borderColor     = 'rgba(139,92,246,0.55)';
+                chart.data.datasets[3].borderDash      = [6, 3];
+
+                chart.data.datasets[4].data            = r.hybridSpend_AC;
+                chart.data.datasets[4].label           = 'Limite: 100% speso';
+                chart.data.datasets[4].borderColor     = 'rgba(139,92,246,0.35)';
+                chart.data.datasets[4].borderDash      = [3, 3];
+
+            } else if (hs === 'BC') {
+
+                chart.data.datasets[0].data            = r.hybridCurrent_BC;
+                chart.data.datasets[0].label           = 'Anticipo + B/C ibrido';
+                chart.data.datasets[0].borderColor     = '#8b5cf6';
+                chart.data.datasets[0].backgroundColor = 'rgba(139,92,246,0.07)';
+                chart.data.datasets[0].borderWidth     = 2.5;
+                chart.data.datasets[0].borderDash      = [];
+
+                chart.data.datasets[1].data            = r.hybridVendita_BC;
+                chart.data.datasets[1].label           = 'Vendita + B/C ibrido';
+                chart.data.datasets[1].borderColor     = '#10b981';
+                chart.data.datasets[1].backgroundColor = 'rgba(16,185,129,0.07)';
+                chart.data.datasets[1].borderWidth     = 2;
+                chart.data.datasets[1].borderDash      = [];
+
+                chart.data.datasets[2].data            = r.fairHold_C;
+                chart.data.datasets[2].label           = 'Mantieni Catalogo';
+                chart.data.datasets[2].borderColor     = '#f59e0b';
+                chart.data.datasets[2].backgroundColor = 'rgba(245,158,11,0.07)';
+                chart.data.datasets[2].borderWidth     = 2;
+                chart.data.datasets[2].borderDash      = [];
+
+                chart.data.datasets[3].data            = r.hybridInvest_BC;
+                chart.data.datasets[3].label           = 'Limite: 100% Investimento (B)';
+                chart.data.datasets[3].borderColor     = 'rgba(139,92,246,0.55)';
+                chart.data.datasets[3].borderDash      = [6, 3];
+
+                chart.data.datasets[4].data            = r.hybridCatalog_BC;
+                chart.data.datasets[4].label           = 'Limite: 100% Catalogo (C)';
+                chart.data.datasets[4].borderColor     = 'rgba(139,92,246,0.35)';
+                chart.data.datasets[4].borderDash      = [3, 3];
+
+            }
+
+            chart.getDatasetMeta(3).hidden = false;
+            chart.getDatasetMeta(4).hidden = false;
+
+            chart.update();
+
+        } else {
+            // Restore boundary datasets to empty in non-hybrid mode
+            chart.data.datasets[3].data = [];
+            chart.data.datasets[4].data = [];
+            chart.getDatasetMeta(3).hidden = true;
+            chart.getDatasetMeta(4).hidden = true;
+
+            // Wave 6b — base Sale band reflects the "most informative" active scenario:
+            // B (compounding at investment rate) > C/A (constant). Sale_A and Sale_C are equal.
+            if (state.activeScenarios.has('B')) {
+                chart.data.datasets[0].data = r.saleUpper_B;
+                chart.data.datasets[1].data = r.saleLower_B;
+            } else if (state.activeScenarios.has('C')) {
+                chart.data.datasets[0].data = r.saleUpper_C;
+                chart.data.datasets[1].data = r.saleLower_C;
+            } else {
+                chart.data.datasets[0].data = r.saleUpper_A;
+                chart.data.datasets[1].data = r.saleLower_A;
+            }
+
+            // Wave 6b — base Hold band: B (FVA at investment rate) > C (linear).
+            // Scenario A has no Hold band (NOT FEASIBLE) — fall back to C's linear shape
+            // for chart geometry; Wave 6 visual treatment grays it out.
+            if (state.activeScenarios.has('B')) {
+                chart.data.datasets[2].data = r.holdUpper_B;
+                chart.data.datasets[5].data = r.holdLower_B;
+            } else {
+                chart.data.datasets[2].data = r.holdUpper_C;
+                chart.data.datasets[5].data = r.holdLower_C;
+            }
+
+            // Wave 5 — FAIR comparison: each active scenario plots its three exit paths
+            if (state.activeScenarios.has('A')) {
+                chart.data.datasets[6].data = r.fairRS_A;
+            }
+            if (state.activeScenarios.has('B')) {
+                chart.data.datasets[7].data = r.fairRS_B;
+                chart.data.datasets[9].data = r.rsUpper_B;
+                chart.data.datasets[10].data = r.rsLower_B;
+            }
+            if (state.activeScenarios.has('C')) {
+                chart.data.datasets[8].data = r.fairRS_C;
+                chart.data.datasets[11].data = r.rsUpper_C;
+                chart.data.datasets[12].data = r.rsLower_C;
+            }
+
+            // Scenarios: use meta.hidden (runtime source of truth in Chart.js v4)
+            chart.getDatasetMeta(6).hidden = !state.activeScenarios.has('A');
+            chart.getDatasetMeta(7).hidden = !state.activeScenarios.has('B');
+            chart.getDatasetMeta(8).hidden = !state.activeScenarios.has('C');
+            chart.getDatasetMeta(9).hidden = !state.activeScenarios.has('B');
+            chart.getDatasetMeta(10).hidden = !state.activeScenarios.has('B');
+            chart.getDatasetMeta(11).hidden = !state.activeScenarios.has('C');
+            chart.getDatasetMeta(12).hidden = !state.activeScenarios.has('C');
+
+            // Ensure Vendita and Mantieni bands are always visible
+            [0, 1, 2, 5].forEach(i => {
+                chart.getDatasetMeta(i).hidden = false;
+            });
+
+            // Wave 6 — Hold feasibility visual treatment
+            const feasible = r.isHoldFeasible;
+
+            const holdValueEl = document.getElementById('holdMainValue');
+            const holdBadgeEl = document.getElementById('holdNotFeasibleBadge');
+            if (holdValueEl) {
+                holdValueEl.textContent = formatEuro(r.holdNPV);
+                holdValueEl.style.display = feasible ? '' : 'none';
+            }
+            if (holdBadgeEl) holdBadgeEl.style.display = feasible ? 'none' : 'block';
+
+            // Hold base band datasets ([2] upper, [5] lower) — restyle when not feasible
+            const holdBandIndices = [
+                { idx: 2, originalDash: [] },
+                { idx: 5, originalDash: [4, 4] },
+            ];
+            holdBandIndices.forEach(({ idx, originalDash }) => {
+                const ds = chart.data.datasets[idx];
+                if (!ds) return;
+                if (!feasible) {
+                    ds.borderColor          = '#d1d5db';
+                    ds.backgroundColor      = 'rgba(209,213,219,0.15)';
+                    ds.borderDash           = [6, 4];
+                    ds.pointBackgroundColor = '#d1d5db';
+                } else {
+                    ds.borderColor          = '#d97706';
+                    ds.backgroundColor      = 'rgba(217,119,6,0.10)';
+                    ds.borderDash           = originalDash;
+                    ds.pointBackgroundColor = '#d97706';
+                }
+            });
+
+            chart.update();
+        }
 
         initScenarioPanel();
 
@@ -2096,6 +2373,18 @@
         if (showExpense) {
             document.getElementById('expenseAmountMax').textContent =
                 formatEuroShort(r.royaltySaleCF0);
+        }
+
+        // Constraint banner
+        const banner = document.getElementById('expenseConstraintBanner');
+        if (r.hybridConstraintViolated) {
+            banner.style.display = 'block';
+            banner.textContent =
+                "L'importo inserito supera il valore dell'anticipo ("
+                + formatEuro(r.royaltySaleCF0)
+                + "). Riduci l'importo o aumenta la quota del catalogo in anticipo.";
+        } else {
+            banner.style.display = 'none';
         }
 
         if (showAllocation) {
