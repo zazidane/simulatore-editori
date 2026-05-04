@@ -1170,7 +1170,7 @@
                 </div>
                 <p class="chart-note">
                   Nota 1: durante il periodo di anticipo sui ricavi, l'editore continua
-                  a percepire i flussi generati da fonti non SIAE (stimati al 10%
+                  a percepire i flussi generati da fonti non SIAE (stimati al 20%
                   dei ricavi annuali del catalogo).
                 </p>
                 <p class="chart-note">
@@ -1219,16 +1219,19 @@
     // Estimated additional revenue from non-SIAE third-party sources (20% of SIAE flows)
     // Updated from 0.10 — corrected to reflect actual market benchmark
 
-    const TAX_LOW = 0.125;
-    // Preferential tax rate applied to gross investment returns in range 3%–5%
-    // (Italian "imposta sostitutiva" on government bonds and equivalent instruments)
+    const TAX_BTP = 0.125;
+    // Preferential tax rate ("imposta sostitutiva") applied to BTP-equivalent
+    // government-bond returns. Also exposed as TAX_LOW alias for the slider's
+    // threshold-based regime.
+    const TAX_LOW = TAX_BTP;
 
-    const TAX_HIGH = 0.26;
-    // Standard tax rate applied to gross investment returns above 5%
-    // (Italian capital gains tax on financial instruments)
+    const TAX_OTHER = 0.26;
+    // Standard Italian capital-gains tax applied to non-BTP financial returns
+    // (equity, ETF, etc.). Also exposed as TAX_HIGH alias.
+    const TAX_HIGH = TAX_OTHER;
 
     const INVESTMENT_TAX_THRESHOLD = 0.05;
-    // Gross rate threshold separating TAX_LOW regime (≤ threshold) from TAX_HIGH (> threshold)
+    // Gross rate threshold separating TAX_BTP regime (≤ threshold) from TAX_OTHER (> threshold)
 
     const INVESTMENT_RATE_MIN = 0.03;
     // Minimum gross investment rate for the future investment-rate slider (3%)
@@ -1236,8 +1239,17 @@
     const INVESTMENT_RATE_MAX = 0.12;
     // Maximum gross investment rate for the future investment-rate slider (12%)
 
-    const BTP_RATE = 0.035;
-    // Annual yield of BTP Italia — used in Scenario B (reserved for future implementation)
+    // Named gross rates for the three reference instruments.
+    const GROSS_BTP_RATE = 0.035;
+    const GROSS_EQ_RATE  = 0.07;
+    const GROSS_ETF_RATE = 0.12;
+    const BTP_RATE = GROSS_BTP_RATE; // legacy alias
+
+    // Net rates derived from gross × (1 − tax). Computed from components so any
+    // change to a gross rate or tax rate propagates automatically.
+    const NET_BTP_RATE = GROSS_BTP_RATE * (1 - TAX_BTP);   // 0.030625
+    const NET_EQ_RATE  = GROSS_EQ_RATE  * (1 - TAX_OTHER); // 0.0518
+    const NET_ETF_RATE = GROSS_ETF_RATE * (1 - TAX_OTHER); // 0.0888
 
     const NEW_CATALOG_RISK_RATE = 0.10;
     // Discount rate for a newly acquired catalog — used in Scenario C (reserved for future)
@@ -1249,17 +1261,17 @@
 
     /**
      * netInvestmentRate — converts a gross investment rate to net-of-tax rate.
-     * Uses TAX_LOW (12.5%) for grossRate ≤ INVESTMENT_TAX_THRESHOLD (5%),
-     * TAX_HIGH (26%) for grossRate > INVESTMENT_TAX_THRESHOLD.
+     * Uses TAX_BTP (12.5%) for grossRate ≤ INVESTMENT_TAX_THRESHOLD (5%),
+     * TAX_OTHER (26%) for grossRate > INVESTMENT_TAX_THRESHOLD.
      * This function is a pure helper: no side effects, no DOM access.
      * @param {number} grossRate — gross annual return rate (e.g. 0.035 for 3.5%)
      * @returns {number} net annual return rate after applicable tax
      */
     function netInvestmentRate(grossRate) {
       if (grossRate <= INVESTMENT_TAX_THRESHOLD) {
-        return grossRate * (1 - TAX_LOW);
+        return grossRate * (1 - TAX_BTP);
       } else {
-        return grossRate * (1 - TAX_HIGH);
+        return grossRate * (1 - TAX_OTHER);
       }
     }
 
@@ -2368,6 +2380,19 @@
                 chart.data.datasets[2].data = r.holdUpper_C;
                 chart.data.datasets[5].data = r.holdLower_C;
             }
+
+            // Wave 8 / Item 9 — Pure C: Vendita Catalogo collapses onto Mantieni.
+            // Why: selling a catalog and immediately repurchasing one of identical
+            // risk profile and identical annual cash flow yields the same patrimonial
+            // position as holding the original. The visual overlap signals that the
+            // operation generates no additional benefit. Does NOT apply in hybrid AC,
+            // which is handled in the hybrid branch above.
+            const isPureC = state.activeScenarios.size === 1 && state.activeScenarios.has('C');
+            if (isPureC) {
+                chart.data.datasets[0].data = chart.data.datasets[2].data;
+                chart.data.datasets[1].data = chart.data.datasets[5].data;
+            }
+            chart.data.datasets[0].label = isPureC ? 'Vendita = Mantieni' : 'Vendita Catalogo';
 
             // Wave 5 — FAIR comparison: each active scenario plots its three exit paths
             if (state.activeScenarios.has('A')) {
