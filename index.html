@@ -1468,6 +1468,31 @@
                     borderWidth: 2.5,
                     hidden: true,
                 },
+                // [14] Scenario A — upper band (Wave 9.6)
+                {
+                    label: '_scenarioAUpper',
+                    data: [],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139,92,246,0.10)',
+                    fill: '+1',
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1,
+                    hidden: true,
+                },
+                // [15] Scenario A — lower band (Wave 9.6)
+                {
+                    label: '_scenarioALower',
+                    data: [],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139,92,246,0.10)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1,
+                    borderDash: [3, 3],
+                    hidden: true,
+                },
             ]
         },
         options: {
@@ -1519,6 +1544,7 @@
                             const bandPairs = {
                                 'Vendita Catalogo':          { upper: 'Vendita Catalogo',  lower: '_saleLower' },
                                 'Mantieni Catalogo':         { upper: 'Mantieni Catalogo', lower: '_holdLower' },
+                                'Anticipo e spese':          { upper: '_scenarioAUpper',   lower: '_scenarioALower' },
                                 'Anticipo e BTP':            { upper: '_scenarioBUpper',   lower: '_scenarioBLower' },
                                 'Anticipo e nuovo catalogo': { upper: '_scenarioCUpper',   lower: '_scenarioCLower' },
                             };
@@ -1732,7 +1758,8 @@
                                         1 - INV_RATE_DELTA_FACTOR);
 
         // Scenario A bands (no Hold band — NOT FEASIBLE)
-        // [DEAD CODE REMOVED — Ciclo Azimut FASE A] rsUpper_A / rsLower_A: Scenario A renders a single line via fairRS_A; bands never consumed by updateUI.
+        const rsUpper_A   = new Array(CHART_YEARS + 1);
+        const rsLower_A   = new Array(CHART_YEARS + 1);
         const saleUpper_A = new Array(CHART_YEARS + 1);
         const saleLower_A = new Array(CHART_YEARS + 1);
         // Scenario B bands (all 6)
@@ -1751,7 +1778,7 @@
         const holdLower_C  = new Array(CHART_YEARS + 1);
 
         // t = 0 initial values for every band
-        // [DEAD CODE REMOVED — Ciclo Azimut FASE A] rsUpper_A[0] / rsLower_A[0] init: arrays removed.
+        rsUpper_A[0]   = upper.cf0 - expAmt;     rsLower_A[0]   = lower.cf0 - expAmt;
         saleUpper_A[0] = upper.saleCf0 - expAmt; saleLower_A[0] = lower.saleCf0 - expAmt;
         rsUpper_B[0]   = upper.cf0;     rsLower_B[0]   = lower.cf0;
         saleUpper_B[0] = upper.saleCf0; saleLower_B[0] = lower.saleCf0;
@@ -1804,8 +1831,20 @@
                 }
                 // [DEAD CODE REMOVED — Ciclo Azimut FASE A] fairHold_C[t] assignment.
 
-                // Wave 6b — Scenario A bands (sale only — no rs band)
-                // [DEAD CODE REMOVED — Ciclo Azimut FASE A] rsUpper_A / rsLower_A loop assignments.
+                // Wave 6b / Wave 9.6 — Scenario A bands (rs linear, no new-catalog income)
+                if (t <= T) {
+                    rsUpper_A[t] = (upper.cf0 - expAmt)
+                        + duringTokenizationPerYear * upper.flowMult * t;
+                    rsLower_A[t] = (lower.cf0 - expAmt)
+                        + duringTokenizationPerYear * lower.flowMult * t;
+                } else {
+                    rsUpper_A[t] = (upper.cf0 - expAmt)
+                        + duringTokenizationPerYear * upper.flowMult * T
+                        + afterTokenizationPerYear  * upper.flowMult * (t - T);
+                    rsLower_A[t] = (lower.cf0 - expAmt)
+                        + duringTokenizationPerYear * lower.flowMult * T
+                        + afterTokenizationPerYear  * lower.flowMult * (t - T);
+                }
                 saleUpper_A[t] = upper.saleCf0 - expAmt;
                 saleLower_A[t] = lower.saleCf0 - expAmt;
 
@@ -2011,8 +2050,7 @@
             liquidityCost,
             // [DEAD CODE REMOVED — Ciclo Azimut FASE A] scenarioACumulative / scenarioBCumulative / scenarioCCumulative return keys.
             // Wave 6b — confidence bands per scenario
-            // [DEAD CODE REMOVED — Ciclo Azimut FASE A] rsUpper_A / rsLower_A return keys: Scenario A has no rs band.
-            saleUpper_A, saleLower_A,
+            rsUpper_A, rsLower_A, saleUpper_A, saleLower_A,
             rsUpper_B, rsLower_B, saleUpper_B, saleLower_B, holdUpper_B, holdLower_B,
             rsUpper_C, rsLower_C, saleUpper_C, saleLower_C, holdUpper_C, holdLower_C,
             fairRS_A,
@@ -2295,6 +2333,8 @@
             // Wave 5 — FAIR comparison: each active scenario plots its three exit paths
             if (state.activeScenarios.has('A')) {
                 chart.data.datasets[6].data = r.fairRS_A;
+                chart.data.datasets[14].data = r.rsUpper_A;
+                chart.data.datasets[15].data = r.rsLower_A;
             }
             if (state.activeScenarios.has('B')) {
                 chart.data.datasets[7].data = r.fairRS_B;
@@ -2315,6 +2355,8 @@
             chart.getDatasetMeta(10).hidden = !state.activeScenarios.has('B');
             chart.getDatasetMeta(11).hidden = !state.activeScenarios.has('C');
             chart.getDatasetMeta(12).hidden = !state.activeScenarios.has('C');
+            chart.getDatasetMeta(14).hidden = !state.activeScenarios.has('A');
+            chart.getDatasetMeta(15).hidden = !state.activeScenarios.has('A');
 
             // Ensure Vendita and Mantieni bands are always visible
             [0, 1, 2, 5].forEach(i => {
