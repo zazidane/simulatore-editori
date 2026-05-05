@@ -1503,33 +1503,33 @@
                         },
                         label: function(context) {
                             const label = context.dataset.label || '';
-                            const chart = context.chart;
-                            const dataIndex = context.dataIndex;
-                            const lower = label.toLowerCase();
+                            if (label.startsWith('_')) return null;
 
-                            const isSale = lower.includes('vendita');
-                            const isHold = lower.includes('mantieni');
-                            const isB    = lower.includes('anticipo e btp');
-                            const isC    = lower.includes('anticipo e nuovo catalogo');
+                            const datasets = context.chart.data.datasets;
+                            const dataIndex = context.dataIndex;
+                            const findValue = (lookupLabel) => {
+                                const ds = datasets.find(d => (d.label || '') === lookupLabel);
+                                if (!ds || !ds.data) return null;
+                                const v = ds.data[dataIndex];
+                                return (v === undefined || v === null || isNaN(v)) ? null : v;
+                            };
+
+                            // Explicit band pairings: visible label → { upper, lower } dataset labels.
+                            // Non-contiguous in the datasets array, so index-based pairing won't work.
+                            const bandPairs = {
+                                'Vendita Catalogo':          { upper: 'Vendita Catalogo',  lower: '_saleLower' },
+                                'Mantieni Catalogo':         { upper: 'Mantieni Catalogo', lower: '_holdLower' },
+                                'Anticipo e BTP':            { upper: '_scenarioBUpper',   lower: '_scenarioBLower' },
+                                'Anticipo e nuovo catalogo': { upper: '_scenarioCUpper',   lower: '_scenarioCLower' },
+                            };
 
                             let displayValue = context.parsed.y;
-
-                            if (isSale || isHold || isB || isC) {
-                                const groupFragment = isSale ? 'vendita' :
-                                                      isHold ? 'mantieni' :
-                                                      isB    ? 'anticipo e btp' : 'anticipo e nuovo catalogo';
-                                const groupDatasets = chart.data.datasets
-                                    .filter(ds => (ds.label || '').toLowerCase().includes(groupFragment));
-
-                                const values = groupDatasets
-                                    .map(ds => {
-                                        const data = ds.data;
-                                        return (data && data[dataIndex] !== undefined) ? data[dataIndex] : null;
-                                    })
-                                    .filter(v => v !== null && !isNaN(v));
-
-                                if (values.length > 0) {
-                                    displayValue = values.reduce((a, b) => a + b, 0) / values.length;
+                            const pair = bandPairs[label];
+                            if (pair) {
+                                const u = findValue(pair.upper);
+                                const l = findValue(pair.lower);
+                                if (u !== null && l !== null) {
+                                    displayValue = (u + l) / 2;
                                 }
                             }
 
