@@ -1689,6 +1689,7 @@
         // Step 8: derive net reinvestment rate from gross rate (refresh derived state)
         s.investmentRate = netInvestmentRate(s.investmentGrossRate);
         const r = s.investmentRate;
+        const expAmt = s.expenseAmount || 0;
 
         // Scenario A/B/C time series — use of CF0 (computed at fixed riskRate=10)
         const nonTokenizedPerYear = royaltiesPerYear * (1 - s.tokenPct / 100);
@@ -1751,7 +1752,7 @@
 
         // t = 0 initial values for every band
         // [DEAD CODE REMOVED — Ciclo Azimut FASE A] rsUpper_A[0] / rsLower_A[0] init: arrays removed.
-        saleUpper_A[0] = upper.saleCf0; saleLower_A[0] = lower.saleCf0;
+        saleUpper_A[0] = upper.saleCf0 - expAmt; saleLower_A[0] = lower.saleCf0 - expAmt;
         rsUpper_B[0]   = upper.cf0;     rsLower_B[0]   = lower.cf0;
         saleUpper_B[0] = upper.saleCf0; saleLower_B[0] = lower.saleCf0;
         holdUpper_B[0] = 0;             holdLower_B[0] = 0;
@@ -1771,7 +1772,8 @@
 
             // Wave 5 — FAIR comparison series (per scenario, all three exit paths)
             if (t === 0) {
-                fairRS_A[0] = fairRS_B[0] = fairRS_C[0] = royaltySaleCF0;
+                fairRS_A[0] = royaltySaleCF0 - expAmt;
+                fairRS_B[0] = fairRS_C[0] = royaltySaleCF0;
                 // [DEAD CODE REMOVED — Ciclo Azimut FASE A] fairSale_*/fairHold_C t=0 init.
             } else {
                 // Scenario A — linear, no compounding
@@ -1804,8 +1806,8 @@
 
                 // Wave 6b — Scenario A bands (sale only — no rs band)
                 // [DEAD CODE REMOVED — Ciclo Azimut FASE A] rsUpper_A / rsLower_A loop assignments.
-                saleUpper_A[t] = upper.saleCf0;
-                saleLower_A[t] = lower.saleCf0;
+                saleUpper_A[t] = upper.saleCf0 - expAmt;
+                saleLower_A[t] = lower.saleCf0 - expAmt;
 
                 // Wave 6b — Scenario B bands (CF0 + flows compounded at band-specific ru/rl)
                 if (t <= T) {
@@ -1823,8 +1825,8 @@
                 }
                 saleUpper_B[t] = upper.saleCf0 * Math.pow(1 + ru, t);
                 saleLower_B[t] = lower.saleCf0 * Math.pow(1 + rl, t);
-                holdUpper_B[t] = (royaltiesPerYear + thirdPartyPerYear) * upper.flowMult * fva(t, ru);
-                holdLower_B[t] = (royaltiesPerYear + thirdPartyPerYear) * lower.flowMult * fva(t, rl);
+                holdUpper_B[t] = (s.annualCashFlow + thirdPartyPerYear) * upper.flowMult * fva(t, ru);
+                holdLower_B[t] = (s.annualCashFlow + thirdPartyPerYear) * lower.flowMult * fva(t, rl);
 
                 // Wave 6b — Scenario C bands (linear, with new-catalog income)
                 if (t <= T) {
@@ -1842,15 +1844,15 @@
                 }
                 saleUpper_C[t] = upper.saleCf0;
                 saleLower_C[t] = lower.saleCf0;
-                holdUpper_C[t] = (royaltiesPerYear + thirdPartyPerYear) * upper.flowMult * t;
-                holdLower_C[t] = (royaltiesPerYear + thirdPartyPerYear) * lower.flowMult * t;
+                holdUpper_C[t] = (s.annualCashFlow + thirdPartyPerYear) * upper.flowMult * t;
+                holdLower_C[t] = (s.annualCashFlow + thirdPartyPerYear) * lower.flowMult * t;
             }
         }
 
         // Wave 5 — central series (no risk-rate band) used by FAIR comparison
         const holdCumulativeCentral = new Array(CHART_YEARS + 1);
         for (let t = 0; t <= CHART_YEARS; t++) {
-            holdCumulativeCentral[t] = (royaltiesPerYear + thirdPartyPerYear) * fva(t, r);
+            holdCumulativeCentral[t] = (s.annualCashFlow + thirdPartyPerYear) * fva(t, r);
         }
         const saleCumulativeCentral = new Array(CHART_YEARS + 1).fill(saleCF0);
 
@@ -1869,7 +1871,6 @@
         // (saleCF0 − anticipo) sits flat (undeployed); only the absolute amounts
         // matching the publisher's allocation are actively managed. Band ±5% on saleCF0.
         const invRate = s.investmentRate;
-        const expAmt  = s.expenseAmount || 0;
         const alpha   = s.hybridAllocation;
 
         const anticipo        = royaltySaleCF0;
