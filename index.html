@@ -1221,38 +1221,25 @@
 
     const TAX_BTP = 0.125;
     // Preferential tax rate ("imposta sostitutiva") applied to BTP-equivalent
-    // government-bond returns. Also exposed as TAX_LOW alias for the slider's
-    // threshold-based regime.
-    const TAX_LOW = TAX_BTP;
+    // government-bond returns.
+    // [DEAD CODE REMOVED — Ciclo Azimut FASE A] TAX_LOW: alias of TAX_BTP, never referenced after slider refactor.
 
     const TAX_OTHER = 0.26;
-    // Standard Italian capital-gains tax applied to non-BTP financial returns
-    // (equity, ETF, etc.). Also exposed as TAX_HIGH alias.
-    const TAX_HIGH = TAX_OTHER;
+    // Standard Italian capital-gains tax applied to non-BTP financial returns.
+    // [DEAD CODE REMOVED — Ciclo Azimut FASE A] TAX_HIGH: alias of TAX_OTHER, never referenced.
 
-    const INVESTMENT_TAX_THRESHOLD = 0.05;
-    // Gross rate threshold separating TAX_BTP regime (≤ threshold) from TAX_OTHER (> threshold)
+    // [FIX — Ciclo Azimut FASE B] INVESTMENT_TAX_THRESHOLD: corrected 0.05 → 0.06
+    // Rule: grossRate < 6% → 12.5% tax (agevolata); grossRate ≥ 6% → 26% (ordinaria)
+    const INVESTMENT_TAX_THRESHOLD = 0.06;
+    // Gross rate threshold separating TAX_BTP regime (< threshold) from TAX_OTHER (≥ threshold)
 
     const INVESTMENT_RATE_MIN = 0.03;
     // Minimum gross investment rate for the future investment-rate slider (3%)
 
-    const INVESTMENT_RATE_MAX = 0.12;
-    // Maximum gross investment rate for the future investment-rate slider (12%)
-
-    // Named gross rates for the three reference instruments.
-    const GROSS_BTP_RATE = 0.035;
-    const GROSS_EQ_RATE  = 0.07;
-    const GROSS_ETF_RATE = 0.12;
-    const BTP_RATE = GROSS_BTP_RATE; // legacy alias
-
-    // Net rates derived from gross × (1 − tax). Computed from components so any
-    // change to a gross rate or tax rate propagates automatically.
-    const NET_BTP_RATE = GROSS_BTP_RATE * (1 - TAX_BTP);   // 0.030625
-    const NET_EQ_RATE  = GROSS_EQ_RATE  * (1 - TAX_OTHER); // 0.0518
-    const NET_ETF_RATE = GROSS_ETF_RATE * (1 - TAX_OTHER); // 0.0888
-
-    const NEW_CATALOG_RISK_RATE = 0.10;
-    // Discount rate for a newly acquired catalog — used in Scenario C (reserved for future)
+    // [DEAD CODE REMOVED — Ciclo Azimut FASE A] INVESTMENT_RATE_MAX: declared but never referenced (slider max hardcoded in HTML).
+    // [DEAD CODE REMOVED — Ciclo Azimut FASE A] GROSS_BTP_RATE / GROSS_EQ_RATE / GROSS_ETF_RATE / BTP_RATE: instrument-specific constants from pre-slider model, never referenced.
+    // [DEAD CODE REMOVED — Ciclo Azimut FASE A] NET_BTP_RATE / NET_EQ_RATE / NET_ETF_RATE: derived net rates, never referenced.
+    // [DEAD CODE REMOVED — Ciclo Azimut FASE A] NEW_CATALOG_RISK_RATE: declared for future Scenario C use, never referenced.
 
     const RISK_BAND_DELTA       = 0.05;  // ±5% on catalog risk and periodic flows
     const RISK_RATE_LOWER       = 0.05;  // RISK_RATE_DEFAULT(0.10) − RISK_BAND_DELTA
@@ -1261,14 +1248,16 @@
 
     /**
      * netInvestmentRate — converts a gross investment rate to net-of-tax rate.
-     * Uses TAX_BTP (12.5%) for grossRate ≤ INVESTMENT_TAX_THRESHOLD (5%),
-     * TAX_OTHER (26%) for grossRate > INVESTMENT_TAX_THRESHOLD.
+     * Uses TAX_BTP (12.5%) for grossRate < INVESTMENT_TAX_THRESHOLD (6%),
+     * TAX_OTHER (26%) for grossRate ≥ INVESTMENT_TAX_THRESHOLD.
      * This function is a pure helper: no side effects, no DOM access.
      * @param {number} grossRate — gross annual return rate (e.g. 0.035 for 3.5%)
      * @returns {number} net annual return rate after applicable tax
      */
+    // [FIX — Ciclo Azimut FASE B] comparator corrected `<=` → `<` so that the 6% boundary
+    // applies the ordinaria (26%) regime per spec: grossRate ≥ 6% → 26%.
     function netInvestmentRate(grossRate) {
-      if (grossRate <= INVESTMENT_TAX_THRESHOLD) {
+      if (grossRate < INVESTMENT_TAX_THRESHOLD) {
         return grossRate * (1 - TAX_BTP);
       } else {
         return grossRate * (1 - TAX_OTHER);
@@ -1288,7 +1277,7 @@
         actualCashFlow: 0,    // Z — actual annual cash flow of the catalog (€)
         activeScenarios: new Set(['A']), // multi-select scenario set; min 1 active
         nCatalogs: 1,         // number of catalogs in the aggregated package
-        feePerPublisher: ORIGINATION_FEE, // origination fee for this publisher
+        // [DEAD CODE REMOVED — Ciclo Azimut FASE A] feePerPublisher: state property assigned in obSelectScenario but never read.
         investmentGrossRate: INVESTMENT_RATE_MIN, // gross reinvestment rate (default 3%)
         investmentRate: netInvestmentRate(INVESTMENT_RATE_MIN), // derived net rate (default 0.02625)
         hybridScenario:   null,
@@ -1619,41 +1608,7 @@
         return (1 - Math.pow(1 + r, -T)) / r;
     }
 
-    // Builds cumulative time series for all 3 scenarios at a given riskRateOverride (decimal)
-    function computeTimeSeries(royaltiesPerYear, thirdPartyPerYear, duringTokenizationPerYear, afterTokenizationPerYear, riskRateOverride, packageValue, nCatalogs, T, originationFeePerCatalog, fullCashFlow, r) {
-        const tier = TIERS.find(t => packageValue >= t.minValue);
-        const investorRate = tier.baseSpread + RISK_SENSITIVITY * riskRateOverride;
-        const investorPrice = royaltiesPerYear * annuityFactor(T, investorRate);
-        const royaltySaleCF0 = investorPrice - originationFeePerCatalog;
-        const saleRate = SALE_BASE_RATE + RISK_SENSITIVITY * riskRateOverride;
-        const saleCF0 = fullCashFlow / saleRate;
-
-        // Future Value of Annuity: value at time n of €1/year reinvested at `rate`
-        const fva = (n, rate) => {
-            if (n <= 0) return 0;
-            if (rate === 0) return n;
-            return (Math.pow(1 + rate, n) - 1) / rate;
-        };
-
-        const rsCumulative = [];
-        const saleCumulative = [];
-        const holdCumulative = [];
-
-        for (let year = 0; year <= CHART_YEARS; year++) {
-            saleCumulative.push(saleCF0);
-            holdCumulative.push((royaltiesPerYear + thirdPartyPerYear) * fva(year, r));
-            if (year <= T) {
-                rsCumulative.push(royaltySaleCF0 + duringTokenizationPerYear * fva(year, r));
-            } else {
-                const accumulatedAtT = duringTokenizationPerYear * fva(T, r);
-                const grownAccumulated = accumulatedAtT * Math.pow(1 + r, year - T);
-                const newAnnuity = afterTokenizationPerYear * fva(year - T, r);
-                rsCumulative.push(royaltySaleCF0 + grownAccumulated + newAnnuity);
-            }
-        }
-
-        return { rsCumulative, saleCumulative, holdCumulative };
-    }
+    // [DEAD CODE REMOVED — Ciclo Azimut FASE A] computeTimeSeries(): function declared but never called. Inline calculations in calculate() superseded it.
 
     function calculate(s) {
         // Step 1: Full catalog value from annual cash flow (market convention: 9×)
@@ -1740,9 +1695,7 @@
         const newCatalogSIAE = royaltySaleCF0 / ROYALTY_RATIO;
         const newCatalogTotal = newCatalogSIAE * (1 + THIRD_PARTY_RATIO);
 
-        const scenarioACumulative = [];
-        const scenarioBCumulative = [];
-        const scenarioCCumulative = [];
+        // [DEAD CODE REMOVED — Ciclo Azimut FASE A] scenarioACumulative/BCumulative/CCumulative: superseded by Wave 5 fairRS_* arrays; never consumed by updateUI.
 
         // Wave 5 — FAIR comparison arrays (cumulative perceived value per scenario)
         const fva = (n, rate) => {
@@ -1751,11 +1704,9 @@
             return (Math.pow(1 + rate, n) - 1) / rate;
         };
         const fairRS_A   = new Array(CHART_YEARS + 1);
-        const fairSale_A = new Array(CHART_YEARS + 1);
         const fairRS_B   = new Array(CHART_YEARS + 1);
-        const fairSale_B = new Array(CHART_YEARS + 1);
         const fairRS_C   = new Array(CHART_YEARS + 1);
-        const fairHold_C = new Array(CHART_YEARS + 1);
+        // [DEAD CODE REMOVED — Ciclo Azimut FASE A] fairSale_A / fairSale_B / fairHold_C: never consumed by updateUI.
 
         // Wave 6b — Confidence bands.
         // Re-run STEPS 3–5 at fixed risk rates ±RISK_BAND_DELTA to obtain band CF0/saleCF0.
@@ -1780,8 +1731,7 @@
                                         1 - INV_RATE_DELTA_FACTOR);
 
         // Scenario A bands (no Hold band — NOT FEASIBLE)
-        const rsUpper_A   = new Array(CHART_YEARS + 1);
-        const rsLower_A   = new Array(CHART_YEARS + 1);
+        // [DEAD CODE REMOVED — Ciclo Azimut FASE A] rsUpper_A / rsLower_A: Scenario A renders a single line via fairRS_A; bands never consumed by updateUI.
         const saleUpper_A = new Array(CHART_YEARS + 1);
         const saleLower_A = new Array(CHART_YEARS + 1);
         // Scenario B bands (all 6)
@@ -1800,7 +1750,7 @@
         const holdLower_C  = new Array(CHART_YEARS + 1);
 
         // t = 0 initial values for every band
-        rsUpper_A[0]   = upper.cf0;     rsLower_A[0]   = lower.cf0;
+        // [DEAD CODE REMOVED — Ciclo Azimut FASE A] rsUpper_A[0] / rsLower_A[0] init: arrays removed.
         saleUpper_A[0] = upper.saleCf0; saleLower_A[0] = lower.saleCf0;
         rsUpper_B[0]   = upper.cf0;     rsLower_B[0]   = lower.cf0;
         saleUpper_B[0] = upper.saleCf0; saleLower_B[0] = lower.saleCf0;
@@ -1817,61 +1767,18 @@
         const ncLower = (lower.cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO) * lower.flowMult;
 
         for (let t = 0; t <= CHART_YEARS; t++) {
-            // Scenario A: CF0 spent; publisher keeps third-party + non-tokenized; resumes after T
-            if (t === 0) {
-                scenarioACumulative[t] = royaltySaleCF0;
-            } else if (t <= T) {
-                scenarioACumulative[t] = royaltySaleCF0
-                    + thirdPartyPerYear * t
-                    + nonTokenizedPerYear * t;
-            } else {
-                scenarioACumulative[t] = royaltySaleCF0
-                    + thirdPartyPerYear * t
-                    + nonTokenizedPerYear * T
-                    + (nonTokenizedPerYear + royaltiesPerYear + thirdPartyPerYear) * (t - T);
-            }
-
-            // Scenario B: CF0 invested at compound net reinvestment rate r
-            if (t === 0) {
-                scenarioBCumulative[t] = royaltySaleCF0;
-            } else if (t <= T) {
-                scenarioBCumulative[t] = royaltySaleCF0 * Math.pow(1 + r, t)
-                    + thirdPartyPerYear * t
-                    + nonTokenizedPerYear * t;
-            } else {
-                scenarioBCumulative[t] = royaltySaleCF0 * Math.pow(1 + r, t)
-                    + thirdPartyPerYear * t
-                    + nonTokenizedPerYear * T
-                    + (nonTokenizedPerYear + royaltiesPerYear + thirdPartyPerYear) * (t - T);
-            }
-
-            // Scenario C: CF0 used to purchase new catalog (generates newCatalogTotal/year)
-            if (t === 0) {
-                scenarioCCumulative[t] = royaltySaleCF0;
-            } else if (t <= T) {
-                scenarioCCumulative[t] = royaltySaleCF0
-                    + thirdPartyPerYear * t
-                    + nonTokenizedPerYear * t
-                    + newCatalogTotal * t;
-            } else {
-                scenarioCCumulative[t] = royaltySaleCF0
-                    + thirdPartyPerYear * T
-                    + nonTokenizedPerYear * T
-                    + newCatalogTotal * T
-                    + (royaltiesPerYear + thirdPartyPerYear + newCatalogTotal) * (t - T);
-            }
+            // [DEAD CODE REMOVED — Ciclo Azimut FASE A] scenarioACumulative / scenarioBCumulative / scenarioCCumulative loop body: superseded by Wave 5 fairRS_* arrays.
 
             // Wave 5 — FAIR comparison series (per scenario, all three exit paths)
             if (t === 0) {
                 fairRS_A[0] = fairRS_B[0] = fairRS_C[0] = royaltySaleCF0;
-                fairSale_A[0] = fairSale_B[0] = saleCF0;
-                fairHold_C[0] = 0;
+                // [DEAD CODE REMOVED — Ciclo Azimut FASE A] fairSale_*/fairHold_C t=0 init.
             } else {
                 // Scenario A — linear, no compounding
                 fairRS_A[t] = royaltySaleCF0
                     + duringTokenizationPerYear * Math.min(t, T)
                     + afterTokenizationPerYear  * Math.max(0, t - T);
-                fairSale_A[t] = saleCF0;
+                // [DEAD CODE REMOVED — Ciclo Azimut FASE A] fairSale_A[t] assignment.
 
                 // Scenario B — CF0 and periodic flows compounded at r
                 if (t <= T) {
@@ -1882,7 +1789,7 @@
                         + duringTokenizationPerYear * fva(T, r) * Math.pow(1 + r, t - T)
                         + afterTokenizationPerYear  * fva(t - T, r);
                 }
-                fairSale_B[t] = saleCF0 * Math.pow(1 + r, t);
+                // [DEAD CODE REMOVED — Ciclo Azimut FASE A] fairSale_B[t] assignment.
 
                 // Scenario C — CF0 buys new catalog, linear accumulation
                 if (t <= T) {
@@ -1893,15 +1800,10 @@
                         + (duringTokenizationPerYear + newCatalogTotal) * T
                         + (afterTokenizationPerYear  + newCatalogTotal) * (t - T);
                 }
-                fairHold_C[t] = (royaltiesPerYear + thirdPartyPerYear) * t;
+                // [DEAD CODE REMOVED — Ciclo Azimut FASE A] fairHold_C[t] assignment.
 
-                // Wave 6b — Scenario A bands (linear, no investment-rate risk)
-                rsUpper_A[t] = upper.cf0
-                    + duringTokenizationPerYear * upper.flowMult * Math.min(t, T)
-                    + afterTokenizationPerYear  * upper.flowMult * Math.max(0, t - T);
-                rsLower_A[t] = lower.cf0
-                    + duringTokenizationPerYear * lower.flowMult * Math.min(t, T)
-                    + afterTokenizationPerYear  * lower.flowMult * Math.max(0, t - T);
+                // Wave 6b — Scenario A bands (sale only — no rs band)
+                // [DEAD CODE REMOVED — Ciclo Azimut FASE A] rsUpper_A / rsLower_A loop assignments.
                 saleUpper_A[t] = upper.saleCf0;
                 saleLower_A[t] = lower.saleCf0;
 
@@ -2095,10 +1997,9 @@
             effectivePath,
             nCatalogs,
             packageValue,
-            tier,
+            // [DEAD CODE REMOVED — Ciclo Azimut FASE A] tier / originationFeePerCatalog / T return keys: never consumed by updateUI.
             effectiveDiscount,
             investorRate,
-            originationFeePerCatalog,
             investorPrice,
             royaltySaleCF0,
             saleCF0,
@@ -2107,20 +2008,16 @@
             rsNPV,
             saleNPV,
             liquidityCost,
-            T,
-            scenarioACumulative,
-            scenarioBCumulative,
-            scenarioCCumulative,
+            // [DEAD CODE REMOVED — Ciclo Azimut FASE A] scenarioACumulative / scenarioBCumulative / scenarioCCumulative return keys.
             // Wave 6b — confidence bands per scenario
-            rsUpper_A, rsLower_A, saleUpper_A, saleLower_A,
+            // [DEAD CODE REMOVED — Ciclo Azimut FASE A] rsUpper_A / rsLower_A return keys: Scenario A has no rs band.
+            saleUpper_A, saleLower_A,
             rsUpper_B, rsLower_B, saleUpper_B, saleLower_B, holdUpper_B, holdLower_B,
             rsUpper_C, rsLower_C, saleUpper_C, saleLower_C, holdUpper_C, holdLower_C,
             fairRS_A,
-            fairSale_A,
             fairRS_B,
-            fairSale_B,
             fairRS_C,
-            fairHold_C,
+            // [DEAD CODE REMOVED — Ciclo Azimut FASE A] fairSale_A / fairSale_B / fairHold_C return keys.
             holdCumulative: holdCumulativeCentral,
             saleCumulative: saleCumulativeCentral,
             isHoldFeasible: !s.activeScenarios.has('A'),
@@ -2775,7 +2672,7 @@
         state.tokenPct = result.tokenPct;
         state.path = result.path;
         state.nCatalogs = result.nCatalogs;
-        state.feePerPublisher = result.feePerPublisher;
+        // [DEAD CODE REMOVED — Ciclo Azimut FASE A] state.feePerPublisher assignment: target property is dead.
     }
 
     function obConfirm() {
@@ -2847,7 +2744,7 @@
             tokenPct,
             path,
             nCatalogs,
-            feePerPublisher,
+            // [DEAD CODE REMOVED — Ciclo Azimut FASE A] feePerPublisher return key: caller no longer reads it.
         };
     }
 
