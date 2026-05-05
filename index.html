@@ -1790,6 +1790,15 @@
         // Investment-rate band values used by Scenario B band formulas
         const ru = upper.r;
         const rl = lower.r;
+        // Scenario B "Vendita Catalogo": only the financing target is invested at the
+        // BTP rate; the residual sale proceeds stay flat as non-invested cash.
+        // Math.min clamps invested ≤ available proceeds (financingTarget may exceed CF0).
+        const investedSaleAmountCentral = Math.min(s.financingTarget || 0, saleCF0);
+        const saleResidualCashCentral   = saleCF0 - investedSaleAmountCentral;
+        const investedSaleAmountUpper   = Math.min(s.financingTarget || 0, upper.saleCf0);
+        const saleResidualCashUpper     = upper.saleCf0 - investedSaleAmountUpper;
+        const investedSaleAmountLower   = Math.min(s.financingTarget || 0, lower.saleCf0);
+        const saleResidualCashLower     = lower.saleCf0 - investedSaleAmountLower;
         // Scenario C "new catalog" annual income, scaled by flow multiplier
         const ncUpper = (upper.cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO) * upper.flowMult;
         const ncLower = (lower.cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO) * lower.flowMult;
@@ -1862,8 +1871,8 @@
                         + duringTokenizationPerYear * lower.flowMult * fva(T, rl) * Math.pow(1 + rl, t - T)
                         + afterTokenizationPerYear  * lower.flowMult * fva(t - T, rl);
                 }
-                saleUpper_B[t] = upper.saleCf0 * Math.pow(1 + ru, t);
-                saleLower_B[t] = lower.saleCf0 * Math.pow(1 + rl, t);
+                saleUpper_B[t] = saleResidualCashUpper + investedSaleAmountUpper * Math.pow(1 + ru, t);
+                saleLower_B[t] = saleResidualCashLower + investedSaleAmountLower * Math.pow(1 + rl, t);
                 holdUpper_B[t] = (s.annualCashFlow + thirdPartyPerYear) * upper.flowMult * fva(t, ru);
                 holdLower_B[t] = (s.annualCashFlow + thirdPartyPerYear) * lower.flowMult * fva(t, rl);
 
@@ -1893,7 +1902,10 @@
         for (let t = 0; t <= CHART_YEARS; t++) {
             holdCumulativeCentral[t] = (s.annualCashFlow + thirdPartyPerYear) * fva(t, r);
         }
-        const saleCumulativeCentral = new Array(CHART_YEARS + 1).fill(saleCF0);
+        const saleCumulativeCentral = new Array(CHART_YEARS + 1);
+        for (let t = 0; t <= CHART_YEARS; t++) {
+            saleCumulativeCentral[t] = saleResidualCashCentral + investedSaleAmountCentral * Math.pow(1 + r, t);
+        }
 
         // NPV: for lump sums at Y0, NPV = the amount itself
         const rsNPV = royaltySaleCF0;
