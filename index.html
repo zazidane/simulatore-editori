@@ -1826,8 +1826,10 @@
         const investedSaleAmountLower   = Math.min(lower.cf0, saleCF0);
         const saleResidualCashLower     = Math.max(0, saleCF0 - lower.cf0);
         // Scenario C "new catalog" annual income, scaled by flow multiplier
-        const ncUpper = (upper.cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO) * upper.flowMult;
-        const ncLower = (lower.cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO) * lower.flowMult;
+        const ncFlowMultUpper = upper.flowMult * upper.flowMult;
+        const ncFlowMultLower = lower.flowMult * lower.flowMult;
+        const ncUpper = (upper.cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO) * ncFlowMultUpper;
+        const ncLower = (lower.cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO) * ncFlowMultLower;
 
         for (let t = 0; t <= CHART_YEARS; t++) {
             // [DEAD CODE REMOVED — Ciclo Azimut FASE A] scenarioACumulative / scenarioBCumulative / scenarioCCumulative loop body: superseded by Wave 5 fairRS_* arrays.
