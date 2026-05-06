@@ -1808,7 +1808,7 @@
 
         // t = 0 initial values for every band
         rsUpper_A[0]   = upper.cf0 - expAmt;     rsLower_A[0]   = lower.cf0 - expAmt;
-        saleUpper_A[0] = royaltiesPerYear / saleRateUpper_A; saleLower_A[0] = royaltiesPerYear / saleRateLower_A;
+        saleUpper_A[0] = s.annualCashFlow / saleRateUpper_A; saleLower_A[0] = s.annualCashFlow / saleRateLower_A;
         saleCumulative_A[0] = saleCF0;
         rsUpper_B[0]   = upper.cf0;     rsLower_B[0]   = lower.cf0;
         saleUpper_B[0] = saleCF0;       saleLower_B[0] = saleCF0;
@@ -1887,8 +1887,8 @@
                         + afterTokenizationPerYear  * lower.flowMult * (t - T);
                 }
                 saleCumulative_A[t] = saleCF0;
-                saleUpper_A[t] = royaltiesPerYear / saleRateUpper_A;
-                saleLower_A[t] = royaltiesPerYear / saleRateLower_A;
+                saleUpper_A[t] = s.annualCashFlow / saleRateUpper_A;
+                saleLower_A[t] = s.annualCashFlow / saleRateLower_A;
 
                 // Wave 6b — Scenario B bands (CF0 + flows compounded at band-specific ru/rl)
                 if (t <= T) {
