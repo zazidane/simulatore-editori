@@ -1498,11 +1498,11 @@
                     label: '_scenarioCsaleUpper',
                     data: [],
                     borderColor: '#ef4444',
-                    backgroundColor: 'rgba(239,68,68,0.08)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.10)',
                     fill: '+1',
                     tension: 0.3,
                     pointRadius: 0,
-                    borderWidth: 1,
+                    borderWidth: 1.5,
                     borderDash: [4, 4],
                     hidden: true,
                 },
@@ -1511,11 +1511,11 @@
                     label: '_scenarioCsaleLower',
                     data: [],
                     borderColor: '#ef4444',
-                    backgroundColor: 'rgba(239,68,68,0.08)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.10)',
                     fill: false,
                     tension: 0.3,
                     pointRadius: 0,
-                    borderWidth: 1,
+                    borderWidth: 1.5,
                     borderDash: [4, 4],
                     hidden: true,
                 },
@@ -1788,6 +1788,9 @@
         const rsLower_A   = new Array(CHART_YEARS + 1);
         const saleUpper_A = new Array(CHART_YEARS + 1);
         const saleLower_A = new Array(CHART_YEARS + 1);
+        const saleCumulative_A = new Array(CHART_YEARS + 1);
+        const saleRateUpper_A = SALE_BASE_RATE + RISK_SENSITIVITY * RISK_RATE_LOWER;
+        const saleRateLower_A = SALE_BASE_RATE + RISK_SENSITIVITY * RISK_RATE_UPPER;
         // Scenario B bands (all 6)
         const rsUpper_B    = new Array(CHART_YEARS + 1);
         const rsLower_B    = new Array(CHART_YEARS + 1);
@@ -1805,7 +1808,8 @@
 
         // t = 0 initial values for every band
         rsUpper_A[0]   = upper.cf0 - expAmt;     rsLower_A[0]   = lower.cf0 - expAmt;
-        saleUpper_A[0] = saleCF0 - expAmt; saleLower_A[0] = saleCF0 - expAmt;
+        saleUpper_A[0] = royaltiesPerYear / saleRateUpper_A; saleLower_A[0] = royaltiesPerYear / saleRateLower_A;
+        saleCumulative_A[0] = saleCF0;
         rsUpper_B[0]   = upper.cf0;     rsLower_B[0]   = lower.cf0;
         saleUpper_B[0] = saleCF0;       saleLower_B[0] = saleCF0;
         holdUpper_B[0] = 0;             holdLower_B[0] = 0;
@@ -1882,8 +1886,9 @@
                         + duringTokenizationPerYear * lower.flowMult * T
                         + afterTokenizationPerYear  * lower.flowMult * (t - T);
                 }
-                saleUpper_A[t] = saleCF0 - expAmt;
-                saleLower_A[t] = saleCF0 - expAmt;
+                saleCumulative_A[t] = saleCF0;
+                saleUpper_A[t] = royaltiesPerYear / saleRateUpper_A;
+                saleLower_A[t] = royaltiesPerYear / saleRateLower_A;
 
                 // Wave 6b — Scenario B bands (CF0 + flows compounded at band-specific ru/rl)
                 if (t <= T) {
@@ -2100,7 +2105,7 @@
             liquidityCost,
             // [DEAD CODE REMOVED — Ciclo Azimut FASE A] scenarioACumulative / scenarioBCumulative / scenarioCCumulative return keys.
             // Wave 6b — confidence bands per scenario
-            rsUpper_A, rsLower_A, saleUpper_A, saleLower_A,
+            rsUpper_A, rsLower_A, saleUpper_A, saleLower_A, saleCumulative_A,
             rsUpper_B, rsLower_B, saleUpper_B, saleLower_B, holdUpper_B, holdLower_B,
             rsUpper_C, rsLower_C, saleUpper_C, saleLower_C, holdUpper_C, holdLower_C,
             fairRS_A,
@@ -2359,8 +2364,13 @@
                 chart.data.datasets[0].data = r.saleUpper_C;
                 chart.data.datasets[1].data = r.saleLower_C;
             } else {
-                chart.data.datasets[0].data = r.saleUpper_A;
-                chart.data.datasets[1].data = r.saleLower_A;
+                chart.data.datasets[0].data        = r.saleCumulative_A;
+                chart.data.datasets[0].fill        = false;
+                chart.data.datasets[0].borderWidth = 2;
+                chart.data.datasets[0].pointRadius = 2;
+                chart.data.datasets[1].data        = [];
+                chart.data.datasets[16].data       = r.saleUpper_A;
+                chart.data.datasets[17].data       = r.saleLower_A;
             }
 
             // Wave 6b — base Hold band: B (FVA at investment rate) > C (linear).
@@ -2378,6 +2388,8 @@
             // trajectories: Vendita renders as a solid red midpoint with a
             // dashed band, Mantieni keeps its existing amber band.
             const isPureC = state.activeScenarios.size === 1 && state.activeScenarios.has('C');
+            const isPureA = !state.activeScenarios.has('B')
+                            && !state.activeScenarios.has('C');
             if (isPureC) {
                 chart.data.datasets[0].data        = r.saleCumulative_C;
                 chart.data.datasets[0].fill        = false;
@@ -2386,7 +2398,7 @@
                 chart.data.datasets[1].data        = [];
                 chart.data.datasets[16].data       = r.saleUpper_C;
                 chart.data.datasets[17].data       = r.saleLower_C;
-            } else {
+            } else if (!isPureA) {
                 chart.data.datasets[16].data = [];
                 chart.data.datasets[17].data = [];
             }
@@ -2419,8 +2431,9 @@
             chart.getDatasetMeta(12).hidden = !state.activeScenarios.has('C');
             chart.getDatasetMeta(14).hidden = !state.activeScenarios.has('A');
             chart.getDatasetMeta(15).hidden = !state.activeScenarios.has('A');
-            chart.getDatasetMeta(16).hidden = !isPureC;
-            chart.getDatasetMeta(17).hidden = !isPureC;
+            const showSaleBand = isPureC || isPureA;
+            chart.getDatasetMeta(16).hidden = !showSaleBand;
+            chart.getDatasetMeta(17).hidden = !showSaleBand;
 
             // Ensure Vendita and Mantieni bands are always visible
             [0, 1, 2, 5].forEach(i => {
