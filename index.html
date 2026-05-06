@@ -1493,6 +1493,32 @@
                     borderDash: [3, 3],
                     hidden: true,
                 },
+                // [16] Scenario C — Vendita Catalogo upper band (dashed red)
+                {
+                    label: '_scenarioCsaleUpper',
+                    data: [],
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239,68,68,0.08)',
+                    fill: '+1',
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1,
+                    borderDash: [4, 4],
+                    hidden: true,
+                },
+                // [17] Scenario C — Vendita Catalogo lower band (dashed red)
+                {
+                    label: '_scenarioCsaleLower',
+                    data: [],
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239,68,68,0.08)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1,
+                    borderDash: [4, 4],
+                    hidden: true,
+                },
             ]
         },
         options: {
@@ -1890,8 +1916,8 @@
                         + (duringTokenizationPerYear * lower.flowMult + ncLower) * T
                         + (afterTokenizationPerYear  * lower.flowMult + ncLower) * (t - T);
                 }
-                saleUpper_C[t] = saleCF0;
-                saleLower_C[t] = saleCF0;
+                saleUpper_C[t] = saleCF0 + ncUpper * t;
+                saleLower_C[t] = saleCF0 + ncLower * t;
                 holdUpper_C[t] = (s.annualCashFlow + thirdPartyPerYear) * upper.flowMult * t;
                 holdLower_C[t] = (s.annualCashFlow + thirdPartyPerYear) * lower.flowMult * t;
             }
@@ -1905,6 +1931,16 @@
         const saleCumulativeCentral = new Array(CHART_YEARS + 1);
         for (let t = 0; t <= CHART_YEARS; t++) {
             saleCumulativeCentral[t] = saleResidualCashCentral + investedSaleAmountCentral * Math.pow(1 + r, t);
+        }
+
+        // Scenario C central trajectories: linear growth from the new catalog
+        // (sale) and from the publisher's full annual flow (hold).
+        const saleCumulative_C = new Array(CHART_YEARS + 1);
+        const holdCumulative_C = new Array(CHART_YEARS + 1);
+        const newCatFlowCentral = (royaltySaleCF0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO);
+        for (let t = 0; t <= CHART_YEARS; t++) {
+            saleCumulative_C[t] = saleCF0 + newCatFlowCentral * t;
+            holdCumulative_C[t] = (s.annualCashFlow + thirdPartyPerYear) * t;
         }
 
         // NPV: for lump sums at Y0, NPV = the amount itself
@@ -2071,6 +2107,8 @@
             // [DEAD CODE REMOVED — Ciclo Azimut FASE A] fairSale_A / fairSale_B / fairHold_C return keys.
             holdCumulative: holdCumulativeCentral,
             saleCumulative: saleCumulativeCentral,
+            saleCumulative_C,
+            holdCumulative_C,
             isHoldFeasible: !s.activeScenarios.has('A'),
             hybridConstraintViolated,
             // Wave 7c hybrid arrays
@@ -2217,6 +2255,8 @@
             chart.data.datasets[10].data = [];
             chart.data.datasets[11].data = [];
             chart.data.datasets[12].data = [];
+            chart.data.datasets[16].data = [];
+            chart.data.datasets[17].data = [];
 
             // [13] Hybrid center curve — orange solid, drawn on top
             chart.data.datasets[13].data            = hybCenter;
@@ -2243,6 +2283,8 @@
             chart.getDatasetMeta(11).hidden = true;
             chart.getDatasetMeta(12).hidden = true;
             chart.getDatasetMeta(13).hidden = false;
+            chart.getDatasetMeta(16).hidden = true;
+            chart.getDatasetMeta(17).hidden = true;
 
             // Mantieni Catalogo card — keep visible; toggle NON APPLICABILE badge
             // based on whether scenario A is part of the hybrid pair.
@@ -2267,6 +2309,7 @@
             chart.data.datasets[0].borderWidth = 1.5;
             chart.data.datasets[0].borderDash  = [];
             chart.data.datasets[0].fill        = '+1';
+            chart.data.datasets[0].pointRadius = 0;
 
             // [1] Vendita lower edge → non-hybrid defaults
             chart.data.datasets[1].label       = '_saleLower';
@@ -2329,18 +2372,23 @@
                 chart.data.datasets[5].data = r.holdLower_C;
             }
 
-            // Wave 8 / Item 9 — Pure C: Vendita Catalogo collapses onto Mantieni.
-            // Why: selling a catalog and immediately repurchasing one of identical
-            // risk profile and identical annual cash flow yields the same patrimonial
-            // position as holding the original. The visual overlap signals that the
-            // operation generates no additional benefit. Does NOT apply in hybrid AC,
-            // which is handled in the hybrid branch above.
+            // Pure C — Vendita Catalogo and Mantieni Catalogo follow distinct
+            // trajectories: Vendita renders as a solid red midpoint with a
+            // dashed band, Mantieni keeps its existing amber band.
             const isPureC = state.activeScenarios.size === 1 && state.activeScenarios.has('C');
             if (isPureC) {
-                chart.data.datasets[0].data = chart.data.datasets[2].data;
-                chart.data.datasets[1].data = chart.data.datasets[5].data;
+                chart.data.datasets[0].data        = r.saleCumulative_C;
+                chart.data.datasets[0].fill        = false;
+                chart.data.datasets[0].borderWidth = 2;
+                chart.data.datasets[0].pointRadius = 2;
+                chart.data.datasets[1].data        = [];
+                chart.data.datasets[16].data       = r.saleUpper_C;
+                chart.data.datasets[17].data       = r.saleLower_C;
+            } else {
+                chart.data.datasets[16].data = [];
+                chart.data.datasets[17].data = [];
             }
-            chart.data.datasets[0].label = isPureC ? 'Vendita = Mantieni' : 'Vendita Catalogo';
+            chart.data.datasets[0].label = 'Vendita Catalogo';
 
             // Wave 5 — FAIR comparison: each active scenario plots its three exit paths
             if (state.activeScenarios.has('A')) {
@@ -2369,6 +2417,8 @@
             chart.getDatasetMeta(12).hidden = !state.activeScenarios.has('C');
             chart.getDatasetMeta(14).hidden = !state.activeScenarios.has('A');
             chart.getDatasetMeta(15).hidden = !state.activeScenarios.has('A');
+            chart.getDatasetMeta(16).hidden = !isPureC;
+            chart.getDatasetMeta(17).hidden = !isPureC;
 
             // Ensure Vendita and Mantieni bands are always visible
             [0, 1, 2, 5].forEach(i => {
