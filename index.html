@@ -1779,26 +1779,26 @@
 
         // t = 0 initial values for every band
         rsUpper_A[0]   = upper.cf0 - expAmt;     rsLower_A[0]   = lower.cf0 - expAmt;
-        saleUpper_A[0] = upper.saleCf0 - expAmt; saleLower_A[0] = lower.saleCf0 - expAmt;
+        saleUpper_A[0] = saleCF0 - expAmt; saleLower_A[0] = saleCF0 - expAmt;
         rsUpper_B[0]   = upper.cf0;     rsLower_B[0]   = lower.cf0;
-        saleUpper_B[0] = upper.saleCf0; saleLower_B[0] = lower.saleCf0;
+        saleUpper_B[0] = saleCF0;       saleLower_B[0] = saleCF0;
         holdUpper_B[0] = 0;             holdLower_B[0] = 0;
         rsUpper_C[0]   = upper.cf0;     rsLower_C[0]   = lower.cf0;
-        saleUpper_C[0] = upper.saleCf0; saleLower_C[0] = lower.saleCf0;
+        saleUpper_C[0] = saleCF0;       saleLower_C[0] = saleCF0;
         holdUpper_C[0] = 0;             holdLower_C[0] = 0;
 
         // Investment-rate band values used by Scenario B band formulas
         const ru = upper.r;
         const rl = lower.r;
-        // Scenario B "Vendita Catalogo": only the financing target is invested at the
+        // Scenario B "Vendita Catalogo": the actual advance CF0 is invested at the
         // BTP rate; the residual sale proceeds stay flat as non-invested cash.
-        // Math.min clamps invested ≤ available proceeds (financingTarget may exceed CF0).
-        const investedSaleAmountCentral = Math.min(s.financingTarget || 0, saleCF0);
-        const saleResidualCashCentral   = saleCF0 - investedSaleAmountCentral;
-        const investedSaleAmountUpper   = Math.min(s.financingTarget || 0, upper.saleCf0);
-        const saleResidualCashUpper     = upper.saleCf0 - investedSaleAmountUpper;
-        const investedSaleAmountLower   = Math.min(s.financingTarget || 0, lower.saleCf0);
-        const saleResidualCashLower     = lower.saleCf0 - investedSaleAmountLower;
+        // Math.min/Math.max clamp invested ≤ saleCF0 so total at t=0 always equals saleCF0.
+        const investedSaleAmountCentral = Math.min(royaltySaleCF0, saleCF0);
+        const saleResidualCashCentral   = Math.max(0, saleCF0 - royaltySaleCF0);
+        const investedSaleAmountUpper   = Math.min(upper.cf0, saleCF0);
+        const saleResidualCashUpper     = Math.max(0, saleCF0 - upper.cf0);
+        const investedSaleAmountLower   = Math.min(lower.cf0, saleCF0);
+        const saleResidualCashLower     = Math.max(0, saleCF0 - lower.cf0);
         // Scenario C "new catalog" annual income, scaled by flow multiplier
         const ncUpper = (upper.cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO) * upper.flowMult;
         const ncLower = (lower.cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO) * lower.flowMult;
@@ -1854,8 +1854,8 @@
                         + duringTokenizationPerYear * lower.flowMult * T
                         + afterTokenizationPerYear  * lower.flowMult * (t - T);
                 }
-                saleUpper_A[t] = upper.saleCf0 - expAmt;
-                saleLower_A[t] = lower.saleCf0 - expAmt;
+                saleUpper_A[t] = saleCF0 - expAmt;
+                saleLower_A[t] = saleCF0 - expAmt;
 
                 // Wave 6b — Scenario B bands (CF0 + flows compounded at band-specific ru/rl)
                 if (t <= T) {
@@ -1890,8 +1890,8 @@
                         + (duringTokenizationPerYear * lower.flowMult + ncLower) * T
                         + (afterTokenizationPerYear  * lower.flowMult + ncLower) * (t - T);
                 }
-                saleUpper_C[t] = upper.saleCf0;
-                saleLower_C[t] = lower.saleCf0;
+                saleUpper_C[t] = saleCF0;
+                saleLower_C[t] = saleCF0;
                 holdUpper_C[t] = (s.annualCashFlow + thirdPartyPerYear) * upper.flowMult * t;
                 holdLower_C[t] = (s.annualCashFlow + thirdPartyPerYear) * lower.flowMult * t;
             }
