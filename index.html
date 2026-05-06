@@ -2360,9 +2360,11 @@
             if (state.activeScenarios.has('B')) {
                 chart.data.datasets[0].data = r.saleUpper_B;
                 chart.data.datasets[1].data = r.saleLower_B;
+                chart.data.datasets[0].borderDash = [4, 4];
             } else if (state.activeScenarios.has('C')) {
                 chart.data.datasets[0].data = r.saleUpper_C;
                 chart.data.datasets[1].data = r.saleLower_C;
+                chart.data.datasets[0].borderDash = [4, 4];
             } else {
                 chart.data.datasets[0].data        = r.saleCumulative_A;
                 chart.data.datasets[0].fill        = false;
