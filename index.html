@@ -2049,11 +2049,12 @@
         const arr = () => new Array(N).fill(0);
 
         // AB
-        const hybCenter_AB    = arr();
-        const hybExtremeA_AB  = arr();   // 100% spent  → lower
-        const hybExtremeB_AB  = arr();   // 100% invest → upper
-        const venditaUpper_AB = arr();
-        const venditaLower_AB = arr();
+        const hybCenter_AB     = arr();
+        const hybExtremeA_AB   = arr();   // 100% spent  → Scenario A pure
+        const hybExtremeB_AB   = arr();   // 100% invest → Scenario B pure
+        const venditaUpper_AB  = arr();   // FIXED — 100% invest extreme
+        const venditaLower_AB  = arr();   // FIXED — 100% expense extreme
+        const venditaCenter_AB = arr();   // moves with allocation
 
         // AC
         const hybCenter_AC    = arr();
@@ -2083,9 +2084,13 @@
             hybExtremeB_AB[t] = abAccum(anticipo, t);
             hybCenter_AB[t]   = abAccum(investimentoB_AB, t);
 
-            const ventActiveAB = investimentoB_AB * Math.pow(1 + invRate, t);
-            venditaUpper_AB[t] = undeployed_high + ventActiveAB;
-            venditaLower_AB[t] = undeployed_low  + ventActiveAB;
+            // Vendita Catalogo: bounds FIXED at allocation extremes; central
+            // moves with the slider. expAmt=0 → central = upper (full BTP);
+            // expAmt=anticipo → central = lower (flat residual).
+            const undeployedAB = saleCF0 - anticipo;
+            venditaUpper_AB[t]  = undeployedAB + anticipo         * Math.pow(1 + invRate, t);
+            venditaLower_AB[t]  = undeployedAB;
+            venditaCenter_AB[t] = undeployedAB + investimentoB_AB * Math.pow(1 + invRate, t);
 
             // ── A+C ──────────────────────────────────────────────────────────
             hybExtremeA_AC[t] = linearOriginal;
@@ -2157,7 +2162,8 @@
             isHoldFeasible: !s.activeScenarios.has('A'),
             hybridConstraintViolated,
             // Wave 7c hybrid arrays
-            hybCenter_AB, hybExtremeA_AB, hybExtremeB_AB, venditaUpper_AB, venditaLower_AB,
+            hybCenter_AB, hybExtremeA_AB, hybExtremeB_AB,
+            venditaUpper_AB, venditaLower_AB, venditaCenter_AB,
             hybCenter_AC, hybExtremeA_AC, hybExtremeC_AC, venditaUpper_AC, venditaLower_AC,
             hybCenter_BC, hybExtremeB_BC, hybExtremeC_BC, venditaUpper_BC, venditaLower_BC,
             holdUpper_BC, holdLower_BC,
@@ -2168,6 +2174,23 @@
     //  UI UPDATE
     // =========================================
     function updateUI() {
+        // Pre-default expenseAmount to the 50/50 split BEFORE the chart's
+        // first calculate() call so the AB central curve renders between
+        // the two extremes on initial load (without requiring a slider
+        // interaction). Without this, expAmt=0 → investimentoB=anticipo →
+        // central collapses onto the 100%-invest extreme.
+        if (state.hybridScenario && state.hybridScenario.includes('A') &&
+            state.expenseAmount === null) {
+            const pre = calculate(state);
+            state.expenseAmount = Math.round(pre.royaltySaleCF0 * 0.5);
+            const inputEl  = document.getElementById('expenseAmountInput');
+            const sliderEl = document.getElementById('expenseAmountSlider');
+            const pctEl    = document.getElementById('expenseAmountPct');
+            if (inputEl)  inputEl.value      = formatEuro(state.expenseAmount);
+            if (sliderEl) sliderEl.value     = 50;
+            if (pctEl)    pctEl.textContent  = '50%';
+        }
+
         const r = calculate(state);
 
         // Warning banner
@@ -2194,37 +2217,181 @@
 
         if (state.hybridScenario !== null) {
 
-            // Wave 7c — hybrid mode: red Vendita band (±5% on saleCF0),
-            // orange hybrid extremes band (fixed pure-scenario borders),
-            // orange center curve (moves with slider). BC also shows an amber
-            // Hold band; AB/AC suppress the Hold curve entirely (Mantieni card
-            // keeps the NON APPLICABILE badge).
+            // Wave 7c — hybrid mode.
+            // AB has a dedicated three-curve representation (A purple,
+            // B blue, AB center orange) with FIXED Vendita bounds, a
+            // movable Vendita central, and a grey Hold reference envelope.
+            // AC/BC keep the original orange-band representation.
             const hs = state.hybridScenario;
 
-            let venditaUpper, venditaLower;
-            let hybExtremeUpper, hybExtremeLower, hybCenter;
-
             if (hs === 'AB') {
-                venditaUpper    = r.venditaUpper_AB;
-                venditaLower    = r.venditaLower_AB;
-                hybExtremeUpper = r.hybExtremeB_AB;   // 100% invest
-                hybExtremeLower = r.hybExtremeA_AB;   // 100% spend
-                hybCenter       = r.hybCenter_AB;
-            } else if (hs === 'AC') {
-                venditaUpper    = r.venditaUpper_AC;
-                venditaLower    = r.venditaLower_AC;
-                hybExtremeUpper = r.hybExtremeC_AC;   // 100% new catalog
-                hybExtremeLower = r.hybExtremeA_AC;   // 100% spend
-                hybCenter       = r.hybCenter_AC;
-            } else { // BC
-                venditaUpper    = r.venditaUpper_BC;
-                venditaLower    = r.venditaLower_BC;
-                hybExtremeUpper = r.hybExtremeB_BC;   // α = 1
-                hybExtremeLower = r.hybExtremeC_BC;   // α = 0
-                hybCenter       = r.hybCenter_BC;
-            }
+                // ─── AB — three explicit curves + grey Hold envelope ────────
 
-            const holdFeasible = (hs === 'BC');
+                // [0] Vendita Catalogo central — solid red, year dots, moves
+                //     with the allocation slider.
+                chart.data.datasets[0].data             = r.venditaCenter_AB;
+                chart.data.datasets[0].label            = 'Vendita Catalogo';
+                chart.data.datasets[0].borderColor      = '#ef4444';
+                chart.data.datasets[0].backgroundColor  = 'rgba(239,68,68,0.10)';
+                chart.data.datasets[0].borderWidth      = 2;
+                chart.data.datasets[0].borderDash       = [];
+                chart.data.datasets[0].pointRadius      = 2;
+                chart.data.datasets[0].pointHoverRadius = 4;
+                chart.data.datasets[0].fill             = false;
+                chart.data.datasets[0].tension          = 0;
+
+                // [1] unused
+                chart.data.datasets[1].data = [];
+                chart.data.datasets[1].fill = false;
+
+                // [2][5] Mantieni central — unused; the grey envelope is
+                //         drawn through [18][19] instead.
+                chart.data.datasets[2].data = [];
+                chart.data.datasets[2].fill = false;
+                chart.data.datasets[5].data = [];
+                chart.data.datasets[5].fill = false;
+
+                // [3] Scenario A line — solid purple ("Spese personali o
+                //     aziendali"), 100%-expense extreme of the AB hybrid.
+                chart.data.datasets[3].data             = r.hybExtremeA_AB;
+                chart.data.datasets[3].label            = 'Anticipo e spese';
+                chart.data.datasets[3].borderColor      = '#8b5cf6';
+                chart.data.datasets[3].backgroundColor  = 'rgba(139,92,246,0.08)';
+                chart.data.datasets[3].borderWidth      = 2;
+                chart.data.datasets[3].borderDash       = [];
+                chart.data.datasets[3].pointRadius      = 0;
+                chart.data.datasets[3].pointHoverRadius = 0;
+                chart.data.datasets[3].fill             = false;
+                chart.data.datasets[3].tension          = 0;
+
+                // [4] Scenario B line — solid blue ("Acquisto BTP Italia"),
+                //     100%-investment extreme of the AB hybrid.
+                chart.data.datasets[4].data             = r.hybExtremeB_AB;
+                chart.data.datasets[4].label            = 'Anticipo e BTP';
+                chart.data.datasets[4].borderColor      = '#3b82f6';
+                chart.data.datasets[4].backgroundColor  = 'rgba(59,130,246,0.08)';
+                chart.data.datasets[4].borderWidth      = 2;
+                chart.data.datasets[4].borderDash       = [];
+                chart.data.datasets[4].pointRadius      = 0;
+                chart.data.datasets[4].pointHoverRadius = 0;
+                chart.data.datasets[4].fill             = false;
+                chart.data.datasets[4].tension          = 0;
+
+                // Standalone scenario lines/bands not used in AB hybrid.
+                [6, 7, 8, 9, 10, 11, 12, 14, 15].forEach(i => {
+                    chart.data.datasets[i].data = [];
+                });
+
+                // [13] AB hybrid center — solid orange.
+                chart.data.datasets[13].data             = r.hybCenter_AB;
+                chart.data.datasets[13].label            = 'Curva ibrida AB';
+                chart.data.datasets[13].borderColor      = '#f97316';
+                chart.data.datasets[13].backgroundColor  = 'rgba(249,115,22,0.12)';
+                chart.data.datasets[13].borderWidth      = 2.5;
+                chart.data.datasets[13].borderDash       = [];
+                chart.data.datasets[13].pointRadius      = 0;
+                chart.data.datasets[13].pointHoverRadius = 0;
+                chart.data.datasets[13].fill             = false;
+                chart.data.datasets[13].tension          = 0;
+
+                // [16] Vendita upper bound — FIXED dashed red, fills toward [17].
+                chart.data.datasets[16].data            = r.venditaUpper_AB;
+                chart.data.datasets[16].label           = '_venditaUpperAB';
+                chart.data.datasets[16].borderColor     = '#ef4444';
+                chart.data.datasets[16].backgroundColor = 'rgba(239,68,68,0.08)';
+                chart.data.datasets[16].borderWidth     = 1.5;
+                chart.data.datasets[16].borderDash      = [6, 3];
+                chart.data.datasets[16].pointRadius     = 0;
+                chart.data.datasets[16].fill            = '+1';
+                chart.data.datasets[16].tension         = 0;
+
+                // [17] Vendita lower bound — FIXED dashed red, no fill.
+                chart.data.datasets[17].data            = r.venditaLower_AB;
+                chart.data.datasets[17].label           = '_venditaLowerAB';
+                chart.data.datasets[17].borderColor     = '#ef4444';
+                chart.data.datasets[17].backgroundColor = 'rgba(239,68,68,0.08)';
+                chart.data.datasets[17].borderWidth     = 1.5;
+                chart.data.datasets[17].borderDash      = [6, 3];
+                chart.data.datasets[17].pointRadius     = 0;
+                chart.data.datasets[17].fill            = false;
+                chart.data.datasets[17].tension         = 0;
+
+                // [18] Hold grey envelope upper — dashed grey, fills toward [19].
+                //      Visual reference only (Mantieni card stays "Non applicabile").
+                //      Uses the C-shape linear accumulation so the envelope
+                //      starts from €0 and widens with time, matching the Hold
+                //      reference shown in standalone Scenario A.
+                chart.data.datasets[18].data            = r.holdUpper_C;
+                chart.data.datasets[18].label           = '_holdEnvelopeUpper';
+                chart.data.datasets[18].borderColor     = '#9ca3af';
+                chart.data.datasets[18].backgroundColor = 'rgba(156,163,175,0.18)';
+                chart.data.datasets[18].borderWidth     = 1.5;
+                chart.data.datasets[18].borderDash      = [4, 4];
+                chart.data.datasets[18].pointRadius     = 0;
+                chart.data.datasets[18].fill            = '+1';
+                chart.data.datasets[18].tension         = 0;
+
+                // [19] Hold grey envelope lower — dashed grey, no fill.
+                chart.data.datasets[19].data            = r.holdLower_C;
+                chart.data.datasets[19].label           = '_holdEnvelopeLower';
+                chart.data.datasets[19].borderColor     = '#9ca3af';
+                chart.data.datasets[19].backgroundColor = 'rgba(156,163,175,0.18)';
+                chart.data.datasets[19].borderWidth     = 1.5;
+                chart.data.datasets[19].borderDash      = [4, 4];
+                chart.data.datasets[19].pointRadius     = 0;
+                chart.data.datasets[19].fill            = false;
+                chart.data.datasets[19].tension         = 0;
+
+                // Visibility
+                chart.getDatasetMeta(0).hidden  = false;
+                chart.getDatasetMeta(1).hidden  = true;
+                chart.getDatasetMeta(2).hidden  = true;
+                chart.getDatasetMeta(3).hidden  = false;
+                chart.getDatasetMeta(4).hidden  = false;
+                chart.getDatasetMeta(5).hidden  = true;
+                chart.getDatasetMeta(6).hidden  = true;
+                chart.getDatasetMeta(7).hidden  = true;
+                chart.getDatasetMeta(8).hidden  = true;
+                chart.getDatasetMeta(9).hidden  = true;
+                chart.getDatasetMeta(10).hidden = true;
+                chart.getDatasetMeta(11).hidden = true;
+                chart.getDatasetMeta(12).hidden = true;
+                chart.getDatasetMeta(13).hidden = false;
+                chart.getDatasetMeta(14).hidden = true;
+                chart.getDatasetMeta(15).hidden = true;
+                chart.getDatasetMeta(16).hidden = false;
+                chart.getDatasetMeta(17).hidden = false;
+                chart.getDatasetMeta(18).hidden = false;
+                chart.getDatasetMeta(19).hidden = false;
+
+                // Mantieni Catalogo card — "Non applicabile" badge stays.
+                const holdValueElAB = document.getElementById('holdMainValue');
+                const holdBadgeElAB = document.getElementById('holdNotFeasibleBadge');
+                if (holdValueElAB) holdValueElAB.style.display = 'none';
+                if (holdBadgeElAB) holdBadgeElAB.style.display = 'block';
+
+                chart.update();
+
+            } else {
+                // ─── AC / BC — original orange-band representation ──────────
+                let venditaUpper, venditaLower;
+                let hybExtremeUpper, hybExtremeLower, hybCenter;
+
+                if (hs === 'AC') {
+                    venditaUpper    = r.venditaUpper_AC;
+                    venditaLower    = r.venditaLower_AC;
+                    hybExtremeUpper = r.hybExtremeC_AC;   // 100% new catalog
+                    hybExtremeLower = r.hybExtremeA_AC;   // 100% spend
+                    hybCenter       = r.hybCenter_AC;
+                } else { // BC
+                    venditaUpper    = r.venditaUpper_BC;
+                    venditaLower    = r.venditaLower_BC;
+                    hybExtremeUpper = r.hybExtremeB_BC;   // α = 1
+                    hybExtremeLower = r.hybExtremeC_BC;   // α = 0
+                    hybCenter       = r.hybCenter_BC;
+                }
+
+                const holdFeasible = (hs === 'BC');
 
             // [0] Vendita upper border — dashed red, fills toward [1]
             chart.data.datasets[0].data            = venditaUpper;
@@ -2300,6 +2467,8 @@
             chart.data.datasets[10].data = [];
             chart.data.datasets[11].data = [];
             chart.data.datasets[12].data = [];
+            chart.data.datasets[14].data = [];
+            chart.data.datasets[15].data = [];
             chart.data.datasets[16].data = [];
             chart.data.datasets[17].data = [];
             chart.data.datasets[18].data = [];
@@ -2330,6 +2499,8 @@
             chart.getDatasetMeta(11).hidden = true;
             chart.getDatasetMeta(12).hidden = true;
             chart.getDatasetMeta(13).hidden = false;
+            chart.getDatasetMeta(14).hidden = true;
+            chart.getDatasetMeta(15).hidden = true;
             chart.getDatasetMeta(16).hidden = true;
             chart.getDatasetMeta(17).hidden = true;
             chart.getDatasetMeta(18).hidden = true;
@@ -2347,7 +2518,8 @@
                 holdBadgeElH.style.display = holdFeasible ? 'none' : 'block';
             }
 
-            chart.update();
+                chart.update();
+            }
 
         } else {
             // ─── Reset properties that hybrid mode may have changed ─────────
@@ -2572,13 +2744,8 @@
         document.getElementById('hybridAllocationContainer').style.display =
             showAllocation ? 'block' : 'none';
 
-        if (showExpense && state.expenseAmount === null) {
-            state.expenseAmount = Math.round(r.royaltySaleCF0 * 0.5);
-            document.getElementById('expenseAmountInput').value =
-                formatEuro(state.expenseAmount);
-            document.getElementById('expenseAmountSlider').value = 50;
-            document.getElementById('expenseAmountPct').textContent = '50%';
-        }
+        // expenseAmount default is initialised at the top of updateUI so the
+        // first calculate() pass already reflects the 50/50 split.
 
         if (showExpense) {
             document.getElementById('expenseAmountMax').textContent =
