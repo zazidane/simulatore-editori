@@ -1322,11 +1322,12 @@
                     label: 'Mantieni Catalogo',
                     data: [],
                     borderColor: '#d97706',
-                    backgroundColor: 'rgba(217,119,6,0.10)',
+                    backgroundColor: 'rgba(217, 119, 6, 0.12)',
                     fill: '+3',
-                    tension: 0.3,
-                    pointRadius: 0,
-                    borderWidth: 1.5,
+                    tension: 0,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 2,
                 },
                 // [3] Hybrid upper boundary (Wave 7b)
                 {
@@ -1359,10 +1360,11 @@
                     label: '_holdLower',
                     data: [],
                     borderColor: '#d97706',
-                    backgroundColor: 'rgba(217,119,6,0.10)',
+                    backgroundColor: 'rgba(217, 119, 6, 0.12)',
                     fill: false,
-                    tension: 0.3,
+                    tension: 0,
                     pointRadius: 0,
+                    pointHoverRadius: 0,
                     borderWidth: 1.5,
                     borderDash: [4, 4],
                 },
@@ -1373,11 +1375,11 @@
                     borderColor: '#8b5cf6',
                     backgroundColor: 'rgba(139,92,246,0.08)',
                     fill: false,
-                    tension: 0.3,
+                    tension: 0,
                     pointRadius: 3,
                     pointHoverRadius: 5,
-                    borderWidth: 2.5,
-                    borderDash: [6, 3],
+                    borderWidth: 2,
+                    borderDash: [],
                     hidden: true,
                 },
                 // [7] Scenario B — central line
@@ -1387,10 +1389,11 @@
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59,130,246,0.08)',
                     fill: false,
-                    tension: 0.3,
-                    pointRadius: 2,
-                    pointHoverRadius: 4,
-                    borderWidth: 1.5,
+                    tension: 0,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 2,
+                    borderDash: [],
                     hidden: true,
                 },
                 // [8] Scenario C — central line
@@ -1411,11 +1414,13 @@
                     label: '_scenarioBUpper',
                     data: [],
                     borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.10)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.12)',
                     fill: '+1',
-                    tension: 0.3,
+                    tension: 0,
                     pointRadius: 0,
-                    borderWidth: 1,
+                    pointHoverRadius: 0,
+                    borderWidth: 1.5,
+                    borderDash: [],
                     hidden: true,
                 },
                 // [10] Scenario B — lower band
@@ -1423,12 +1428,13 @@
                     label: '_scenarioBLower',
                     data: [],
                     borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.10)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.12)',
                     fill: false,
-                    tension: 0.3,
+                    tension: 0,
                     pointRadius: 0,
-                    borderWidth: 1,
-                    borderDash: [3, 3],
+                    pointHoverRadius: 0,
+                    borderWidth: 1.5,
+                    borderDash: [],
                     hidden: true,
                 },
                 // [11] Scenario C — upper band
@@ -1453,7 +1459,7 @@
                     tension: 0.3,
                     pointRadius: 0,
                     borderWidth: 1,
-                    borderDash: [3, 3],
+                    borderDash: [],
                     hidden: true,
                 },
                 // [13] Hybrid center curve (Wave 7b Patch 3)
@@ -1473,11 +1479,13 @@
                     label: '_scenarioAUpper',
                     data: [],
                     borderColor: '#8b5cf6',
-                    backgroundColor: 'rgba(139,92,246,0.10)',
+                    backgroundColor: 'rgba(139, 92, 246, 0.12)',
                     fill: '+1',
-                    tension: 0.3,
+                    tension: 0,
                     pointRadius: 0,
-                    borderWidth: 1,
+                    pointHoverRadius: 0,
+                    borderWidth: 1.5,
+                    borderDash: [],
                     hidden: true,
                 },
                 // [15] Scenario A — lower band (Wave 9.6)
@@ -1485,12 +1493,13 @@
                     label: '_scenarioALower',
                     data: [],
                     borderColor: '#8b5cf6',
-                    backgroundColor: 'rgba(139,92,246,0.10)',
+                    backgroundColor: 'rgba(139, 92, 246, 0.12)',
                     fill: false,
-                    tension: 0.3,
+                    tension: 0,
                     pointRadius: 0,
-                    borderWidth: 1,
-                    borderDash: [3, 3],
+                    pointHoverRadius: 0,
+                    borderWidth: 1.5,
+                    borderDash: [],
                     hidden: true,
                 },
                 // [16] Scenario C — Vendita Catalogo upper band (dashed red)
@@ -1514,6 +1523,32 @@
                     backgroundColor: 'rgba(239, 68, 68, 0.10)',
                     fill: false,
                     tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 1.5,
+                    borderDash: [4, 4],
+                    hidden: true,
+                },
+                // [18] Mantieni Catalogo upper dashed band (orange)
+                {
+                    label: '_holdUpperBand',
+                    data: [],
+                    borderColor: '#d97706',
+                    backgroundColor: 'rgba(217, 119, 6, 0.12)',
+                    fill: '+1',
+                    tension: 0,
+                    pointRadius: 0,
+                    borderWidth: 1.5,
+                    borderDash: [4, 4],
+                    hidden: true,
+                },
+                // [19] Mantieni Catalogo lower dashed band (orange)
+                {
+                    label: '_holdLowerBand',
+                    data: [],
+                    borderColor: '#d97706',
+                    backgroundColor: 'rgba(217, 119, 6, 0.12)',
+                    fill: false,
+                    tension: 0,
                     pointRadius: 0,
                     borderWidth: 1.5,
                     borderDash: [4, 4],
@@ -1796,6 +1831,7 @@
         const rsLower_B    = new Array(CHART_YEARS + 1);
         const saleUpper_B  = new Array(CHART_YEARS + 1);
         const saleLower_B  = new Array(CHART_YEARS + 1);
+        const saleCumulative_B = new Array(CHART_YEARS + 1);
         const holdUpper_B  = new Array(CHART_YEARS + 1);
         const holdLower_B  = new Array(CHART_YEARS + 1);
         // Scenario C bands (all 6)
@@ -1812,6 +1848,7 @@
         saleCumulative_A[0] = saleCF0;
         rsUpper_B[0]   = upper.cf0;     rsLower_B[0]   = lower.cf0;
         saleUpper_B[0] = saleCF0;       saleLower_B[0] = saleCF0;
+        saleCumulative_B[0] = saleCF0;
         holdUpper_B[0] = 0;             holdLower_B[0] = 0;
         rsUpper_C[0]   = upper.cf0;     rsLower_C[0]   = lower.cf0;
         saleUpper_C[0] = saleCF0;       saleLower_C[0] = saleCF0;
@@ -1906,6 +1943,7 @@
                 }
                 saleUpper_B[t] = saleResidualCashUpper + investedSaleAmountUpper * Math.pow(1 + ru, t);
                 saleLower_B[t] = saleResidualCashLower + investedSaleAmountLower * Math.pow(1 + rl, t);
+                saleCumulative_B[t] = saleResidualCashCentral + investedSaleAmountCentral * Math.pow(1 + r, t);
                 holdUpper_B[t] = (s.annualCashFlow + thirdPartyPerYear) * upper.flowMult * fva(t, ru);
                 holdLower_B[t] = (s.annualCashFlow + thirdPartyPerYear) * lower.flowMult * fva(t, rl);
 
@@ -2106,7 +2144,7 @@
             // [DEAD CODE REMOVED — Ciclo Azimut FASE A] scenarioACumulative / scenarioBCumulative / scenarioCCumulative return keys.
             // Wave 6b — confidence bands per scenario
             rsUpper_A, rsLower_A, saleUpper_A, saleLower_A, saleCumulative_A,
-            rsUpper_B, rsLower_B, saleUpper_B, saleLower_B, holdUpper_B, holdLower_B,
+            rsUpper_B, rsLower_B, saleUpper_B, saleLower_B, saleCumulative_B, holdUpper_B, holdLower_B,
             rsUpper_C, rsLower_C, saleUpper_C, saleLower_C, holdUpper_C, holdLower_C,
             fairRS_A,
             fairRS_B,
@@ -2264,6 +2302,8 @@
             chart.data.datasets[12].data = [];
             chart.data.datasets[16].data = [];
             chart.data.datasets[17].data = [];
+            chart.data.datasets[18].data = [];
+            chart.data.datasets[19].data = [];
 
             // [13] Hybrid center curve — orange solid, drawn on top
             chart.data.datasets[13].data            = hybCenter;
@@ -2292,6 +2332,8 @@
             chart.getDatasetMeta(13).hidden = false;
             chart.getDatasetMeta(16).hidden = true;
             chart.getDatasetMeta(17).hidden = true;
+            chart.getDatasetMeta(18).hidden = true;
+            chart.getDatasetMeta(19).hidden = true;
 
             // Mantieni Catalogo card — keep visible; toggle NON APPLICABILE badge
             // based on whether scenario A is part of the hybrid pair.
@@ -2326,26 +2368,45 @@
             chart.data.datasets[1].borderDash  = [4, 4];
             chart.data.datasets[1].fill        = false;
 
-            // [5] Mantieni lower edge → non-hybrid defaults (color set later by feasibility logic)
-            chart.data.datasets[5].label       = '_holdLower';
-            chart.data.datasets[5].borderWidth = 1.5;
-            chart.data.datasets[5].fill        = false;
+            // [2] Mantieni central → solid + dots (no fill); color set later by feasibility
+            chart.data.datasets[2].label            = 'Mantieni Catalogo';
+            chart.data.datasets[2].borderWidth      = 2;
+            chart.data.datasets[2].borderDash       = [];
+            chart.data.datasets[2].pointRadius      = 2;
+            chart.data.datasets[2].pointHoverRadius = 4;
+            chart.data.datasets[2].fill             = false;
+            chart.data.datasets[2].tension          = 0;
+
+            // [5] no longer used in non-hybrid mode → keep empty placeholder
+            chart.data.datasets[5].label            = '_holdLower';
+            chart.data.datasets[5].borderWidth      = 1.5;
+            chart.data.datasets[5].borderDash       = [4, 4];
+            chart.data.datasets[5].pointRadius      = 0;
+            chart.data.datasets[5].pointHoverRadius = 0;
+            chart.data.datasets[5].fill             = false;
+            chart.data.datasets[5].tension          = 0;
 
             // [9] Scenario B upper band → non-hybrid defaults
-            chart.data.datasets[9].label       = '_scenarioBUpper';
-            chart.data.datasets[9].borderColor = '#3b82f6';
-            chart.data.datasets[9].backgroundColor = 'rgba(59,130,246,0.10)';
-            chart.data.datasets[9].borderWidth = 1;
-            chart.data.datasets[9].borderDash  = [];
-            chart.data.datasets[9].fill        = '+1';
+            chart.data.datasets[9].label            = '_scenarioBUpper';
+            chart.data.datasets[9].borderColor      = '#3b82f6';
+            chart.data.datasets[9].backgroundColor  = 'rgba(59, 130, 246, 0.12)';
+            chart.data.datasets[9].borderWidth      = 1.5;
+            chart.data.datasets[9].borderDash       = [];
+            chart.data.datasets[9].pointRadius      = 0;
+            chart.data.datasets[9].pointHoverRadius = 0;
+            chart.data.datasets[9].fill             = '+1';
+            chart.data.datasets[9].tension          = 0;
 
             // [10] Scenario B lower band → non-hybrid defaults
-            chart.data.datasets[10].label       = '_scenarioBLower';
-            chart.data.datasets[10].borderColor = '#3b82f6';
-            chart.data.datasets[10].backgroundColor = 'rgba(59,130,246,0.10)';
-            chart.data.datasets[10].borderWidth = 1;
-            chart.data.datasets[10].borderDash  = [3, 3];
-            chart.data.datasets[10].fill        = false;
+            chart.data.datasets[10].label            = '_scenarioBLower';
+            chart.data.datasets[10].borderColor      = '#3b82f6';
+            chart.data.datasets[10].backgroundColor  = 'rgba(59, 130, 246, 0.12)';
+            chart.data.datasets[10].borderWidth      = 1.5;
+            chart.data.datasets[10].borderDash       = [];
+            chart.data.datasets[10].pointRadius      = 0;
+            chart.data.datasets[10].pointHoverRadius = 0;
+            chart.data.datasets[10].fill             = false;
+            chart.data.datasets[10].tension          = 0;
 
             // Boundary references and hybrid center hidden in non-hybrid mode
             chart.data.datasets[3].data = [];
@@ -2355,55 +2416,55 @@
             chart.getDatasetMeta(4).hidden = true;
             chart.getDatasetMeta(13).hidden = true;
 
-            // Wave 6b — base Sale band reflects the "most informative" active scenario:
-            // B (compounding at investment rate) > C/A (constant). Sale_A and Sale_C are equal.
+            // Vendita Catalogo — uniform visual style across A/B/C:
+            //   [0]   solid red midpoint with year dots
+            //   [16]  dashed red upper bound (fills toward [17])
+            //   [17]  dashed red lower bound
+            // Scenario priority (most informative first): B → C → A.
+            let saleCentral, saleUpper, saleLower;
             if (state.activeScenarios.has('B')) {
-                chart.data.datasets[0].data = r.saleUpper_B;
-                chart.data.datasets[1].data = r.saleLower_B;
-                chart.data.datasets[0].borderDash = [4, 4];
+                saleCentral = r.saleCumulative_B;
+                saleUpper   = r.saleUpper_B;
+                saleLower   = r.saleLower_B;
             } else if (state.activeScenarios.has('C')) {
-                chart.data.datasets[0].data = r.saleUpper_C;
-                chart.data.datasets[1].data = r.saleLower_C;
-                chart.data.datasets[0].borderDash = [4, 4];
+                saleCentral = r.saleCumulative_C;
+                saleUpper   = r.saleUpper_C;
+                saleLower   = r.saleLower_C;
             } else {
-                chart.data.datasets[0].data        = r.saleCumulative_A;
-                chart.data.datasets[0].fill        = false;
-                chart.data.datasets[0].borderWidth = 2;
-                chart.data.datasets[0].pointRadius = 2;
-                chart.data.datasets[1].data        = [];
-                chart.data.datasets[16].data       = r.saleUpper_A;
-                chart.data.datasets[17].data       = r.saleLower_A;
+                saleCentral = r.saleCumulative_A;
+                saleUpper   = r.saleUpper_A;
+                saleLower   = r.saleLower_A;
             }
+            chart.data.datasets[0].data        = saleCentral;
+            chart.data.datasets[0].borderDash  = [];
+            chart.data.datasets[0].fill        = false;
+            chart.data.datasets[0].borderWidth = 2;
+            chart.data.datasets[0].pointRadius = 2;
+            chart.data.datasets[1].data        = [];
+            chart.data.datasets[16].data       = saleUpper;
+            chart.data.datasets[17].data       = saleLower;
 
-            // Wave 6b — base Hold band: B (FVA at investment rate) > C (linear).
-            // Scenario A has no Hold band (NOT FEASIBLE) — fall back to C's linear shape
-            // for chart geometry; Wave 6 visual treatment grays it out.
+            // Mantieni Catalogo — uniform visual style across A/B/C:
+            //   [2]   solid orange midpoint with year dots (only when feasible)
+            //   [18]  dashed orange upper bound (fills toward [19])
+            //   [19]  dashed orange lower bound
+            // Scenario priority: B (compounding) > C (linear). A-only falls back to C
+            // shape, central is hidden, band turns grey via feasibility treatment below.
+            let holdCentral, holdUpper, holdLower;
             if (state.activeScenarios.has('B')) {
-                chart.data.datasets[2].data = r.holdUpper_B;
-                chart.data.datasets[5].data = r.holdLower_B;
+                holdCentral = r.holdCumulative;
+                holdUpper   = r.holdUpper_B;
+                holdLower   = r.holdLower_B;
             } else {
-                chart.data.datasets[2].data = r.holdUpper_C;
-                chart.data.datasets[5].data = r.holdLower_C;
+                holdCentral = r.holdCumulative_C;
+                holdUpper   = r.holdUpper_C;
+                holdLower   = r.holdLower_C;
             }
+            chart.data.datasets[2].data  = r.isHoldFeasible ? holdCentral : [];
+            chart.data.datasets[5].data  = [];
+            chart.data.datasets[18].data = holdUpper;
+            chart.data.datasets[19].data = holdLower;
 
-            // Pure C — Vendita Catalogo and Mantieni Catalogo follow distinct
-            // trajectories: Vendita renders as a solid red midpoint with a
-            // dashed band, Mantieni keeps its existing amber band.
-            const isPureC = state.activeScenarios.size === 1 && state.activeScenarios.has('C');
-            const isPureA = !state.activeScenarios.has('B')
-                            && !state.activeScenarios.has('C');
-            if (isPureC) {
-                chart.data.datasets[0].data        = r.saleCumulative_C;
-                chart.data.datasets[0].fill        = false;
-                chart.data.datasets[0].borderWidth = 2;
-                chart.data.datasets[0].pointRadius = 2;
-                chart.data.datasets[1].data        = [];
-                chart.data.datasets[16].data       = r.saleUpper_C;
-                chart.data.datasets[17].data       = r.saleLower_C;
-            } else if (!isPureA) {
-                chart.data.datasets[16].data = [];
-                chart.data.datasets[17].data = [];
-            }
             chart.data.datasets[0].label = 'Vendita Catalogo';
 
             // Wave 5 — FAIR comparison: each active scenario plots its three exit paths
@@ -2433,14 +2494,16 @@
             chart.getDatasetMeta(12).hidden = !state.activeScenarios.has('C');
             chart.getDatasetMeta(14).hidden = !state.activeScenarios.has('A');
             chart.getDatasetMeta(15).hidden = !state.activeScenarios.has('A');
-            const showSaleBand = isPureC || isPureA;
-            chart.getDatasetMeta(16).hidden = !showSaleBand;
-            chart.getDatasetMeta(17).hidden = !showSaleBand;
+            chart.getDatasetMeta(16).hidden = false;
+            chart.getDatasetMeta(17).hidden = false;
 
-            // Ensure Vendita and Mantieni bands are always visible
-            [0, 1, 2, 5].forEach(i => {
+            // Always-visible band edges (Vendita central + dashed bands; Mantieni dashed band)
+            [0, 16, 17, 18, 19].forEach(i => {
                 chart.getDatasetMeta(i).hidden = false;
             });
+            // Mantieni central — only when feasible (B or C); hidden in pure-A
+            chart.getDatasetMeta(2).hidden = !r.isHoldFeasible;
+            chart.getDatasetMeta(5).hidden = true;
 
             // Wave 6 — Hold feasibility visual treatment
             const feasible = r.isHoldFeasible;
@@ -2453,26 +2516,24 @@
             }
             if (holdBadgeEl) holdBadgeEl.style.display = feasible ? 'none' : 'block';
 
-            // Hold base band datasets ([2] upper, [5] lower) — restyle when not feasible
-            const holdBandIndices = [
-                { idx: 2, originalDash: [] },
-                { idx: 5, originalDash: [4, 4] },
-            ];
-            holdBandIndices.forEach(({ idx, originalDash }) => {
+            // Hold band edges [18][19] — orange when feasible, grey when not
+            [18, 19].forEach(idx => {
                 const ds = chart.data.datasets[idx];
                 if (!ds) return;
                 if (!feasible) {
                     ds.borderColor          = '#d1d5db';
                     ds.backgroundColor      = 'rgba(209,213,219,0.15)';
-                    ds.borderDash           = [6, 4];
                     ds.pointBackgroundColor = '#d1d5db';
                 } else {
                     ds.borderColor          = '#d97706';
-                    ds.backgroundColor      = 'rgba(217,119,6,0.10)';
-                    ds.borderDash           = originalDash;
+                    ds.backgroundColor      = 'rgba(217, 119, 6, 0.12)';
                     ds.pointBackgroundColor = '#d97706';
                 }
             });
+            // Mantieni central [2] — orange (only drawn when feasible per visibility above)
+            chart.data.datasets[2].borderColor          = '#d97706';
+            chart.data.datasets[2].backgroundColor      = 'rgba(217, 119, 6, 0.12)';
+            chart.data.datasets[2].pointBackgroundColor = '#d97706';
 
             chart.update();
         }
