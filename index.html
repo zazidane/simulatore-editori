@@ -2065,13 +2065,12 @@
         const venditaCenter_AC = arr();   // moves with allocation
 
         // BC
-        const hybCenter_BC    = arr();
-        const hybExtremeB_BC  = arr();   // α = 1 (all invest)
-        const hybExtremeC_BC  = arr();   // α = 0 (all new catalog)
-        const venditaUpper_BC = arr();
-        const venditaLower_BC = arr();
-        const holdUpper_BC    = arr();   // ±5% on fullCatalogValue, full flows from t=0
-        const holdLower_BC    = arr();
+        const hybCenter_BC     = arr();
+        const hybExtremeB_BC   = arr();   // α = 1 (all invest)
+        const hybExtremeC_BC   = arr();   // α = 0 (all new catalog)
+        const venditaUpper_BC  = arr();   // FIXED — 100% new-catalog extreme
+        const venditaLower_BC  = arr();   // FIXED — 100% BTP extreme
+        const venditaCenter_BC = arr();   // moves with allocation
 
         for (let t = 0; t <= CHART_YEARS; t++) {
 
@@ -2113,21 +2112,24 @@
             // (prompt explicitly chooses no reinvestment in the BC family).
             hybExtremeB_BC[t] = anticipo * Math.pow(1 + invRate, t) + linearOriginal;
             hybExtremeC_BC[t] = anticipo + linearOriginal + newCatFlow_full * t;
+            // Center includes BOTH B's compounded principal and C's flat
+            // principal — the latter was previously missing, which caused
+            // the 50/50 split to render close to the lower (B) bound.
             hybCenter_BC[t]   = investimentoB_BC * Math.pow(1 + invRate, t)
+                              + investimentoC_BC
                               + newCatFlow_BC * t
                               + linearOriginal;
 
-            // B principal compounds; C principal is held flat plus linear yield.
-            // At t=0: (saleCF0 − anticipo) + investimentoB + investimentoC = saleCF0.
-            const ventActiveBC = investimentoB_BC * Math.pow(1 + invRate, t)
-                               + investimentoC_BC
-                               + newCatFlow_BC * t;
-            venditaUpper_BC[t] = undeployed_high + ventActiveBC;
-            venditaLower_BC[t] = undeployed_low  + ventActiveBC;
-
-            // Hold band (BC only): full catalog from t=0, ±5% on fullCatalogValue
-            holdUpper_BC[t] = fullCatalogValue * (1 + RISK_BAND_DELTA) + flussiPieni * t;
-            holdLower_BC[t] = fullCatalogValue * (1 - RISK_BAND_DELTA) + flussiPieni * t;
+            // Vendita Catalogo: bounds FIXED at allocation extremes; central
+            // moves with the slider. α=1 (all BTP) → central = lower (B
+            // extreme); α=0 (all new catalog) → central = upper (C extreme).
+            const undeployedBC = saleCF0 - anticipo;
+            venditaUpper_BC[t]  = undeployedBC + anticipo + newCatFlow_full * t;
+            venditaLower_BC[t]  = undeployedBC + anticipo * Math.pow(1 + invRate, t);
+            venditaCenter_BC[t] = undeployedBC
+                                + investimentoB_BC * Math.pow(1 + invRate, t)
+                                + investimentoC_BC
+                                + newCatFlow_BC * t;
         }
 
         return {
@@ -2169,8 +2171,8 @@
             venditaUpper_AB, venditaLower_AB, venditaCenter_AB,
             hybCenter_AC, hybExtremeA_AC, hybExtremeC_AC,
             venditaUpper_AC, venditaLower_AC, venditaCenter_AC,
-            hybCenter_BC, hybExtremeB_BC, hybExtremeC_BC, venditaUpper_BC, venditaLower_BC,
-            holdUpper_BC, holdLower_BC,
+            hybCenter_BC, hybExtremeB_BC, hybExtremeC_BC,
+            venditaUpper_BC, venditaLower_BC, venditaCenter_BC,
         };
     }
 
@@ -2524,139 +2526,161 @@
                 chart.update();
 
             } else {
-                // ─── BC — original orange-band representation ───────────────
-                const venditaUpper    = r.venditaUpper_BC;
-                const venditaLower    = r.venditaLower_BC;
-                const hybExtremeUpper = r.hybExtremeB_BC;   // α = 1
-                const hybExtremeLower = r.hybExtremeC_BC;   // α = 0
-                const hybCenter       = r.hybCenter_BC;
+                // ─── BC — three explicit curves + Mantieni Catalogo benchmark ─
 
-                const holdFeasible = true;
+                // [0] Vendita Catalogo central — solid red, year dots, moves
+                //     with the allocation slider.
+                chart.data.datasets[0].data             = r.venditaCenter_BC;
+                chart.data.datasets[0].label            = 'Vendita Catalogo';
+                chart.data.datasets[0].borderColor      = '#ef4444';
+                chart.data.datasets[0].backgroundColor  = 'rgba(239,68,68,0.10)';
+                chart.data.datasets[0].borderWidth      = 2;
+                chart.data.datasets[0].borderDash       = [];
+                chart.data.datasets[0].pointRadius      = 2;
+                chart.data.datasets[0].pointHoverRadius = 4;
+                chart.data.datasets[0].fill             = false;
+                chart.data.datasets[0].tension          = 0;
 
-            // [0] Vendita upper border — dashed red, fills toward [1]
-            chart.data.datasets[0].data            = venditaUpper;
-            chart.data.datasets[0].label           = 'Vendita Catalogo';
-            chart.data.datasets[0].borderColor     = '#ef4444';
-            chart.data.datasets[0].backgroundColor = 'rgba(239,68,68,0.15)';
-            chart.data.datasets[0].borderWidth     = 1.5;
-            chart.data.datasets[0].borderDash      = [6, 3];
-            chart.data.datasets[0].pointRadius     = 0;
-            chart.data.datasets[0].fill            = '+1';
+                // [1] unused
+                chart.data.datasets[1].data = [];
+                chart.data.datasets[1].fill = false;
 
-            // [1] Vendita lower border — dashed red, no fill
-            chart.data.datasets[1].data            = venditaLower;
-            chart.data.datasets[1].label           = '_venditaLowerH';
-            chart.data.datasets[1].borderColor     = '#ef4444';
-            chart.data.datasets[1].backgroundColor = 'rgba(239,68,68,0.15)';
-            chart.data.datasets[1].borderWidth     = 1.5;
-            chart.data.datasets[1].borderDash      = [6, 3];
-            chart.data.datasets[1].pointRadius     = 0;
-            chart.data.datasets[1].fill            = false;
+                // [2] Mantieni Catalogo central — solid orange, year dots.
+                //     Linear C-shape (starts at €0 at T0, grows linearly).
+                chart.data.datasets[2].data             = r.holdCumulative_C;
+                chart.data.datasets[2].label            = 'Mantieni Catalogo';
+                chart.data.datasets[2].borderColor      = '#d97706';
+                chart.data.datasets[2].backgroundColor  = 'rgba(217,119,6,0.12)';
+                chart.data.datasets[2].borderWidth      = 2;
+                chart.data.datasets[2].borderDash       = [];
+                chart.data.datasets[2].pointRadius      = 2;
+                chart.data.datasets[2].pointHoverRadius = 4;
+                chart.data.datasets[2].fill             = false;
+                chart.data.datasets[2].tension          = 0;
 
-            // [2][5] Hold band — only for BC; for AB/AC suppress chart curve
-            if (holdFeasible) {
-                chart.data.datasets[2].data            = r.holdUpper_BC;
-                chart.data.datasets[2].label           = 'Mantieni Catalogo';
-                chart.data.datasets[2].borderColor     = '#f59e0b';
-                chart.data.datasets[2].backgroundColor = 'rgba(245,158,11,0.15)';
-                chart.data.datasets[2].borderWidth     = 1.5;
-                chart.data.datasets[2].borderDash      = [6, 3];
-                chart.data.datasets[2].pointRadius     = 0;
-                chart.data.datasets[2].fill            = '+3';
-
-                chart.data.datasets[5].data            = r.holdLower_BC;
-                chart.data.datasets[5].label           = '_holdLowerH';
-                chart.data.datasets[5].borderColor     = '#f59e0b';
-                chart.data.datasets[5].backgroundColor = 'rgba(245,158,11,0.15)';
-                chart.data.datasets[5].borderWidth     = 1.5;
-                chart.data.datasets[5].borderDash      = [6, 3];
-                chart.data.datasets[5].pointRadius     = 0;
-                chart.data.datasets[5].fill            = false;
-            } else {
-                chart.data.datasets[2].data = [];
-                chart.data.datasets[2].fill = false;
+                // [5] unused
                 chart.data.datasets[5].data = [];
                 chart.data.datasets[5].fill = false;
-            }
 
-            // [3] Hybrid extreme upper — dashed orange, fills toward [4]
-            chart.data.datasets[3].data            = hybExtremeUpper;
-            chart.data.datasets[3].label           = '_hybridExtremeUpper';
-            chart.data.datasets[3].borderColor     = 'rgba(249,115,22,0.55)';
-            chart.data.datasets[3].backgroundColor = 'rgba(249,115,22,0.15)';
-            chart.data.datasets[3].borderWidth     = 1.5;
-            chart.data.datasets[3].borderDash      = [6, 3];
-            chart.data.datasets[3].pointRadius     = 0;
-            chart.data.datasets[3].fill            = '+1';
+                // [3] Scenario B line — solid blue ("Acquisto BTP Italia"),
+                //     100%-BTP extreme of the BC hybrid.
+                chart.data.datasets[3].data             = r.hybExtremeB_BC;
+                chart.data.datasets[3].label            = 'Anticipo e BTP';
+                chart.data.datasets[3].borderColor      = '#3b82f6';
+                chart.data.datasets[3].backgroundColor  = 'rgba(59,130,246,0.08)';
+                chart.data.datasets[3].borderWidth      = 2;
+                chart.data.datasets[3].borderDash       = [];
+                chart.data.datasets[3].pointRadius      = 0;
+                chart.data.datasets[3].pointHoverRadius = 0;
+                chart.data.datasets[3].fill             = false;
+                chart.data.datasets[3].tension          = 0;
 
-            // [4] Hybrid extreme lower — dashed orange, no fill
-            chart.data.datasets[4].data            = hybExtremeLower;
-            chart.data.datasets[4].label           = '_hybridExtremeLower';
-            chart.data.datasets[4].borderColor     = 'rgba(249,115,22,0.55)';
-            chart.data.datasets[4].backgroundColor = 'rgba(249,115,22,0.15)';
-            chart.data.datasets[4].borderWidth     = 1.5;
-            chart.data.datasets[4].borderDash      = [6, 3];
-            chart.data.datasets[4].pointRadius     = 0;
-            chart.data.datasets[4].fill            = false;
+                // [4] Scenario C line — solid green ("Acquisto di un nuovo
+                //     catalogo"), 100%-new-catalog extreme of the BC hybrid.
+                chart.data.datasets[4].data             = r.hybExtremeC_BC;
+                chart.data.datasets[4].label            = 'Anticipo e nuovo catalogo';
+                chart.data.datasets[4].borderColor      = '#10b981';
+                chart.data.datasets[4].backgroundColor  = 'rgba(16,185,129,0.08)';
+                chart.data.datasets[4].borderWidth      = 2;
+                chart.data.datasets[4].borderDash       = [];
+                chart.data.datasets[4].pointRadius      = 0;
+                chart.data.datasets[4].pointHoverRadius = 0;
+                chart.data.datasets[4].fill             = false;
+                chart.data.datasets[4].tension          = 0;
 
-            // Scenario lines and bands not used in hybrid mode
-            chart.data.datasets[6].data  = [];
-            chart.data.datasets[7].data  = [];
-            chart.data.datasets[8].data  = [];
-            chart.data.datasets[9].data  = [];
-            chart.data.datasets[10].data = [];
-            chart.data.datasets[11].data = [];
-            chart.data.datasets[12].data = [];
-            chart.data.datasets[14].data = [];
-            chart.data.datasets[15].data = [];
-            chart.data.datasets[16].data = [];
-            chart.data.datasets[17].data = [];
-            chart.data.datasets[18].data = [];
-            chart.data.datasets[19].data = [];
+                // Standalone scenario lines/bands not used in BC hybrid.
+                [6, 7, 8, 9, 10, 11, 12, 14, 15].forEach(i => {
+                    chart.data.datasets[i].data = [];
+                });
 
-            // [13] Hybrid center curve — orange solid, drawn on top
-            chart.data.datasets[13].data            = hybCenter;
-            chart.data.datasets[13].label           = 'Curva ibrida';
-            chart.data.datasets[13].borderColor     = '#f97316';
-            chart.data.datasets[13].backgroundColor = 'rgba(249,115,22,0.12)';
-            chart.data.datasets[13].borderWidth     = 2.5;
-            chart.data.datasets[13].borderDash      = [];
-            chart.data.datasets[13].pointRadius     = 0;
-            chart.data.datasets[13].fill            = false;
+                // [13] BC hybrid center — solid orange.
+                chart.data.datasets[13].data             = r.hybCenter_BC;
+                chart.data.datasets[13].label            = 'Curva ibrida BC';
+                chart.data.datasets[13].borderColor      = '#f97316';
+                chart.data.datasets[13].backgroundColor  = 'rgba(249,115,22,0.12)';
+                chart.data.datasets[13].borderWidth      = 2.5;
+                chart.data.datasets[13].borderDash       = [];
+                chart.data.datasets[13].pointRadius      = 0;
+                chart.data.datasets[13].pointHoverRadius = 0;
+                chart.data.datasets[13].fill             = false;
+                chart.data.datasets[13].tension          = 0;
 
-            // Visibility
-            chart.getDatasetMeta(0).hidden  = false;
-            chart.getDatasetMeta(1).hidden  = false;
-            chart.getDatasetMeta(2).hidden  = !holdFeasible;
-            chart.getDatasetMeta(3).hidden  = false;
-            chart.getDatasetMeta(4).hidden  = false;
-            chart.getDatasetMeta(5).hidden  = !holdFeasible;
-            chart.getDatasetMeta(6).hidden  = true;
-            chart.getDatasetMeta(7).hidden  = true;
-            chart.getDatasetMeta(8).hidden  = true;
-            chart.getDatasetMeta(9).hidden  = true;
-            chart.getDatasetMeta(10).hidden = true;
-            chart.getDatasetMeta(11).hidden = true;
-            chart.getDatasetMeta(12).hidden = true;
-            chart.getDatasetMeta(13).hidden = false;
-            chart.getDatasetMeta(14).hidden = true;
-            chart.getDatasetMeta(15).hidden = true;
-            chart.getDatasetMeta(16).hidden = true;
-            chart.getDatasetMeta(17).hidden = true;
-            chart.getDatasetMeta(18).hidden = true;
-            chart.getDatasetMeta(19).hidden = true;
+                // [16] Vendita upper bound — FIXED dashed red, fills toward [17].
+                chart.data.datasets[16].data            = r.venditaUpper_BC;
+                chart.data.datasets[16].label           = '_venditaUpperBC';
+                chart.data.datasets[16].borderColor     = '#ef4444';
+                chart.data.datasets[16].backgroundColor = 'rgba(239,68,68,0.08)';
+                chart.data.datasets[16].borderWidth     = 1.5;
+                chart.data.datasets[16].borderDash      = [6, 3];
+                chart.data.datasets[16].pointRadius     = 0;
+                chart.data.datasets[16].fill            = '+1';
+                chart.data.datasets[16].tension         = 0;
 
-            // Mantieni Catalogo card — keep visible; toggle NON APPLICABILE badge
-            // based on whether scenario A is part of the hybrid pair.
-            const holdValueElH = document.getElementById('holdMainValue');
-            const holdBadgeElH = document.getElementById('holdNotFeasibleBadge');
-            if (holdValueElH) {
-                holdValueElH.textContent = formatEuro(r.holdNPV);
-                holdValueElH.style.display = holdFeasible ? '' : 'none';
-            }
-            if (holdBadgeElH) {
-                holdBadgeElH.style.display = holdFeasible ? 'none' : 'block';
-            }
+                // [17] Vendita lower bound — FIXED dashed red, no fill.
+                chart.data.datasets[17].data            = r.venditaLower_BC;
+                chart.data.datasets[17].label           = '_venditaLowerBC';
+                chart.data.datasets[17].borderColor     = '#ef4444';
+                chart.data.datasets[17].backgroundColor = 'rgba(239,68,68,0.08)';
+                chart.data.datasets[17].borderWidth     = 1.5;
+                chart.data.datasets[17].borderDash      = [6, 3];
+                chart.data.datasets[17].pointRadius     = 0;
+                chart.data.datasets[17].fill            = false;
+                chart.data.datasets[17].tension         = 0;
+
+                // [18] Mantieni Catalogo upper bound — dashed orange, fills toward [19].
+                //      Linear C-shape with ±5% flow band, starts at €0 at T0
+                //      and widens over time.
+                chart.data.datasets[18].data            = r.holdUpper_C;
+                chart.data.datasets[18].label           = '_holdUpperBC';
+                chart.data.datasets[18].borderColor     = '#d97706';
+                chart.data.datasets[18].backgroundColor = 'rgba(217,119,6,0.12)';
+                chart.data.datasets[18].borderWidth     = 1.5;
+                chart.data.datasets[18].borderDash      = [4, 4];
+                chart.data.datasets[18].pointRadius     = 0;
+                chart.data.datasets[18].fill            = '+1';
+                chart.data.datasets[18].tension         = 0;
+
+                // [19] Mantieni Catalogo lower bound — dashed orange, no fill.
+                chart.data.datasets[19].data            = r.holdLower_C;
+                chart.data.datasets[19].label           = '_holdLowerBC';
+                chart.data.datasets[19].borderColor     = '#d97706';
+                chart.data.datasets[19].backgroundColor = 'rgba(217,119,6,0.12)';
+                chart.data.datasets[19].borderWidth     = 1.5;
+                chart.data.datasets[19].borderDash      = [4, 4];
+                chart.data.datasets[19].pointRadius     = 0;
+                chart.data.datasets[19].fill            = false;
+                chart.data.datasets[19].tension         = 0;
+
+                // Visibility
+                chart.getDatasetMeta(0).hidden  = false;
+                chart.getDatasetMeta(1).hidden  = true;
+                chart.getDatasetMeta(2).hidden  = false;
+                chart.getDatasetMeta(3).hidden  = false;
+                chart.getDatasetMeta(4).hidden  = false;
+                chart.getDatasetMeta(5).hidden  = true;
+                chart.getDatasetMeta(6).hidden  = true;
+                chart.getDatasetMeta(7).hidden  = true;
+                chart.getDatasetMeta(8).hidden  = true;
+                chart.getDatasetMeta(9).hidden  = true;
+                chart.getDatasetMeta(10).hidden = true;
+                chart.getDatasetMeta(11).hidden = true;
+                chart.getDatasetMeta(12).hidden = true;
+                chart.getDatasetMeta(13).hidden = false;
+                chart.getDatasetMeta(14).hidden = true;
+                chart.getDatasetMeta(15).hidden = true;
+                chart.getDatasetMeta(16).hidden = false;
+                chart.getDatasetMeta(17).hidden = false;
+                chart.getDatasetMeta(18).hidden = false;
+                chart.getDatasetMeta(19).hidden = false;
+
+                // Mantieni Catalogo card — applicable; show NPV, hide badge.
+                const holdValueElBC = document.getElementById('holdMainValue');
+                const holdBadgeElBC = document.getElementById('holdNotFeasibleBadge');
+                if (holdValueElBC) {
+                    holdValueElBC.textContent = formatEuro(r.holdNPV);
+                    holdValueElBC.style.display = '';
+                }
+                if (holdBadgeElBC) holdBadgeElBC.style.display = 'none';
 
                 chart.update();
             }
