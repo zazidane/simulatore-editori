@@ -1771,6 +1771,9 @@
 
         // Hold: receive royalties + third-party for T years, NPV at catalog risk rate (full catalog)
         const holdNPV = (fullCashFlow + fullThirdParty) * annuityFactor(T, s.riskRate / 100);
+        // Hold T0: first-year gross flow perceived by the publisher when keeping
+        // the full catalog (SIAE + third-party). Shown on the Mantieni card.
+        const holdCF0 = fullCashFlow + fullThirdParty;
 
         // Build chart labels
         const labels = [];
@@ -2154,6 +2157,7 @@
             royaltySaleCF0,
             saleCF0,
             holdNPV,
+            holdCF0,
             labels,
             rsNPV,
             saleNPV,
@@ -2684,7 +2688,7 @@
                 const holdValueElBC = document.getElementById('holdMainValue');
                 const holdBadgeElBC = document.getElementById('holdNotFeasibleBadge');
                 if (holdValueElBC) {
-                    holdValueElBC.textContent = formatEuro(r.holdNPV);
+                    holdValueElBC.textContent = formatEuro(r.holdCF0);
                     holdValueElBC.style.display = '';
                 }
                 if (holdBadgeElBC) holdBadgeElBC.style.display = 'none';
@@ -2872,7 +2876,7 @@
             const holdValueEl = document.getElementById('holdMainValue');
             const holdBadgeEl = document.getElementById('holdNotFeasibleBadge');
             if (holdValueEl) {
-                holdValueEl.textContent = formatEuro(r.holdNPV);
+                holdValueEl.textContent = formatEuro(r.holdCF0);
                 holdValueEl.style.display = feasible ? '' : 'none';
             }
             if (holdBadgeEl) holdBadgeEl.style.display = feasible ? 'none' : 'block';
