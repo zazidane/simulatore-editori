@@ -625,6 +625,8 @@
             padding: 24px 24px 24px 28px;
             overflow: hidden;
             transition: border-color 200ms ease, box-shadow 200ms ease;
+            display: flex;
+            flex-direction: column;
         }
         .result-card:hover {
             border-color: var(--border-strong);
@@ -679,9 +681,12 @@
         .rc-sub-label {
             font-size: 11px;
             font-weight: 600;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
             color: var(--text-tertiary);
+            margin-top: auto;
+            padding-top: 12px;
+            white-space: nowrap;
         }
 
         /* ===== CHART ===== */
@@ -909,7 +914,7 @@
                 </div>
                 <div class="scenario-card" id="sc-B" onclick="obSelectScenario('B')">
                     <div class="sc-letter">B</div>
-                    <div class="sc-label">Acquisto BTP Italia</div>
+                    <div class="sc-label">Investimento</div>
                 </div>
                 <div class="scenario-card" id="sc-C" onclick="obSelectScenario('C')">
                     <div class="sc-letter">C</div>
@@ -964,7 +969,7 @@
                 </div>
 
                 <div class="input-group" id="scenariPanel">
-                    <label class="input-label">Scenari di confronto</label>
+                    <label class="input-label">Scenari d'impiego dell'anticipo sui ricavi</label>
                     <div class="scenario-toggles">
                         <button class="scenario-toggle-btn" id="toggleScenarioA"
                                 data-scenario="A">
@@ -1014,8 +1019,8 @@
                                 data-scenario="B">
                             <span class="scenario-dot" id="dotB"></span>
                             <span class="scenario-text">
-                                <span class="scenario-label">Acquisto BTP Italia</span>
-                                <span class="scenario-description">Reinvesti l'anticipo in titoli di Stato italiani al tasso fisso del 3,5% annuo, con capitalizzazione composta.</span>
+                                <span class="scenario-label">Investimento</span>
+                                <span class="scenario-description">Reinvesti l'anticipo con un rendimento tra il 3% ed il 12% annuo lordo, con capitalizzazione composta.</span>
                             </span>
                         </button>
                         <div id="investmentSliderContainer" style="display:none; margin-top:12px;">
@@ -1130,14 +1135,14 @@
                 <div class="result-card royalty-sale">
                     <div class="rc-label">Anticipo sui Ricavi</div>
                     <div class="rc-main-value" id="rsCF0">—</div>
-                    <div class="rc-sub-label">Flusso di cassa ad anno 0</div>
+                    <div class="rc-sub-label">Flusso di cassa lordo ad anno 0</div>
                 </div>
 
                 <!-- Sale -->
                 <div class="result-card sale">
                     <div class="rc-label">Vendita Catalogo</div>
                     <div class="rc-main-value" id="saleCF0">—</div>
-                    <div class="rc-sub-label">Flusso di cassa ad anno 0</div>
+                    <div class="rc-sub-label">Flusso di cassa lordo ad anno 0</div>
                 </div>
 
                 <!-- Hold -->
@@ -1158,7 +1163,7 @@
                                 width:fit-content;">
                         Non applicabile
                     </div>
-                    <div class="rc-sub-label">Flusso di cassa ad anno 0</div>
+                    <div class="rc-sub-label">Flusso di cassa lordo ad anno 0</div>
                 </div>
             </div>
 
@@ -1384,7 +1389,7 @@
                 },
                 // [7] Scenario B — central line
                 {
-                    label: 'Anticipo e BTP',
+                    label: 'Anticipo ed investimento',
                     data: [],
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59,130,246,0.08)',
@@ -1606,7 +1611,7 @@
                                 'Vendita Catalogo':          { upper: 'Vendita Catalogo',  lower: '_saleLower' },
                                 'Mantieni Catalogo':         { upper: 'Mantieni Catalogo', lower: '_holdLower' },
                                 'Anticipo e spese':          { upper: '_scenarioAUpper',   lower: '_scenarioALower' },
-                                'Anticipo e BTP':            { upper: '_scenarioBUpper',   lower: '_scenarioBLower' },
+                                'Anticipo ed investimento': { upper: '_scenarioBUpper',   lower: '_scenarioBLower' },
                                 'Anticipo e nuovo catalogo': { upper: '_scenarioCUpper',   lower: '_scenarioCLower' },
                             };
 
@@ -2275,7 +2280,7 @@
                 // [4] Scenario B line — solid blue ("Acquisto BTP Italia"),
                 //     100%-investment extreme of the AB hybrid.
                 chart.data.datasets[4].data             = r.hybExtremeB_AB;
-                chart.data.datasets[4].label            = 'Anticipo e BTP';
+                chart.data.datasets[4].label            = 'Anticipo ed investimento';
                 chart.data.datasets[4].borderColor      = '#3b82f6';
                 chart.data.datasets[4].backgroundColor  = 'rgba(59,130,246,0.08)';
                 chart.data.datasets[4].borderWidth      = 2;
@@ -2292,7 +2297,7 @@
 
                 // [13] AB hybrid center — solid orange.
                 chart.data.datasets[13].data             = r.hybCenter_AB;
-                chart.data.datasets[13].label            = 'Curva ibrida AB';
+                chart.data.datasets[13].label            = 'Curva ibrida (spese e investimento)';
                 chart.data.datasets[13].borderColor      = '#f97316';
                 chart.data.datasets[13].backgroundColor  = 'rgba(249,115,22,0.12)';
                 chart.data.datasets[13].borderWidth      = 2.5;
@@ -2440,7 +2445,7 @@
 
                 // [13] AC hybrid center — solid orange.
                 chart.data.datasets[13].data             = r.hybCenter_AC;
-                chart.data.datasets[13].label            = 'Curva ibrida AC';
+                chart.data.datasets[13].label            = 'Curva ibrida (spese e nuovo catalogo)';
                 chart.data.datasets[13].borderColor      = '#f97316';
                 chart.data.datasets[13].backgroundColor  = 'rgba(249,115,22,0.12)';
                 chart.data.datasets[13].borderWidth      = 2.5;
@@ -2567,7 +2572,7 @@
                 // [3] Scenario B line — solid blue ("Acquisto BTP Italia"),
                 //     100%-BTP extreme of the BC hybrid.
                 chart.data.datasets[3].data             = r.hybExtremeB_BC;
-                chart.data.datasets[3].label            = 'Anticipo e BTP';
+                chart.data.datasets[3].label            = 'Anticipo ed investimento';
                 chart.data.datasets[3].borderColor      = '#3b82f6';
                 chart.data.datasets[3].backgroundColor  = 'rgba(59,130,246,0.08)';
                 chart.data.datasets[3].borderWidth      = 2;
@@ -2597,7 +2602,7 @@
 
                 // [13] BC hybrid center — solid orange.
                 chart.data.datasets[13].data             = r.hybCenter_BC;
-                chart.data.datasets[13].label            = 'Curva ibrida BC';
+                chart.data.datasets[13].label            = 'Curva ibrida (investimento e nuovo catalogo)';
                 chart.data.datasets[13].borderColor      = '#f97316';
                 chart.data.datasets[13].backgroundColor  = 'rgba(249,115,22,0.12)';
                 chart.data.datasets[13].borderWidth      = 2.5;
