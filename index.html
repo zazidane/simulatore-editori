@@ -1824,8 +1824,10 @@
         const saleUpper_A = new Array(CHART_YEARS + 1);
         const saleLower_A = new Array(CHART_YEARS + 1);
         const saleCumulative_A = new Array(CHART_YEARS + 1);
-        const saleRateUpper_A = SALE_BASE_RATE + RISK_SENSITIVITY * RISK_RATE_LOWER;
-        const saleRateLower_A = SALE_BASE_RATE + RISK_SENSITIVITY * RISK_RATE_UPPER;
+        // Scenario A — Vendita Catalogo bands: symmetric ±RISK_BAND_DELTA on saleCF0
+        // (value-symmetric, not rate-symmetric, to avoid the convex 1/x asymmetry).
+        const saleUpperValue_A = saleCF0 * (1 + RISK_BAND_DELTA);
+        const saleLowerValue_A = saleCF0 * (1 - RISK_BAND_DELTA);
         // Scenario B bands (all 6)
         const rsUpper_B    = new Array(CHART_YEARS + 1);
         const rsLower_B    = new Array(CHART_YEARS + 1);
@@ -1844,7 +1846,7 @@
 
         // t = 0 initial values for every band
         rsUpper_A[0]   = upper.cf0 - expAmt;     rsLower_A[0]   = lower.cf0 - expAmt;
-        saleUpper_A[0] = s.annualCashFlow / saleRateUpper_A; saleLower_A[0] = s.annualCashFlow / saleRateLower_A;
+        saleUpper_A[0] = saleUpperValue_A; saleLower_A[0] = saleLowerValue_A;
         saleCumulative_A[0] = saleCF0;
         rsUpper_B[0]   = upper.cf0;     rsLower_B[0]   = lower.cf0;
         saleUpper_B[0] = saleCF0;       saleLower_B[0] = saleCF0;
@@ -1924,8 +1926,8 @@
                         + afterTokenizationPerYear  * lower.flowMult * (t - T);
                 }
                 saleCumulative_A[t] = saleCF0;
-                saleUpper_A[t] = s.annualCashFlow / saleRateUpper_A;
-                saleLower_A[t] = s.annualCashFlow / saleRateLower_A;
+                saleUpper_A[t] = saleUpperValue_A;
+                saleLower_A[t] = saleLowerValue_A;
 
                 // Wave 6b — Scenario B bands (CF0 + flows compounded at band-specific ru/rl)
                 if (t <= T) {
@@ -2752,6 +2754,16 @@
             chart.getDatasetMeta(4).hidden = true;
             chart.getDatasetMeta(13).hidden = true;
 
+            // Scenario A perspective: the anticipo is fully absorbed by the
+            // immediate expenses ("Spese personali o aziendali"). The chart
+            // must therefore represent the NET cash position — so the
+            // Vendita Catalogo baseline shown alongside Scenario A is
+            // saleCF0 − anticipo, and the purple "Anticipo e spese" curve
+            // starts at 0. Cards are unaffected (they read saleCF0 and
+            // royaltySaleCF0 directly from r).
+            const anticipoNet = r.royaltySaleCF0;
+            const shiftA = (arr) => arr.map(v => v - anticipoNet);
+
             // Vendita Catalogo — uniform visual style across A/B/C:
             //   [0]   solid red midpoint with year dots
             //   [16]  dashed red upper bound (fills toward [17])
@@ -2767,9 +2779,13 @@
                 saleUpper   = r.saleUpper_C;
                 saleLower   = r.saleLower_C;
             } else {
-                saleCentral = r.saleCumulative_A;
-                saleUpper   = r.saleUpper_A;
-                saleLower   = r.saleLower_A;
+                // Pure Scenario A view: net of the spent anticipo. The band
+                // logic is unchanged — bounds shift by the same offset, so
+                // the existing ±RISK_BAND_DELTA spread is preserved and
+                // recentered on the new baseline.
+                saleCentral = shiftA(r.saleCumulative_A);
+                saleUpper   = shiftA(r.saleUpper_A);
+                saleLower   = shiftA(r.saleLower_A);
             }
             chart.data.datasets[0].data        = saleCentral;
             chart.data.datasets[0].borderDash  = [];
@@ -2803,11 +2819,15 @@
 
             chart.data.datasets[0].label = 'Vendita Catalogo';
 
-            // Wave 5 — FAIR comparison: each active scenario plots its three exit paths
+            // Wave 5 — FAIR comparison: each active scenario plots its three exit paths.
+            // Scenario A's "Anticipo e spese" curve must start at 0 at T0
+            // (anticipo fully spent on immediate expenses); the purple
+            // confidence band is shifted by the same offset so it stays
+            // centered on the new curve.
             if (state.activeScenarios.has('A')) {
-                chart.data.datasets[6].data = r.fairRS_A;
-                chart.data.datasets[14].data = r.rsUpper_A;
-                chart.data.datasets[15].data = r.rsLower_A;
+                chart.data.datasets[6].data  = shiftA(r.fairRS_A);
+                chart.data.datasets[14].data = shiftA(r.rsUpper_A);
+                chart.data.datasets[15].data = shiftA(r.rsLower_A);
             }
             if (state.activeScenarios.has('B')) {
                 chart.data.datasets[7].data = r.fairRS_B;
