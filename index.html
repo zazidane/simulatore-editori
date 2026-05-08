@@ -26,10 +26,10 @@
             /* Semantic card colors */
             --color-rs: #2563eb;
             --color-sale: #dc2626;
-            --color-hold: #d97706;
+            --color-hold: #eab308;
             --color-rs-band: rgba(37,99,235,0.08);
             --color-sale-band: rgba(220,38,38,0.08);
-            --color-hold-band: rgba(217,119,6,0.08);
+            --color-hold-band: rgba(234,179,8,0.08);
 
             /* Scenario accents (Anticipo variants) */
             --color-scenario-a: #8b5cf6;
@@ -1321,8 +1321,8 @@
                 {
                     label: 'Mantieni Catalogo',
                     data: [],
-                    borderColor: '#d97706',
-                    backgroundColor: 'rgba(217, 119, 6, 0.12)',
+                    borderColor: '#eab308',
+                    backgroundColor: 'rgba(234, 179, 8, 0.12)',
                     fill: '+3',
                     tension: 0,
                     pointRadius: 3,
@@ -1359,8 +1359,8 @@
                 {
                     label: '_holdLower',
                     data: [],
-                    borderColor: '#d97706',
-                    backgroundColor: 'rgba(217, 119, 6, 0.12)',
+                    borderColor: '#eab308',
+                    backgroundColor: 'rgba(234, 179, 8, 0.12)',
                     fill: false,
                     tension: 0,
                     pointRadius: 0,
@@ -1532,8 +1532,8 @@
                 {
                     label: '_holdUpperBand',
                     data: [],
-                    borderColor: '#d97706',
-                    backgroundColor: 'rgba(217, 119, 6, 0.12)',
+                    borderColor: '#eab308',
+                    backgroundColor: 'rgba(234, 179, 8, 0.12)',
                     fill: '+1',
                     tension: 0,
                     pointRadius: 0,
@@ -1545,8 +1545,8 @@
                 {
                     label: '_holdLowerBand',
                     data: [],
-                    borderColor: '#d97706',
-                    backgroundColor: 'rgba(217, 119, 6, 0.12)',
+                    borderColor: '#eab308',
+                    backgroundColor: 'rgba(234, 179, 8, 0.12)',
                     fill: false,
                     tension: 0,
                     pointRadius: 0,
@@ -2549,8 +2549,8 @@
                 //     Linear C-shape (starts at €0 at T0, grows linearly).
                 chart.data.datasets[2].data             = r.holdCumulative_C;
                 chart.data.datasets[2].label            = 'Mantieni Catalogo';
-                chart.data.datasets[2].borderColor      = '#d97706';
-                chart.data.datasets[2].backgroundColor  = 'rgba(217,119,6,0.12)';
+                chart.data.datasets[2].borderColor      = '#eab308';
+                chart.data.datasets[2].backgroundColor  = 'rgba(234,179,8,0.12)';
                 chart.data.datasets[2].borderWidth      = 2;
                 chart.data.datasets[2].borderDash       = [];
                 chart.data.datasets[2].pointRadius      = 2;
@@ -2632,8 +2632,8 @@
                 //      and widens over time.
                 chart.data.datasets[18].data            = r.holdUpper_C;
                 chart.data.datasets[18].label           = '_holdUpperBC';
-                chart.data.datasets[18].borderColor     = '#d97706';
-                chart.data.datasets[18].backgroundColor = 'rgba(217,119,6,0.12)';
+                chart.data.datasets[18].borderColor     = '#eab308';
+                chart.data.datasets[18].backgroundColor = 'rgba(234,179,8,0.12)';
                 chart.data.datasets[18].borderWidth     = 1.5;
                 chart.data.datasets[18].borderDash      = [4, 4];
                 chart.data.datasets[18].pointRadius     = 0;
@@ -2643,8 +2643,8 @@
                 // [19] Mantieni Catalogo lower bound — dashed orange, no fill.
                 chart.data.datasets[19].data            = r.holdLower_C;
                 chart.data.datasets[19].label           = '_holdLowerBC';
-                chart.data.datasets[19].borderColor     = '#d97706';
-                chart.data.datasets[19].backgroundColor = 'rgba(217,119,6,0.12)';
+                chart.data.datasets[19].borderColor     = '#eab308';
+                chart.data.datasets[19].backgroundColor = 'rgba(234,179,8,0.12)';
                 chart.data.datasets[19].borderWidth     = 1.5;
                 chart.data.datasets[19].borderDash      = [4, 4];
                 chart.data.datasets[19].pointRadius     = 0;
@@ -2861,15 +2861,15 @@
                     ds.backgroundColor      = 'rgba(209,213,219,0.15)';
                     ds.pointBackgroundColor = '#d1d5db';
                 } else {
-                    ds.borderColor          = '#d97706';
-                    ds.backgroundColor      = 'rgba(217, 119, 6, 0.12)';
-                    ds.pointBackgroundColor = '#d97706';
+                    ds.borderColor          = '#eab308';
+                    ds.backgroundColor      = 'rgba(234, 179, 8, 0.12)';
+                    ds.pointBackgroundColor = '#eab308';
                 }
             });
             // Mantieni central [2] — orange (only drawn when feasible per visibility above)
-            chart.data.datasets[2].borderColor          = '#d97706';
-            chart.data.datasets[2].backgroundColor      = 'rgba(217, 119, 6, 0.12)';
-            chart.data.datasets[2].pointBackgroundColor = '#d97706';
+            chart.data.datasets[2].borderColor          = '#eab308';
+            chart.data.datasets[2].backgroundColor      = 'rgba(234, 179, 8, 0.12)';
+            chart.data.datasets[2].pointBackgroundColor = '#eab308';
 
             chart.update();
         }
