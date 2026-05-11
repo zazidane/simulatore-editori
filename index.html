@@ -2019,10 +2019,13 @@
         const saleUpper_A = new Array(CHART_YEARS + 1);
         const saleLower_A = new Array(CHART_YEARS + 1);
         const saleCumulative_A = new Array(CHART_YEARS + 1);
-        // Scenario A — Vendita Catalogo bands: symmetric ±RISK_BAND_DELTA on saleCF0
+        // Vendita Catalogo bands: symmetric ±RISK_BAND_DELTA on saleCF0
         // (value-symmetric, not rate-symmetric, to avoid the convex 1/x asymmetry).
-        const saleUpperValue_A = saleCF0 * (1 + RISK_BAND_DELTA);
-        const saleLowerValue_A = saleCF0 * (1 - RISK_BAND_DELTA);
+        // Used by every scenario's Vendita Catalogo upper/lower envelope.
+        const saleCF0_high = saleCF0 * (1 + RISK_BAND_DELTA);
+        const saleCF0_low  = saleCF0 * (1 - RISK_BAND_DELTA);
+        const saleUpperValue_A = saleCF0_high;
+        const saleLowerValue_A = saleCF0_low;
         // Scenario B bands (all 6)
         const rsUpper_B    = new Array(CHART_YEARS + 1);
         const rsLower_B    = new Array(CHART_YEARS + 1);
@@ -2044,11 +2047,13 @@
         saleUpper_A[0] = saleUpperValue_A; saleLower_A[0] = saleLowerValue_A;
         saleCumulative_A[0] = saleCF0;
         rsUpper_B[0]   = upper.cf0;     rsLower_B[0]   = lower.cf0;
-        saleUpper_B[0] = saleCF0;       saleLower_B[0] = saleCF0;
-        saleCumulative_B[0] = saleCF0;
+        // Vendita Catalogo curve now shows NET returns above the deployed capital:
+        // the full saleCF0 is invested at T0, so the position (and its ±5% band) starts at 0.
+        saleUpper_B[0] = 0;             saleLower_B[0] = 0;
+        saleCumulative_B[0] = 0;
         holdUpper_B[0] = 0;             holdLower_B[0] = 0;
         rsUpper_C[0]   = upper.cf0;     rsLower_C[0]   = lower.cf0;
-        saleUpper_C[0] = saleCF0;       saleLower_C[0] = saleCF0;
+        saleUpper_C[0] = 0;             saleLower_C[0] = 0;
         holdUpper_C[0] = 0;             holdLower_C[0] = 0;
 
         // Investment-rate band values used by Scenario B band formulas
@@ -2068,6 +2073,9 @@
         const ncFlowMultLower = lower.flowMult * lower.flowMult;
         const ncUpper = (upper.cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO) * ncFlowMultUpper;
         const ncLower = (lower.cf0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO) * ncFlowMultLower;
+        // Pure C "Vendita Catalogo" annual revenue from the newly purchased catalog
+        // (SIAE + third-party). Reused below by the central and its ±5% flow band.
+        const saleNewCatalogAnnual_C = (saleCF0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO);
 
         for (let t = 0; t <= CHART_YEARS; t++) {
             // [DEAD CODE REMOVED — Ciclo Azimut FASE A] scenarioACumulative / scenarioBCumulative / scenarioCCumulative loop body: superseded by Wave 5 fairRS_* arrays.
@@ -2138,9 +2146,12 @@
                         + duringTokenizationPerYear * lower.flowMult * fva(T, rl) * Math.pow(1 + rl, t - T)
                         + afterTokenizationPerYear  * lower.flowMult * fva(t - T, rl);
                 }
-                saleUpper_B[t] = saleResidualCashUpper + investedSaleAmountUpper * Math.pow(1 + ru, t);
-                saleLower_B[t] = saleResidualCashLower + investedSaleAmountLower * Math.pow(1 + rl, t);
-                saleCumulative_B[t] = saleResidualCashCentral + investedSaleAmountCentral * Math.pow(1 + r, t);
+                // Entire saleCF0 deployed at T0; curve = compound net returns above principal.
+                // Band restores the original double-perturbation: catalog value ±RISK_BAND_DELTA
+                // (saleCF0_high/low) AND investment rate ±INV_RATE_DELTA_FACTOR (ru/rl).
+                saleUpper_B[t] = saleCF0_high * (Math.pow(1 + ru, t) - 1);
+                saleLower_B[t] = saleCF0_low  * (Math.pow(1 + rl, t) - 1);
+                saleCumulative_B[t] = saleCF0 * (Math.pow(1 + r, t) - 1);
                 holdUpper_B[t] = (s.annualCashFlow + thirdPartyPerYear) * upper.flowMult * fva(t, ru);
                 holdLower_B[t] = (s.annualCashFlow + thirdPartyPerYear) * lower.flowMult * fva(t, rl);
 
@@ -2158,8 +2169,12 @@
                         + (duringTokenizationPerYear * lower.flowMult + ncLower) * T
                         + (afterTokenizationPerYear  * lower.flowMult + ncLower) * (t - T);
                 }
-                saleUpper_C[t] = saleCF0 + ncUpper * t;
-                saleLower_C[t] = saleCF0 + ncLower * t;
+                // Band = ±5% on the periodic flow only, matching Mantieni Catalogo's
+                // semantic. saleCF0 is the deterministic sale price (shown on the KPI
+                // card), so it is NOT a forward-looking uncertainty source — only the
+                // newly-purchased catalog's year-over-year revenue is.
+                saleUpper_C[t] = saleNewCatalogAnnual_C * upper.flowMult * t;
+                saleLower_C[t] = saleNewCatalogAnnual_C * lower.flowMult * t;
                 holdUpper_C[t] = (s.annualCashFlow + thirdPartyPerYear) * upper.flowMult * t;
                 holdLower_C[t] = (s.annualCashFlow + thirdPartyPerYear) * lower.flowMult * t;
             }
@@ -2180,8 +2195,9 @@
         const saleCumulative_C = new Array(CHART_YEARS + 1);
         const holdCumulative_C = new Array(CHART_YEARS + 1);
         const newCatFlowCentral = (royaltySaleCF0 / ROYALTY_RATIO) * (1 + THIRD_PARTY_RATIO);
+        // saleNewCatalogAnnual_C declared earlier (used by the pure-C band inside the band loop).
         for (let t = 0; t <= CHART_YEARS; t++) {
-            saleCumulative_C[t] = saleCF0 + newCatFlowCentral * t;
+            saleCumulative_C[t] = saleNewCatalogAnnual_C * t;
             holdCumulative_C[t] = (s.annualCashFlow + thirdPartyPerYear) * t;
         }
 
@@ -2222,12 +2238,6 @@
         const newCatFlow_AC      = investimentoC_AC / ROYALTY_RATIO * tprPlus1;
         const newCatFlow_BC      = investimentoC_BC / ROYALTY_RATIO * tprPlus1;
         const newCatFlow_full    = anticipo         / ROYALTY_RATIO * tprPlus1;
-
-        // Vendita Catalogo undeployed baselines (±5% band on saleCF0)
-        const saleCF0_high = saleCF0 * (1 + RISK_BAND_DELTA);
-        const saleCF0_low  = saleCF0 * (1 - RISK_BAND_DELTA);
-        const undeployed_high = saleCF0_high - anticipo;
-        const undeployed_low  = saleCF0_low  - anticipo;
 
         // AB-style accumulation: M0 compounds at r and reinvests perceived flows;
         // at t=T the regime switches to full flows, with prior balance still compounding.
@@ -2281,27 +2291,32 @@
             hybExtremeB_AB[t] = abAccum(anticipo, t);
             hybCenter_AB[t]   = abAccum(investimentoB_AB, t);
 
-            // Vendita Catalogo: bounds FIXED at allocation extremes; central
-            // moves with the slider. expAmt=0 → central = upper (full BTP);
-            // expAmt=anticipo → central = lower (flat residual).
-            const undeployedAB = saleCF0 - anticipo;
-            venditaUpper_AB[t]  = undeployedAB + anticipo         * Math.pow(1 + invRate, t);
-            venditaLower_AB[t]  = undeployedAB;
-            venditaCenter_AB[t] = undeployedAB + investimentoB_AB * Math.pow(1 + invRate, t);
+            // Central: entire saleCF0 minus the absolute expense amount is invested at r;
+            // curve shows net compound returns above the deployed principal (T0 = 0).
+            // Bounds FIXED at the slider's allocation extremes:
+            //   Upper = expAmt=0 (100% invest) → full saleCF0 deployed.
+            //   Lower = expAmt=anticipo (100% expense) → only the residual saleCF0−anticipo invested.
+            const salesCF0Investita_AB = Math.max(0, saleCF0 - expAmt);
+            venditaUpper_AB[t]  = saleCF0                          * (Math.pow(1 + invRate, t) - 1);
+            venditaLower_AB[t]  = Math.max(0, saleCF0 - anticipo) * (Math.pow(1 + invRate, t) - 1);
+            venditaCenter_AB[t] = salesCF0Investita_AB             * (Math.pow(1 + invRate, t) - 1);
 
             // ── A+C ──────────────────────────────────────────────────────────
             hybExtremeA_AC[t] = linearOriginal;
             hybExtremeC_AC[t] = anticipo + linearOriginal + newCatFlow_full * t;
             hybCenter_AC[t]   = investimentoC_AC + linearOriginal + newCatFlow_AC * t;
 
-            // Vendita Catalogo: bounds FIXED at allocation extremes; central
-            // moves with the slider. expAmt=anticipo → central = lower (only
-            // undeployed cash, flat); expAmt=0 → central = upper (full new
-            // catalog principal + linear yield).
-            const undeployedAC = saleCF0 - anticipo;
-            venditaUpper_AC[t]  = undeployedAC + anticipo         + newCatFlow_full * t;
-            venditaLower_AC[t]  = undeployedAC;
-            venditaCenter_AC[t] = undeployedAC + investimentoC_AC + newCatFlow_AC   * t;
+            // Central: entire saleCF0 minus expense buys a new catalog whose annual
+            // revenue is salesCF0_for_catalog / ROYALTY_RATIO × (1 + THIRD_PARTY_RATIO).
+            // The +20% third-party multiplier matches "Mantieni" so an equivalent
+            // catalog purchase yields the same total annual flow. T0 = 0.
+            // Bounds FIXED at the slider's allocation extremes:
+            //   Upper = expAmt=0 (100% new catalog) → full saleCF0 deployed.
+            //   Lower = expAmt=anticipo (100% expense) → only the residual saleCF0−anticipo deployed.
+            const salesCF0ForCatalog_AC = Math.max(0, saleCF0 - expAmt);
+            venditaUpper_AC[t]  = (saleCF0                          / ROYALTY_RATIO) * tprPlus1 * t;
+            venditaLower_AC[t]  = (Math.max(0, saleCF0 - anticipo) / ROYALTY_RATIO) * tprPlus1 * t;
+            venditaCenter_AC[t] = (salesCF0ForCatalog_AC             / ROYALTY_RATIO) * tprPlus1 * t;
 
             // ── B+C ──────────────────────────────────────────────────────────
             // Heterogeneous: B compounds, C is linear, original flows are LINEAR
@@ -2317,16 +2332,20 @@
                               + newCatFlow_BC * t
                               + linearOriginal;
 
-            // Vendita Catalogo: bounds FIXED at allocation extremes; central
-            // moves with the slider. α=1 (all BTP) → central = lower (B
-            // extreme); α=0 (all new catalog) → central = upper (C extreme).
-            const undeployedBC = saleCF0 - anticipo;
-            venditaUpper_BC[t]  = undeployedBC + anticipo + newCatFlow_full * t;
-            venditaLower_BC[t]  = undeployedBC + anticipo * Math.pow(1 + invRate, t);
-            venditaCenter_BC[t] = undeployedBC
-                                + investimentoB_BC * Math.pow(1 + invRate, t)
-                                + investimentoC_BC
-                                + newCatFlow_BC * t;
+            // Central: split the FULL saleCF0 with the same α slider — α invested
+            // at r (net compound returns above principal), 1−α buys a new catalog
+            // whose annual revenue is principal / ROYALTY_RATIO × (1 + THIRD_PARTY_RATIO).
+            // The +20% third-party multiplier matches "Mantieni". T0 = 0.
+            // Bounds FIXED at the slider's allocation extremes (same labelling as
+            // the original code):
+            //   Upper = α=0 (100% new catalog) → linear (saleCF0/ROYALTY_RATIO)·tprPlus1·t.
+            //   Lower = α=1 (100% BTP)        → compound saleCF0·((1+invRate)^t−1).
+            const salesCF0_B_BC = saleCF0 * alpha;
+            const salesCF0_C_BC = saleCF0 * (1 - alpha);
+            venditaUpper_BC[t]  = (saleCF0 / ROYALTY_RATIO) * tprPlus1 * t;
+            venditaLower_BC[t]  = saleCF0 * (Math.pow(1 + invRate, t) - 1);
+            venditaCenter_BC[t] = salesCF0_B_BC * (Math.pow(1 + invRate, t) - 1)
+                                + (salesCF0_C_BC / ROYALTY_RATIO) * tprPlus1 * t;
         }
 
         return {
