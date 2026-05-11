@@ -4541,6 +4541,27 @@
         syncIntakeCard(document.getElementById('intakeCardCashflow'), state.annualCashFlow);
     }
 
+    // Derive tokenPct + path from the two intake inputs and mirror them to
+    // the simulator controls. Reuses backCalculate so the upfront figure
+    // produced by the engine lands near the user's funding target instead
+    // of defaulting to 100% tokenization. The user can still override the
+    // sliders after this initial configuration.
+    function applyAutoConfig() {
+        if (state.financingTarget <= 0 || state.annualCashFlow <= 0) return;
+        const result = backCalculate(state.financingTarget, state.annualCashFlow);
+        state.tokenPct  = result.tokenPct;
+        state.path      = result.path;
+        state.nCatalogs = result.nCatalogs;
+        const slider  = document.getElementById('tokenPct');
+        const display = document.getElementById('tokenPctDisplay');
+        if (slider)  slider.value = state.tokenPct;
+        if (display) display.textContent = state.tokenPct + '%';
+        const btnInstant    = document.getElementById('btnInstant');
+        const btnAggregated = document.getElementById('btnAggregated');
+        if (btnInstant)    btnInstant.classList.toggle('active', state.path === 'instant');
+        if (btnAggregated) btnAggregated.classList.toggle('active', state.path === 'aggregated');
+    }
+
     // =========================================
     //  EVENT HANDLERS
     // =========================================
@@ -4548,12 +4569,14 @@
         state.annualCashFlow = parseEuroInput(e.target.value);
         state.actualCashFlow = state.annualCashFlow;
         refreshSimulatorActivation();
+        applyAutoConfig();
         updateUI();
     });
 
     document.getElementById('financingTarget').addEventListener('input', function(e) {
         state.financingTarget = parseEuroInput(e.target.value);
         refreshSimulatorActivation();
+        applyAutoConfig();
         updateUI();
     });
 
@@ -4722,12 +4745,15 @@
         const feePerPublisher = ORIGINATION_FEE / nCatalogs;
 
         // Step 3: Compute required annual flow Y for this publisher
-        // Use the same investor rate as calculate(s) for consistency
+        // Use the same investor rate as calculate(s) for consistency. Read
+        // timeHorizon and riskRate from current state so derivation stays
+        // aligned with the engine when the user has adjusted those sliders.
         const fullPackageValue = Z * ROYALTY_RATIO * nCatalogs;
         const tier = TIERS.find(t => fullPackageValue >= t.minValue);
-        const DEFAULT_RISK_RATE = 0.10;
-        const actualInvestorRate = tier.baseSpread + RISK_SENSITIVITY * DEFAULT_RISK_RATE;
-        const Y = (X + feePerPublisher) / annuityFactor(10, actualInvestorRate);
+        const riskRateForCalc = (state.riskRate || 10) / 100;
+        const horizonForCalc = state.timeHorizon || 10;
+        const actualInvestorRate = tier.baseSpread + RISK_SENSITIVITY * riskRateForCalc;
+        const Y = (X + feePerPublisher) / annuityFactor(horizonForCalc, actualInvestorRate);
 
         // Step 4: Determine tokenPct
         let tokenPct, path, message;
