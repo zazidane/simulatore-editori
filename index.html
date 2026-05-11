@@ -115,96 +115,80 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 32px;
-            height: 68px;
-            background: rgba(7, 11, 20, 0.88);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 0 36px;
+            height: 64px;
+            background: rgba(7, 11, 20, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .navbar-left {
-            flex: 1;
+        .navbar-logo-wrapper {
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            transition: opacity 0.2s ease;
         }
 
-        .navbar-center {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
+        .navbar-logo-wrapper:hover {
+            opacity: 0.80;
         }
 
-        .brand-logo {
-            height: 48px;
+        .brand-logo-svg {
+            height: 32px;
             width: auto;
-            object-fit: contain;
-            /* Logo PNG ships with a white backdrop. Invert + hue-rotate flips
-               that white to near-black while keeping the blue mark's hue;
-               mix-blend-mode: lighten then drops the now-dark backdrop into
-               the navbar background, leaving only the logo visible. */
-            filter: invert(1) hue-rotate(180deg);
-            mix-blend-mode: lighten;
-            background: transparent;
-            border: none;
-            box-shadow: none;
             display: block;
+            cursor: pointer;
+            flex-shrink: 0;
         }
 
-        .navbar-center .brand-logo {
-            pointer-events: auto;
+        .brand-logo-svg:hover text {
+            fill: #F1F5F9;
+            transition: fill 0.2s ease;
         }
 
         .navbar-right {
-            flex: 1;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
         }
 
-        .navbar-home {
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            font-weight: 500;
-            color: #94A3B8;
-            text-decoration: none;
-            letter-spacing: 0.02em;
-            transition: color 0.2s ease;
-            padding: 8px 0;
-        }
-
-        .navbar-home:hover {
-            color: #F1F5F9;
-        }
-
-        .navbar-cta {
+        .navbar-about-btn {
             font-family: 'Inter', sans-serif;
             font-size: 13px;
             font-weight: 600;
-            color: #ffffff;
-            background: #3B82F6;
-            border: none;
+            color: #BFDBFE;
+            text-decoration: none;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 9px 20px;
+            border: 1px solid rgba(59, 130, 246, 0.45);
             border-radius: 8px;
-            padding: 10px 20px;
+            background: linear-gradient(135deg,
+                        rgba(59, 130, 246, 0.18) 0%,
+                        rgba(59, 130, 246, 0.08) 100%);
+            box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+            transition: color 0.2s ease,
+                        border-color 0.2s ease,
+                        background 0.2s ease,
+                        box-shadow 0.2s ease;
             cursor: pointer;
-            letter-spacing: 0.01em;
-            transition: background 0.2s ease, box-shadow 0.2s ease;
-            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
         }
 
-        .navbar-cta:hover {
-            background: #60A5FA;
-            box-shadow: 0 0 16px rgba(59, 130, 246, 0.40);
+        .navbar-about-btn:hover {
+            color: #EFF6FF;
+            border-color: rgba(96, 165, 250, 0.75);
+            background: linear-gradient(135deg,
+                        rgba(59, 130, 246, 0.32) 0%,
+                        rgba(59, 130, 246, 0.18) 100%);
+            box-shadow: 0 0 18px rgba(59, 130, 246, 0.35);
         }
 
-        .navbar-cta:active {
-            background: #1D4ED8;
-            box-shadow: none;
+        .navbar-about-btn:active {
+            background: linear-gradient(135deg,
+                        rgba(29, 78, 216, 0.40) 0%,
+                        rgba(29, 78, 216, 0.22) 100%);
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.25);
         }
 
         /* ===== APP LAYOUT ===== */
@@ -909,9 +893,8 @@
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .synthonia-navbar { padding: 0 16px; height: 60px; }
-            .brand-logo { height: 36px; }
-            .navbar-home { font-size: 12px; }
-            .navbar-cta { font-size: 12px; padding: 8px 14px; }
+            .brand-logo-svg { height: 28px; }
+            .navbar-about-btn { font-size: 12px; padding: 8px 14px; }
             .app-container {
                 grid-template-columns: 1fr;
                 padding: 20px 16px;
@@ -985,16 +968,32 @@
     </svg>
 
     <header class="synthonia-navbar">
-        <nav class="navbar-left">
-            <a href="#" class="navbar-home">Home</a>
-        </nav>
-
-        <div class="navbar-center">
-            <img src="assets/logo/synthonia-logo.png" alt="Synthonia" class="brand-logo">
+        <div class="navbar-logo-wrapper"
+             onclick="document.getElementById('simulator').classList.add('hidden'); document.getElementById('onboarding').classList.remove('hidden'); obShowStep(1);"
+             style="cursor: pointer;" role="button" aria-label="Torna alla home">
+            <svg class="brand-logo-svg" width="200" height="32" viewBox="0 0 200 32"
+                 xmlns="http://www.w3.org/2000/svg" aria-label="Synthonia">
+                <text x="0" y="16"
+                      font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+                      font-weight="300" font-size="16" letter-spacing="4"
+                      fill="#E2E8F0" dominant-baseline="middle" text-anchor="start">SYNTH</text>
+                <g transform="translate(86, 16)">
+                    <circle r="7" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+                    <circle r="5.5" fill="none" stroke="rgba(226,232,240,0.35)" stroke-width="0.5"/>
+                    <circle r="4" fill="none" stroke="rgba(226,232,240,0.35)" stroke-width="0.5"/>
+                    <circle r="2.5" fill="none" stroke="rgba(226,232,240,0.35)" stroke-width="0.5"/>
+                    <circle r="2" fill="#3B82F6"/>
+                    <circle r="0.8" fill="#070B14"/>
+                </g>
+                <text x="100" y="16"
+                      font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+                      font-weight="300" font-size="16" letter-spacing="4"
+                      fill="#E2E8F0" dominant-baseline="middle" text-anchor="start">NIA</text>
+            </svg>
         </div>
 
         <nav class="navbar-right">
-            <button class="navbar-cta" onclick="obNext(1, true)">Calcola il tuo Anticipo &rarr;</button>
+            <a href="#about" class="navbar-about-btn">About us</a>
         </nav>
     </header>
 
@@ -3090,6 +3089,16 @@
 
             chart.update();
         }
+
+        // FIX-1: hide Mantieni Catalogo entirely when NOT FEASIBLE (scenario A
+        // active without B/C). Covers main line [2] and the envelope bands
+        // [18][19] that together form the curve across all branches.
+        const _holdNotFeasible = !r.isHoldFeasible;
+        [2, 18, 19].forEach(idx => {
+            chart.data.datasets[idx].hidden = _holdNotFeasible;
+            chart.getDatasetMeta(idx).hidden = _holdNotFeasible;
+        });
+        chart.update();
 
         initScenarioPanel();
 
