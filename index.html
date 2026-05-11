@@ -73,7 +73,7 @@
             padding: 0;
         }
 
-        html { background: var(--color-bg-base); }
+        html { background: var(--color-bg-base); scroll-behavior: smooth; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 15px;
@@ -881,6 +881,265 @@
             font-weight: 600;
         }
 
+        /* ===== SIMULATOR INTAKE (top horizontal section) ===== */
+        .sim-intake {
+            position: relative;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 40px 32px 28px;
+            background:
+                radial-gradient(ellipse 70% 100% at 50% 0%, rgba(59, 130, 246, 0.14) 0%, transparent 65%),
+                linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, rgba(7, 11, 20, 0) 100%);
+            border-bottom: 1px solid rgba(59, 130, 246, 0.18);
+        }
+        .sim-intake::before,
+        .sim-intake::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(59, 130, 246, 0.35) 0%, transparent 100%);
+            pointer-events: none;
+        }
+        .sim-intake::before { left: 24px; }
+        .sim-intake::after  { right: 24px; }
+
+        .sim-intake-head {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 24px;
+            max-width: 720px;
+        }
+        .sim-intake-eyebrow {
+            font-family: var(--font-mono, 'JetBrains Mono', 'SF Mono', monospace);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--color-accent-hover);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sim-intake-eyebrow::before {
+            content: '';
+            width: 28px;
+            height: 1px;
+            background: currentColor;
+            opacity: 0.7;
+        }
+        .sim-intake-title {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(24px, 2.6vw, 32px);
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            color: var(--color-text-primary);
+            margin: 0;
+        }
+        .sim-intake-subtitle {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            line-height: 1.55;
+            margin: 0;
+            max-width: 540px;
+        }
+
+        .sim-intake-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .sim-intake-card {
+            position: relative;
+            background: rgba(13, 20, 33, 0.85);
+            border: 1px solid rgba(59, 130, 246, 0.18);
+            border-radius: 14px;
+            padding: 22px 24px 24px;
+            transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+        }
+        .sim-intake-card::before,
+        .sim-intake-card::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border: 1px solid rgba(96, 165, 250, 0.45);
+            pointer-events: none;
+        }
+        .sim-intake-card::before {
+            top: -1px;
+            right: -1px;
+            border-bottom: none;
+            border-left: none;
+            border-top-right-radius: 14px;
+        }
+        .sim-intake-card::after {
+            bottom: -1px;
+            left: -1px;
+            border-top: none;
+            border-right: none;
+            border-bottom-left-radius: 14px;
+        }
+        .sim-intake-card:focus-within {
+            border-color: rgba(96, 165, 250, 0.55);
+            box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.25), 0 12px 32px -16px rgba(59, 130, 246, 0.55);
+            transform: translateY(-1px);
+        }
+        .sim-intake-card.is-filled {
+            border-color: rgba(96, 165, 250, 0.4);
+            box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.2), 0 0 36px -10px rgba(59, 130, 246, 0.35);
+        }
+
+        .sim-intake-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .sim-intake-step {
+            font-family: var(--font-mono, 'JetBrains Mono', 'SF Mono', monospace);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            color: var(--color-chrome-dark);
+            text-transform: uppercase;
+        }
+        .sim-intake-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: transparent;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+        }
+        .sim-intake-card.is-filled .sim-intake-status {
+            background: var(--color-accent-hover);
+            border-color: var(--color-accent-hover);
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.7);
+        }
+
+        .sim-intake-label {
+            display: block;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            color: var(--color-text-primary);
+            margin-bottom: 6px;
+        }
+        .sim-intake-hint {
+            font-size: 13px;
+            color: var(--color-chrome-dark);
+            line-height: 1.5;
+            margin: 0 0 18px;
+        }
+
+        .sim-intake-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .sim-intake-euro {
+            position: absolute;
+            left: 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--color-chrome-dark);
+            pointer-events: none;
+            transition: color 200ms ease;
+        }
+        .sim-intake-card:focus-within .sim-intake-euro,
+        .sim-intake-card.is-filled .sim-intake-euro { color: var(--color-text-primary); }
+        .sim-intake-input {
+            width: 100%;
+            padding: 14px 16px 14px 36px;
+            background: rgba(7, 11, 20, 0.6);
+            border: 1px solid rgba(59, 130, 246, 0.18);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            font-variant-numeric: tabular-nums;
+            outline: none;
+            letter-spacing: -0.01em;
+            transition: border-color 200ms ease, background 200ms ease;
+        }
+        .sim-intake-input::placeholder {
+            color: var(--color-chrome-muted);
+            font-weight: 400;
+        }
+        .sim-intake-input:focus {
+            border-color: var(--color-accent-hover);
+            background: rgba(7, 11, 20, 0.85);
+        }
+
+        /* ===== SIMULATOR LOCKED STATE ===== */
+        #simulator[data-active="false"] .app-container {
+            position: relative;
+            opacity: 0.42;
+            filter: saturate(0.6);
+            pointer-events: none;
+            user-select: none;
+        }
+        #simulator[data-active="false"] .app-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(7, 11, 20, 0.0) 0%, rgba(7, 11, 20, 0.4) 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+        .sim-locked-banner {
+            display: none;
+            max-width: 1440px;
+            margin: 16px auto 0;
+            padding: 0 32px;
+        }
+        #simulator[data-active="false"] .sim-locked-banner {
+            display: block;
+        }
+        .sim-locked-banner-inner {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(13, 20, 33, 0.7);
+            border: 1px dashed rgba(96, 165, 250, 0.45);
+            border-radius: 999px;
+            font-family: var(--font-mono, 'JetBrains Mono', 'SF Mono', monospace);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--color-chrome-light);
+        }
+        .sim-locked-banner-inner::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--color-accent-hover);
+            box-shadow: 0 0 8px var(--color-accent-hover);
+            animation: simLockedPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes simLockedPulse {
+            0%, 100% { opacity: 1; }
+            50%      { opacity: 0.4; }
+        }
+
+        @media (max-width: 768px) {
+            .sim-intake { padding: 28px 20px 20px; }
+            .sim-intake::before, .sim-intake::after { display: none; }
+            .sim-intake-grid { grid-template-columns: 1fr; gap: 14px; }
+            .sim-intake-card { padding: 18px 18px 20px; }
+            .sim-intake-input { font-size: 18px; padding: 12px 14px 12px 32px; }
+            .sim-locked-banner { padding: 0 20px; }
+        }
+
         /* ===== SCROLLBAR ===== */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: var(--color-bg-base); }
@@ -957,6 +1216,729 @@
             padding-top: 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
+
+        /* ============================================================
+           LANDING PAGE — observatory-grade tech aesthetic
+           ============================================================ */
+        :root {
+            --font-mono: ui-monospace, "SF Mono", "JetBrains Mono",
+                         Menlo, Consolas, monospace;
+        }
+
+        #landing.hidden { display: none; }
+
+        .landing {
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        /* ---------- BACKDROP (persistent within landing) ---------- */
+        .lp-backdrop {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .lp-grid {
+            position: absolute;
+            inset: -40px;
+            background-image:
+                /* major every 4th line (256px) — slightly stronger */
+                linear-gradient(to right, rgba(226,232,240,0.08) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(226,232,240,0.08) 1px, transparent 1px),
+                /* minor 64px grid */
+                linear-gradient(to right, rgba(226,232,240,0.035) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(226,232,240,0.035) 1px, transparent 1px);
+            background-size:
+                256px 256px, 256px 256px,
+                64px 64px, 64px 64px;
+            -webkit-mask-image: radial-gradient(
+                ellipse 80% 70% at 50% 40%,
+                #000 30%, transparent 80%);
+                    mask-image: radial-gradient(
+                ellipse 80% 70% at 50% 40%,
+                #000 30%, transparent 80%);
+        }
+        .lp-orb {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            width: 1200px;
+            height: 1200px;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle,
+                        rgba(29, 78, 216, 0.16) 0%,
+                        rgba(29, 78, 216, 0.06) 30%,
+                        transparent 60%);
+            filter: blur(60px);
+            animation: lp-orb-drift 60s ease-in-out infinite alternate;
+        }
+        @keyframes lp-orb-drift {
+            0%   { transform: translate(-50%, -50%) translate(-50px, -30px); }
+            50%  { transform: translate(-50%, -50%) translate( 40px,  20px); }
+            100% { transform: translate(-50%, -50%) translate(-30px,  30px); }
+        }
+        .lp-noise {
+            position: absolute;
+            inset: 0;
+            opacity: 0.025;
+            mix-blend-mode: overlay;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.4 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+        }
+
+        /* ---------- COMMON CONTAINER ---------- */
+        .lp-container {
+            position: relative;
+            z-index: 2;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 48px;
+        }
+
+        /* ---------- HERO ---------- */
+        .lp-hero {
+            position: relative;
+            min-height: calc(100vh - 64px);
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+            gap: 64px;
+            align-items: center;
+            padding: 80px 0 96px;
+        }
+        .lp-hero-left {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            max-width: 640px;
+        }
+        .lp-marker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--color-chrome-muted);
+            margin-bottom: 28px;
+        }
+        .lp-marker::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 1px;
+            background: var(--color-chrome-muted);
+        }
+        .lp-h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(44px, 6.4vw, 88px);
+            font-weight: 500;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            color: var(--color-text-primary);
+            margin: 0 0 28px;
+        }
+        .lp-accent {
+            position: relative;
+            display: inline-block;
+            padding-bottom: 0.08em;
+            background: linear-gradient(135deg, #60A5FA 0%, #E2E8F0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+        .lp-accent::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            height: 1px;
+            width: 100%;
+            background: rgba(59, 130, 246, 0.6);
+            transform-origin: left center;
+            transform: scaleX(0);
+            transition: transform 800ms cubic-bezier(0.22, 1, 0.36, 1) 400ms;
+        }
+        #landing.is-loaded .lp-accent::after { transform: scaleX(1); }
+
+        .lp-lead {
+            font-size: clamp(16px, 1.4vw, 19px);
+            font-weight: 400;
+            letter-spacing: -0.01em;
+            line-height: 1.5;
+            color: var(--color-text-secondary);
+            max-width: 520px;
+            margin: 0 0 44px;
+        }
+
+        .lp-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            height: 52px;
+            padding: 0 28px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #DCEAFF 100%);
+            color: #070B14;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            overflow: hidden;
+            box-shadow:
+                0 0 0 1px rgba(96, 165, 250, 0.45),
+                0 10px 28px -10px rgba(59, 130, 246, 0.55),
+                0 0 32px -4px rgba(59, 130, 246, 0.35);
+            transition: background 200ms ease, box-shadow 220ms ease, transform 220ms ease;
+        }
+        .lp-cta::before {
+            /* inner top highlight for glassy depth */
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, transparent 40%);
+            opacity: 1;
+            transition: opacity 180ms ease;
+            pointer-events: none;
+        }
+        .lp-cta::after {
+            /* specular sweep */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(115deg,
+                        transparent 0%,
+                        rgba(255, 255, 255, 0.7) 50%,
+                        transparent 100%);
+            transform: skewX(-20deg);
+            transition: left 700ms cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+        }
+        .lp-cta:hover {
+            background: linear-gradient(180deg, #FFFFFF 0%, #BFDBFE 100%);
+            box-shadow:
+                0 0 0 1px rgba(96, 165, 250, 0.7),
+                0 14px 36px -10px rgba(59, 130, 246, 0.7),
+                0 0 48px -4px rgba(59, 130, 246, 0.5);
+            transform: translateY(-1px);
+        }
+        .lp-cta:hover::after { left: 140%; }
+        .lp-cta .lp-cta-arrow {
+            width: 12px;
+            height: 12px;
+            transition: transform 200ms ease;
+        }
+        .lp-cta:hover .lp-cta-arrow { transform: translateX(4px); }
+
+        /* ---------- HERO SIGNATURE (waveform → revenue) ---------- */
+        .lp-hero-right {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: center;
+        }
+        .lp-signature-frame {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 380 / 280;
+            max-width: 480px;
+            margin-left: auto;
+        }
+        .lp-signature-frame::before,
+        .lp-signature-frame::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+        }
+        .lp-signature-frame::before {
+            top: 0; left: 0;
+            border-right: none; border-bottom: none;
+        }
+        .lp-signature-frame::after {
+            bottom: 0; right: 0;
+            border-left: none; border-top: none;
+        }
+        .lp-signature-frame .lp-corner-tr,
+        .lp-signature-frame .lp-corner-bl {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+        }
+        .lp-signature-frame .lp-corner-tr {
+            top: 0; right: 0;
+            border-left: none; border-bottom: none;
+        }
+        .lp-signature-frame .lp-corner-bl {
+            bottom: 0; left: 0;
+            border-right: none; border-top: none;
+        }
+        .lp-signature {
+            width: 100%;
+            height: 100%;
+            display: block;
+            overflow: visible;
+        }
+        .lp-sig-axis {
+            stroke: rgba(148, 163, 184, 0.22);
+            stroke-width: 0.6;
+            stroke-dasharray: 2 4;
+            fill: none;
+        }
+        .lp-sig-path {
+            fill: none;
+            stroke: url(#lp-sig-gradient);
+            stroke-width: 1.4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 1400;
+            stroke-dashoffset: 1400;
+            transition: stroke-dashoffset 1400ms cubic-bezier(0.65, 0, 0.35, 1) 200ms;
+        }
+        #landing.is-loaded .lp-sig-path { stroke-dashoffset: 0; }
+        .lp-sig-dot {
+            fill: #60A5FA;
+            filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.65));
+            opacity: 0;
+            transition: opacity 400ms ease 1600ms;
+        }
+        #landing.is-loaded .lp-sig-dot { opacity: 1; }
+        .lp-sig-captions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            color: var(--color-chrome-muted);
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: 0;
+        }
+        .lp-sig-tag {
+            position: absolute;
+            top: -22px;
+            left: 0;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--color-chrome-muted);
+        }
+        .lp-sig-tag-right {
+            position: absolute;
+            top: -22px;
+            right: 0;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--color-accent);
+        }
+
+        /* ---------- SECTION SCAFFOLDING ---------- */
+        .lp-section {
+            position: relative;
+            padding: 120px 0;
+        }
+        .lp-section-rule {
+            position: relative;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 48px;
+        }
+        .lp-section-rule::before {
+            content: '';
+            display: block;
+            height: 1px;
+            background: linear-gradient(to right,
+                        transparent 0%,
+                        rgba(226, 232, 240, 0.08) 20%,
+                        rgba(226, 232, 240, 0.08) 80%,
+                        transparent 100%);
+        }
+        .lp-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--color-chrome-muted);
+            margin-bottom: 28px;
+        }
+        .lp-eyebrow::before {
+            content: '';
+            display: inline-block;
+            width: 18px;
+            height: 1px;
+            background: var(--color-accent);
+        }
+        .lp-h2 {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(34px, 4.4vw, 52px);
+            font-weight: 500;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+            color: var(--color-text-primary);
+            margin: 0 0 24px;
+        }
+        .lp-body {
+            font-size: clamp(15px, 1.2vw, 18px);
+            font-weight: 400;
+            letter-spacing: -0.005em;
+            line-height: 1.6;
+            color: var(--color-chrome-mid);
+        }
+
+        /* ---------- VALUE PROP ---------- */
+        .lp-value {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 80px;
+            align-items: center;
+        }
+        .lp-value-left { max-width: 480px; }
+        .lp-flow-frame {
+            position: relative;
+            width: 100%;
+            max-width: 520px;
+            margin-left: auto;
+        }
+        .lp-flow {
+            width: 100%;
+            height: auto;
+            display: block;
+            overflow: visible;
+        }
+        .lp-flow .lp-flow-cell {
+            fill: transparent;
+            stroke: rgba(148, 163, 184, 0.32);
+            stroke-width: 1;
+        }
+        .lp-flow .lp-flow-arc {
+            fill: none;
+            stroke: rgba(96, 165, 250, 0.5);
+            stroke-width: 1;
+            stroke-dasharray: 600;
+            stroke-dashoffset: 600;
+        }
+        .lp-flow.is-visible .lp-flow-arc {
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1200ms cubic-bezier(0.65, 0, 0.35, 1);
+        }
+        .lp-flow .lp-flow-now {
+            fill: var(--color-accent);
+            stroke: var(--color-accent);
+        }
+        .lp-flow-caption {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+        }
+        .lp-flow-caption.dim { fill: var(--color-chrome-muted); }
+        .lp-flow-caption.accent { fill: var(--color-accent); }
+        .lp-flow-traveller {
+            fill: #60A5FA;
+            opacity: 0;
+        }
+        .lp-flow.is-visible .lp-flow-traveller {
+            opacity: 1;
+            animation: lp-flow-travel 4s ease-in-out 1300ms infinite;
+        }
+        @keyframes lp-flow-travel {
+            0%, 100% { offset-distance: 0%; }
+            50%      { offset-distance: 100%; }
+        }
+
+        /* ---------- BENEFIT CARDS ---------- */
+        .lp-benefits-wrap {
+            position: relative;
+        }
+        .lp-benefits {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            position: relative;
+        }
+        .lp-benefits::before,
+        .lp-benefits::after {
+            content: '';
+            position: absolute;
+            top: 24px;
+            bottom: 24px;
+            width: 1px;
+            background: rgba(226, 232, 240, 0.08);
+            pointer-events: none;
+        }
+        .lp-benefits::before { left: 33.333%; }
+        .lp-benefits::after  { left: 66.666%; }
+
+        .lp-card {
+            position: relative;
+            padding: 48px 36px;
+            min-height: 320px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .lp-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            height: 1px;
+            width: 0;
+            background: var(--color-accent);
+            transition: width 500ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .lp-card:hover::before { width: 100%; }
+
+        .lp-card-index {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            color: var(--color-accent);
+            margin-bottom: 48px;
+            transition: color 250ms ease;
+        }
+        .lp-card:hover .lp-card-index { color: #60A5FA; }
+
+        .lp-card-icon {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 32px;
+        }
+        .lp-card-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke: var(--color-chrome-light);
+            stroke-width: 1.25;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke 250ms ease;
+        }
+        .lp-card:hover .lp-card-icon svg { stroke: #F1F5F9; }
+
+        .lp-card h3 {
+            font-family: 'Inter', sans-serif;
+            font-size: 22px;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            color: var(--color-text-primary);
+            margin: 0 0 16px;
+        }
+        .lp-card p {
+            font-size: 15px;
+            font-weight: 400;
+            line-height: 1.55;
+            color: var(--color-chrome-dark);
+            margin: 0;
+        }
+
+        /* ---------- CONTACT ---------- */
+        .lp-contact-intro {
+            max-width: 560px;
+            margin-bottom: 56px;
+        }
+        .lp-contact-intro .lp-h2 { font-size: clamp(30px, 3.4vw, 40px); }
+        .lp-founders {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .lp-founder {
+            position: relative;
+            display: block;
+            padding: 32px;
+            background: #0D1421;
+            border: 1px solid rgba(226, 232, 240, 0.06);
+            border-radius: 14px;
+            text-decoration: none;
+            overflow: hidden;
+            transition: border-color 250ms ease;
+        }
+        .lp-founder::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(115deg,
+                        transparent 0%,
+                        rgba(96, 165, 250, 0.08) 50%,
+                        transparent 100%);
+            transform: skewX(-20deg);
+            transition: left 700ms cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+        }
+        .lp-founder:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+        .lp-founder:hover::before { left: 140%; }
+        .lp-founder-tag {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--color-chrome-muted);
+            margin-bottom: 16px;
+        }
+        .lp-founder-name {
+            font-family: 'Inter', sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: -0.015em;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+        .lp-founder-affiliation {
+            font-size: 13px;
+            color: var(--color-chrome-dark);
+            margin-bottom: 24px;
+        }
+        .lp-founder-divider {
+            height: 1px;
+            background: rgba(226, 232, 240, 0.06);
+            margin-bottom: 24px;
+        }
+        .lp-founder-email {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--color-chrome-mid);
+            transition: color 250ms ease;
+        }
+        .lp-founder-email svg {
+            width: 12px;
+            height: 12px;
+            stroke: currentColor;
+            stroke-width: 1.5;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform 250ms ease;
+            margin-left: auto;
+        }
+        .lp-founder:hover .lp-founder-email { color: #60A5FA; }
+        .lp-founder:hover .lp-founder-email svg { transform: translateX(4px); }
+
+        /* ---------- FOOTER MARKER ---------- */
+        .lp-footer-marker {
+            border-top: 1px solid rgba(226, 232, 240, 0.06);
+            margin-top: 80px;
+            padding: 28px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--color-chrome-muted);
+        }
+
+        /* ---------- REVEAL ON SCROLL ---------- */
+        .reveal {
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+            will-change: opacity, transform;
+        }
+        .reveal.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal[data-delay="80"]  { transition-delay: 80ms; }
+        .reveal[data-delay="160"] { transition-delay: 160ms; }
+        .reveal[data-delay="240"] { transition-delay: 240ms; }
+        .reveal[data-delay="320"] { transition-delay: 320ms; }
+        @media (prefers-reduced-motion: reduce) {
+            .reveal {
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
+            .lp-orb { animation: none; }
+            .lp-flow-traveller { animation: none; }
+        }
+
+        /* ---------- LANDING RESPONSIVE ---------- */
+        @media (max-width: 980px) {
+            .lp-container { padding: 0 32px; }
+            .lp-section-rule { padding: 0 32px; }
+            .lp-hero {
+                grid-template-columns: 1fr;
+                gap: 56px;
+                min-height: auto;
+                padding: 64px 0 48px;
+            }
+            .lp-hero-right { order: 2; max-width: 480px; margin-right: auto; }
+            .lp-signature-frame { margin-left: 0; }
+            .lp-sig-captions { margin-left: 0; }
+            .lp-value {
+                grid-template-columns: 1fr;
+                gap: 56px;
+            }
+            .lp-flow-frame { margin-left: 0; }
+            .lp-section { padding: 88px 0; }
+        }
+        @media (max-width: 720px) {
+            .lp-benefits { grid-template-columns: 1fr; }
+            .lp-benefits::before,
+            .lp-benefits::after { display: none; }
+            .lp-card {
+                padding: 36px 8px;
+                min-height: auto;
+                border-top: 1px solid rgba(226, 232, 240, 0.08);
+            }
+            .lp-card:first-child { border-top: none; }
+            .lp-card-index { margin-bottom: 28px; }
+            .lp-card-icon { margin-bottom: 20px; }
+            .lp-founders { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .lp-container { padding: 0 22px; }
+            .lp-section-rule { padding: 0 22px; }
+            .lp-section { padding: 64px 0; }
+            .lp-hero { padding: 40px 0 32px; }
+            .lp-marker { margin-bottom: 22px; }
+            .lp-h1 { margin-bottom: 22px; }
+            .lp-lead { margin-bottom: 32px; }
+            .lp-cta {
+                width: 100%;
+                justify-content: center;
+            }
+            .lp-eyebrow { margin-bottom: 20px; }
+            .lp-h2 { margin-bottom: 18px; }
+            .lp-contact-intro { margin-bottom: 40px; }
+            .lp-founder { padding: 24px; border-radius: 12px; }
+            .lp-footer-marker { flex-direction: column; gap: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -969,7 +1951,7 @@
 
     <header class="synthonia-navbar">
         <div class="navbar-logo-wrapper"
-             onclick="document.getElementById('simulator').classList.add('hidden'); document.getElementById('onboarding').classList.remove('hidden'); obShowStep(1);"
+             onclick="window.SynthoniaLanding && window.SynthoniaLanding.showLanding();"
              style="cursor: pointer;" role="button" aria-label="Torna alla home">
             <svg class="brand-logo-svg" width="200" height="32" viewBox="0 0 200 32"
                  xmlns="http://www.w3.org/2000/svg" aria-label="Synthonia">
@@ -997,7 +1979,217 @@
         </nav>
     </header>
 
-    <div id="onboarding">
+    <main class="landing" id="landing">
+
+        <div class="lp-backdrop" aria-hidden="true">
+            <div class="lp-grid"></div>
+            <div class="lp-orb"></div>
+            <div class="lp-noise"></div>
+        </div>
+
+        <!-- HERO -->
+        <section class="lp-hero lp-container">
+            <div class="lp-hero-left">
+                <div class="lp-marker reveal">SYN — 01</div>
+                <h1 class="lp-h1 reveal" data-delay="80">
+                    I tuoi ricavi di domani, nelle tue mani <span class="lp-accent">oggi</span>
+                </h1>
+                <p class="lp-lead reveal" data-delay="160">
+                    Trasforma i flussi futuri del tuo catalogo in liquidità immediata,
+                    mantenendone la proprietà.
+                </p>
+                <button type="button" class="lp-cta reveal" data-delay="240" id="landingCta">
+                    <span>Scopri ora il tuo anticipo</span>
+                    <svg class="lp-cta-arrow" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M2 6h7M6 2.5L9.5 6 6 9.5"
+                              fill="none" stroke="currentColor"
+                              stroke-width="1.5"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="lp-hero-right reveal" data-delay="320">
+                <div class="lp-signature-frame">
+                    <span class="lp-corner-tr"></span>
+                    <span class="lp-corner-bl"></span>
+                    <span class="lp-sig-tag">REV — STREAM</span>
+                    <span class="lp-sig-tag-right">LIVE</span>
+                    <svg class="lp-signature" viewBox="0 0 380 280" preserveAspectRatio="none"
+                         xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="lp-sig-gradient" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%"   stop-color="#3B82F6"/>
+                                <stop offset="55%"  stop-color="#60A5FA"/>
+                                <stop offset="100%" stop-color="#E2E8F0"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- baseline -->
+                        <line class="lp-sig-axis" x1="0" y1="140" x2="380" y2="140"/>
+                        <!-- divider between audio half and revenue half -->
+                        <line class="lp-sig-axis" x1="190" y1="20" x2="190" y2="260"/>
+                        <!-- the line: generated by JS into #lpSigPath -->
+                        <path id="lpSigPath" class="lp-sig-path" d=""/>
+                        <!-- traveller dot — animated along path via JS -->
+                        <circle id="lpSigDot" class="lp-sig-dot" cx="0" cy="140" r="3"/>
+                    </svg>
+                </div>
+                <div class="lp-sig-captions" aria-hidden="true">
+                    <span>T−0</span>
+                    <span>T−12</span>
+                    <span>T−24</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- VALUE PROP -->
+        <div class="lp-section-rule"></div>
+        <section class="lp-section">
+            <div class="lp-container">
+                <div class="lp-value">
+                    <div class="lp-value-left">
+                        <div class="lp-eyebrow reveal">SYN — 02</div>
+                        <h2 class="lp-h2 reveal" data-delay="80">
+                            Ottieni liquidità dal tuo catalogo senza venderlo
+                        </h2>
+                        <p class="lp-body reveal" data-delay="160">
+                            Con Synthonia puoi cedere temporaneamente i ricavi futuri del tuo
+                            catalogo a investitori istituzionali, ricevendo subito la liquidità
+                            di cui hai bisogno. Il catalogo resta tuo.
+                        </p>
+                    </div>
+                    <div class="lp-value-right reveal" data-delay="240">
+                        <div class="lp-flow-frame">
+                            <svg class="lp-flow" id="lpFlow" viewBox="0 0 480 260"
+                                 xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <!-- top label: FLUSSI FUTURI -->
+                                <text class="lp-flow-caption dim" x="0" y="14">FLUSSI FUTURI</text>
+                                <!-- 12 month cells, left half -->
+                                <g id="lpFlowCells"></g>
+                                <!-- arc descending to OGGI -->
+                                <path class="lp-flow-arc" id="lpFlowArc"
+                                      d="M 200 60 C 280 60, 320 100, 380 130 C 410 144, 420 150, 430 156"/>
+                                <!-- traveller dot riding the arc -->
+                                <circle class="lp-flow-traveller" r="2.5" cx="200" cy="60"
+                                        style="offset-path: path('M 200 60 C 280 60, 320 100, 380 130 C 410 144, 420 150, 430 156');"/>
+                                <!-- OGGI solid cell -->
+                                <rect class="lp-flow-now" x="430" y="148" width="36" height="48" rx="2"/>
+                                <text class="lp-flow-caption accent" x="430" y="218">OGGI</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BENEFITS -->
+        <div class="lp-section-rule"></div>
+        <section class="lp-section">
+            <div class="lp-container">
+                <div class="lp-eyebrow reveal">SYN — 03</div>
+                <h2 class="lp-h2 reveal" data-delay="80" style="max-width: 720px; margin-bottom: 64px;">
+                    Tre garanzie strutturali
+                </h2>
+                <div class="lp-benefits-wrap">
+                    <div class="lp-benefits">
+                        <article class="lp-card reveal" data-delay="0">
+                            <div class="lp-card-index">01</div>
+                            <div class="lp-card-icon" aria-hidden="true">
+                                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M16 4 L24 18 C24 23, 20 27, 16 27 C 12 27, 8 23, 8 18 Z"/>
+                                    <path d="M11 21 L11 26 M15 19 L15 26 M19 17 L19 26 M23 15 L23 26"
+                                          opacity="0.7"/>
+                                </svg>
+                            </div>
+                            <h3>Liquidità immediata</h3>
+                            <p>
+                                Ricevi subito l'anticipo sui ricavi futuri del tuo catalogo,
+                                senza attendere gli incassi anno dopo anno.
+                            </p>
+                        </article>
+
+                        <article class="lp-card reveal" data-delay="80">
+                            <div class="lp-card-index">02</div>
+                            <div class="lp-card-icon" aria-hidden="true">
+                                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="5" y="11" width="20" height="14" rx="1"/>
+                                    <rect x="7" y="8"  width="20" height="14" rx="1" opacity="0.7"/>
+                                    <rect x="9" y="5"  width="20" height="14" rx="1" opacity="0.45"/>
+                                    <path d="M16 17.5 v 3" />
+                                    <circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/>
+                                </svg>
+                            </div>
+                            <h3>Catalogo sempre tuo</h3>
+                            <p>
+                                Mantieni la piena proprietà del tuo repertorio: ciò che cedi
+                                sono i ricavi futuri, non le opere.
+                            </p>
+                        </article>
+
+                        <article class="lp-card reveal" data-delay="160">
+                            <div class="lp-card-index">03</div>
+                            <div class="lp-card-icon" aria-hidden="true">
+                                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M5 16 C 5 11, 9 8, 12 11 C 15 14, 17 18, 20 21 C 23 24, 27 21, 27 16 C 27 11, 23 8, 20 11 C 17 14, 15 18, 12 21 C 9 24, 5 21, 5 16 Z"/>
+                                </svg>
+                            </div>
+                            <h3>Continuità aziendale garantita</h3>
+                            <p>
+                                Sostieni investimenti, nuovi progetti e operatività quotidiana
+                                senza compromettere la solidità del tuo business.
+                            </p>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTACT -->
+        <div class="lp-section-rule"></div>
+        <section class="lp-section" id="about">
+            <div class="lp-container">
+                <div class="lp-contact-intro">
+                    <div class="lp-eyebrow reveal">SYN — 04</div>
+                    <h2 class="lp-h2 reveal" data-delay="80">Contatti</h2>
+                    <p class="lp-body reveal" data-delay="160">
+                        Per approfondimenti, demo guidate o confronto sul progetto
+                        Synthonia, puoi scriverci a:
+                    </p>
+                </div>
+                <div class="lp-founders">
+                    <a class="lp-founder reveal" data-delay="0" href="mailto:Leonardo.agostini@polimi.it">
+                        <div class="lp-founder-name">Leonardo Agostini</div>
+                        <div class="lp-founder-affiliation">Politecnico di Milano</div>
+                        <div class="lp-founder-divider"></div>
+                        <div class="lp-founder-email">
+                            <span>Leonardo.agostini@polimi.it</span>
+                            <svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M2 6h7M6 2.5L9.5 6 6 9.5"/>
+                            </svg>
+                        </div>
+                    </a>
+                    <a class="lp-founder reveal" data-delay="80" href="mailto:Ettore.zauli@polimi.it">
+                        <div class="lp-founder-name">Ettore Zauli</div>
+                        <div class="lp-founder-affiliation">Politecnico di Milano</div>
+                        <div class="lp-founder-divider"></div>
+                        <div class="lp-founder-email">
+                            <span>Ettore.zauli@polimi.it</span>
+                            <svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M2 6h7M6 2.5L9.5 6 6 9.5"/>
+                            </svg>
+                        </div>
+                    </a>
+                </div>
+                <div class="lp-footer-marker">
+                    <span>SYNTHONIA — 2026</span>
+                    <span>EOF</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="onboarding" class="hidden" aria-hidden="true">
 
         <!-- Step 1: Interest check -->
         <div class="onboarding-step active" id="ob-step-1" style="text-align:center;">
@@ -1107,20 +2299,61 @@
 
     </div>
 
-    <div class="app-container hidden" id="simulator">
+    <div class="hidden" id="simulator" data-active="false">
+        <!-- INTAKE: 2 inputs that drive the simulator -->
+        <section class="sim-intake">
+            <header class="sim-intake-head">
+                <span class="sim-intake-eyebrow">SYN — DATI</span>
+                <h2 class="sim-intake-title">Inserisci i dati del tuo catalogo</h2>
+                <p class="sim-intake-subtitle">
+                    Bastano due valori per attivare il simulatore. Poi scegli uno o
+                    più scenari per confrontare i tuoi flussi nel tempo.
+                </p>
+            </header>
+            <div class="sim-intake-grid">
+                <div class="sim-intake-card" id="intakeCardTarget">
+                    <div class="sim-intake-card-head">
+                        <span class="sim-intake-step">01 — Obiettivo</span>
+                        <span class="sim-intake-status" aria-hidden="true"></span>
+                    </div>
+                    <label class="sim-intake-label" for="financingTarget">Obiettivo di liquidità</label>
+                    <p class="sim-intake-hint">
+                        Importo che vorresti ricevere subito come anticipo sui
+                        ricavi del tuo catalogo.
+                    </p>
+                    <div class="sim-intake-input-wrap">
+                        <span class="sim-intake-euro">€</span>
+                        <input type="text" id="financingTarget" class="sim-intake-input"
+                               placeholder="80.000" inputmode="numeric" autocomplete="off">
+                    </div>
+                </div>
+                <div class="sim-intake-card" id="intakeCardCashflow">
+                    <div class="sim-intake-card-head">
+                        <span class="sim-intake-step">02 — Flusso</span>
+                        <span class="sim-intake-status" aria-hidden="true"></span>
+                    </div>
+                    <label class="sim-intake-label" for="annualCashFlow">Flusso di cassa annuale</label>
+                    <p class="sim-intake-hint">
+                        Royalties medie annuali generate dal catalogo
+                        (rendiconti SIAE degli ultimi anni).
+                    </p>
+                    <div class="sim-intake-input-wrap">
+                        <span class="sim-intake-euro">€</span>
+                        <input type="text" id="annualCashFlow" class="sim-intake-input"
+                               placeholder="22.222" inputmode="numeric" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+            <div class="sim-locked-banner">
+                <span class="sim-locked-banner-inner">Compila i dati per attivare il simulatore</span>
+            </div>
+        </section>
+
+        <div class="app-container">
         <!-- INPUT PANEL -->
         <div class="input-panel">
             <div class="card">
                 <div class="card-title">Parametri del Catalogo</div>
-
-                <!-- Flusso di cassa annuale -->
-                <div class="input-group">
-                    <label class="input-label" for="annualCashFlow">Flusso di cassa medio annuale</label>
-                    <div class="input-euro-wrapper">
-                        <input type="text" id="annualCashFlow" class="input-number" placeholder="es. 22.222" inputmode="numeric">
-                    </div>
-                    <div class="input-hint">Royalties medie annuali generate dal tuo catalogo</div>
-                </div>
 
                 <!-- % tokenizzazione -->
                 <div class="input-group">
@@ -1359,6 +2592,7 @@
             </div>
 
         </div>
+        </div>
     </div>
 
     <!-- Disclaimer -->
@@ -1445,14 +2679,14 @@
     //  STATE
     // =========================================
     let state = {
-        annualCashFlow: 20000, // royalties annuali medie
+        annualCashFlow: 0, // royalties annuali medie — filled via intake card
         tokenPct: 100,
         timeHorizon: 10,
         riskRate: 10, // fixed internal default — no longer user-controlled (band uses RISK_RATE_LOWER/UPPER)
         path: 'aggregated', // 'instant' or 'aggregated'
-        financingTarget: 0,   // X — desired liquidity amount (€)
+        financingTarget: 0,   // X — desired liquidity amount (€) — filled via intake card
         actualCashFlow: 0,    // Z — actual annual cash flow of the catalog (€)
-        activeScenarios: new Set(['A']), // multi-select scenario set; min 1 active
+        activeScenarios: new Set(), // multi-select; empty until user picks
         nCatalogs: 1,         // number of catalogs in the aggregated package
         // [DEAD CODE REMOVED — Ciclo Azimut FASE A] feePerPublisher: state property assigned in obSelectScenario but never read.
         investmentGrossRate: INVESTMENT_RATE_MIN, // gross reinvestment rate (default 3%)
@@ -3229,10 +4463,9 @@
             const btn = document.getElementById('toggleScenario' + s);
             if (!btn) return;
             btn.addEventListener('click', () => {
+                if (!simulatorIsActive()) return;
                 if (state.activeScenarios.has(s)) {
-                    if (state.activeScenarios.size > 1) {
-                        state.activeScenarios.delete(s);
-                    }
+                    state.activeScenarios.delete(s);
                 } else {
                     state.activeScenarios.add(s);
                 }
@@ -3289,10 +4522,38 @@
     }
 
     // =========================================
+    //  INTAKE — activation logic
+    // =========================================
+    function simulatorIsActive() {
+        return state.financingTarget > 0 && state.annualCashFlow > 0;
+    }
+
+    function syncIntakeCard(cardEl, value) {
+        if (!cardEl) return;
+        cardEl.classList.toggle('is-filled', value > 0);
+    }
+
+    function refreshSimulatorActivation() {
+        const sim = document.getElementById('simulator');
+        const active = simulatorIsActive();
+        sim.dataset.active = active ? 'true' : 'false';
+        syncIntakeCard(document.getElementById('intakeCardTarget'), state.financingTarget);
+        syncIntakeCard(document.getElementById('intakeCardCashflow'), state.annualCashFlow);
+    }
+
+    // =========================================
     //  EVENT HANDLERS
     // =========================================
     document.getElementById('annualCashFlow').addEventListener('input', function(e) {
         state.annualCashFlow = parseEuroInput(e.target.value);
+        state.actualCashFlow = state.annualCashFlow;
+        refreshSimulatorActivation();
+        updateUI();
+    });
+
+    document.getElementById('financingTarget').addEventListener('input', function(e) {
+        state.financingTarget = parseEuroInput(e.target.value);
+        refreshSimulatorActivation();
         updateUI();
     });
 
@@ -3508,9 +4769,168 @@
     }
 
     // =========================================
-    //  INIT
+    //  LANDING ↔ SIMULATOR VIEW SWITCHING
     // =========================================
-    // Simulator is hidden until onboarding completes; no updateUI() call needed here.
+    (function landingInit() {
+        const landing   = document.getElementById('landing');
+        const simulator = document.getElementById('simulator');
+        const cta       = document.getElementById('landingCta');
+        let simulatorReady = false;
+
+        function showSimulator() {
+            if (!simulator) return;
+            landing.classList.add('hidden');
+            simulator.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'auto' });
+            refreshSimulatorActivation();
+            if (!simulatorReady) {
+                // Defer chart layout to next frame so the canvas has measurable size.
+                requestAnimationFrame(() => {
+                    try { updateUI(); } catch (e) { /* no-op */ }
+                    if (typeof chart !== 'undefined' && chart && chart.resize) {
+                        chart.resize();
+                    }
+                    simulatorReady = true;
+                    setTimeout(() => {
+                        const focusEl = document.getElementById('financingTarget');
+                        if (focusEl && !focusEl.value) focusEl.focus();
+                    }, 320);
+                });
+            } else if (typeof chart !== 'undefined' && chart && chart.resize) {
+                chart.resize();
+            }
+        }
+
+        function showLanding() {
+            if (!landing) return;
+            simulator.classList.add('hidden');
+            landing.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'auto' });
+        }
+
+        if (cta) cta.addEventListener('click', showSimulator);
+
+        // Expose for the navbar logo click handler.
+        window.SynthoniaLanding = { showLanding, showSimulator };
+
+        // ---------- SIGNATURE WAVEFORM (hero) ----------
+        // 60 sampled points across 380×280: left half = decaying sine waveform,
+        // right half = ascending stepped revenue line. Single continuous path.
+        (function buildSignaturePath() {
+            const el = document.getElementById('lpSigPath');
+            if (!el) return;
+            const W = 380, BASELINE = 140;
+            const points = [];
+            const SPLIT = 30; // index at x = 190
+            for (let i = 0; i <= 60; i++) {
+                const x = (i / 60) * W;
+                let y;
+                if (i <= SPLIT) {
+                    // Audio waveform: damped sine + small phase noise
+                    const t = i / SPLIT;
+                    const amp = 70 * (1 - 0.35 * t);
+                    const phase = i * 0.95 + Math.sin(i * 0.31) * 0.4;
+                    y = BASELINE + Math.sin(phase) * amp * (1 - t * 0.2);
+                } else {
+                    // Ascending stepped revenue line
+                    const t = (i - SPLIT) / (60 - SPLIT);
+                    // Stepped: 5 plateaus
+                    const step = Math.floor(t * 5);
+                    const stepT = (t * 5) - step;
+                    const ease = stepT < 0.7 ? 0 : (stepT - 0.7) / 0.3;
+                    const stepHeight = (step + ease) * 18;
+                    y = BASELINE - stepHeight - 10;
+                }
+                points.push([x, y]);
+            }
+            // Smooth path with quadratic curves between midpoints
+            let d = `M ${points[0][0].toFixed(2)} ${points[0][1].toFixed(2)}`;
+            for (let i = 1; i < points.length - 1; i++) {
+                const [x0, y0] = points[i];
+                const [x1, y1] = points[i + 1];
+                const mx = (x0 + x1) / 2;
+                const my = (y0 + y1) / 2;
+                d += ` Q ${x0.toFixed(2)} ${y0.toFixed(2)} ${mx.toFixed(2)} ${my.toFixed(2)}`;
+            }
+            const last = points[points.length - 1];
+            d += ` T ${last[0].toFixed(2)} ${last[1].toFixed(2)}`;
+            el.setAttribute('d', d);
+
+            // Total path length for the dot animation
+            const sigPath = el;
+            const sigDot  = document.getElementById('lpSigDot');
+            if (sigDot && sigPath.getTotalLength) {
+                const total = sigPath.getTotalLength();
+                let start = null;
+                const DURATION = 6000;
+                function step(ts) {
+                    if (start === null) start = ts;
+                    const elapsed = (ts - start) % DURATION;
+                    const t = elapsed / DURATION;
+                    const eased = 0.5 - 0.5 * Math.cos(t * Math.PI * 2);
+                    const pt = sigPath.getPointAtLength(eased * total);
+                    sigDot.setAttribute('cx', pt.x.toFixed(2));
+                    sigDot.setAttribute('cy', pt.y.toFixed(2));
+                    requestAnimationFrame(step);
+                }
+                requestAnimationFrame(step);
+            }
+        })();
+
+        // ---------- VALUE-PROP FLOW DIAGRAM cells ----------
+        (function buildFlowCells() {
+            const g = document.getElementById('lpFlowCells');
+            if (!g) return;
+            const COUNT = 12;
+            const W = 18, H = 36, GAP = 4;
+            const startX = 0, y = 36;
+            for (let i = 0; i < COUNT; i++) {
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('class', 'lp-flow-cell');
+                rect.setAttribute('x', startX + i * (W + GAP));
+                rect.setAttribute('y', y);
+                rect.setAttribute('width', W);
+                rect.setAttribute('height', H);
+                rect.setAttribute('rx', 1);
+                g.appendChild(rect);
+            }
+        })();
+
+        // ---------- REVEAL ON SCROLL ----------
+        const revealEls = document.querySelectorAll('.reveal');
+        if (!('IntersectionObserver' in window)) {
+            revealEls.forEach(el => el.classList.add('is-visible'));
+        } else {
+            const io = new IntersectionObserver(function (entries, obs) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
+            revealEls.forEach(el => io.observe(el));
+
+            // Flow diagram has its own one-shot trigger (the SVG arc)
+            const flow = document.getElementById('lpFlow');
+            if (flow) {
+                const fIo = new IntersectionObserver(function (entries, obs) {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            flow.classList.add('is-visible');
+                            obs.unobserve(flow);
+                        }
+                    });
+                }, { threshold: 0.25 });
+                fIo.observe(flow);
+            }
+        }
+
+        // ---------- LOAD STATE (drives hero animations) ----------
+        requestAnimationFrame(() => {
+            landing && landing.classList.add('is-loaded');
+        });
+    })();
     </script>
 
 </body>
