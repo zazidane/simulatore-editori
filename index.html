@@ -4606,6 +4606,22 @@
         updateUI();
     });
 
+    // Show thousand separators only when the input is not being edited.
+    // On focus we strip the dots so digit-level editing stays simple; on blur
+    // we re-format from the parsed numeric value.
+    ['annualCashFlow', 'financingTarget', 'ob-financing-target', 'ob-actual-cashflow'].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('focus', function() {
+            const num = parseEuroInput(el.value);
+            el.value = num > 0 ? String(Math.round(num)) : '';
+        });
+        el.addEventListener('blur', function() {
+            const num = parseEuroInput(el.value);
+            el.value = num > 0 ? Math.round(num).toLocaleString('it-IT') : '';
+        });
+    });
+
     document.getElementById('tokenPct').addEventListener('input', function(e) {
         state.tokenPct = parseInt(e.target.value);
         document.getElementById('tokenPctDisplay').textContent = state.tokenPct + '%';
