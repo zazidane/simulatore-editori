@@ -2686,7 +2686,7 @@
         path: 'aggregated', // 'instant' or 'aggregated'
         financingTarget: 0,   // X — desired liquidity amount (€) — filled via intake card
         actualCashFlow: 0,    // Z — actual annual cash flow of the catalog (€)
-        activeScenarios: new Set(), // multi-select; empty until user picks
+        activeScenarios: new Set(['A']), // multi-select; Scenario A ("Spese personali o aziendali") preselected by default
         nCatalogs: 1,         // number of catalogs in the aggregated package
         // [DEAD CODE REMOVED — Ciclo Azimut FASE A] feePerPublisher: state property assigned in obSelectScenario but never read.
         investmentGrossRate: INVESTMENT_RATE_MIN, // gross reinvestment rate (default 3%)
