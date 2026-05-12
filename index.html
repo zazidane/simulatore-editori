@@ -3582,6 +3582,32 @@
                                 + (salesCF0_C_BC / ROYALTY_RATIO) * tprPlus1 * t;
         }
 
+        // Chart-only rebase: B/C and B/C-bearing hybrid series are plotted as
+        // accumulated performance net of the upfront advance principal embedded
+        // in their formulas, so Year 0 = 0 and later years show only the
+        // incremental cumulative value. The financial engine above is untouched;
+        // we just subtract each series' own t=0 base from every point.
+        const rebaseToZero = (a) => {
+            const base = a[0];
+            for (let i = 0; i < a.length; i++) a[i] -= base;
+        };
+        // Standalone B and C (central + bands)
+        rebaseToZero(fairRS_B);
+        rebaseToZero(rsUpper_B);
+        rebaseToZero(rsLower_B);
+        rebaseToZero(fairRS_C);
+        rebaseToZero(rsUpper_C);
+        rebaseToZero(rsLower_C);
+        // Hybrid curves carrying a B and/or C principal at t=0
+        // (hybExtremeA_* already start at 0 and are intentionally left alone.)
+        rebaseToZero(hybExtremeB_AB);
+        rebaseToZero(hybCenter_AB);
+        rebaseToZero(hybExtremeC_AC);
+        rebaseToZero(hybCenter_AC);
+        rebaseToZero(hybExtremeB_BC);
+        rebaseToZero(hybExtremeC_BC);
+        rebaseToZero(hybCenter_BC);
+
         return {
             fullCatalogValue,
             effectiveValue,
