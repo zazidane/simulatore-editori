@@ -2368,7 +2368,7 @@
                 <div class="input-group">
                     <label class="input-label">Orizzonte temporale</label>
                     <div class="slider-row">
-                        <input type="range" id="timeHorizon" min="3" max="10" value="10" step="1">
+                        <input type="range" id="timeHorizon" min="3" max="15" value="10" step="1">
                         <span class="slider-value" id="timeHorizonDisplay">10 anni</span>
                     </div>
                 </div>
@@ -2611,7 +2611,7 @@
     const ORIGINATION_FEE = 25845.95;
     const MIN_PACKAGE_VALUE = 800000;
     const AGGREGATED_TARGET = MIN_PACKAGE_VALUE; // Aggregate to reach minimum €800k
-    const CHART_YEARS = 20; // Fixed 20-year chart horizon
+    const CHART_YEARS = 30; // Fixed 30-year chart horizon
     const RISK_SENSITIVITY = 0.55; // Dampening factor for risk rate impact on investor pricing
     // Sale valuation: sale_rate = SALE_BASE_RATE + RISK_SENSITIVITY × risk_rate
     // Calibrated so at risk=10%: sale_rate = 1/9 = 0.1111 → multiple = 9×
@@ -3102,7 +3102,11 @@
                 x: {
                     ticks: {
                         color: '#64748B',
-                        font: { family: "'Inter', sans-serif", size: 11 }
+                        font: { family: "'Inter', sans-serif", size: 11 },
+                        autoSkip: false,
+                        callback: function(value, index) {
+                            return index % 5 === 0 ? this.getLabelForValue(value) : '';
+                        }
                     },
                     grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
                     border: { color: 'rgba(255,255,255,0.05)' }
