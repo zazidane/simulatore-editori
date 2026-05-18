@@ -3815,7 +3815,8 @@
             rsNoteTitleEl.textContent = 'Target di liquidità non raggiungibile';
             rsNoteTextEl.textContent  =
                 "Il target di liquidità inserito supera l'anticipo massimo ottenibile da questo catalogo. " +
-                "Il valore mostrato è l'anticipo massimo ottenibile, calcolato con il 100% del catalogo in anticipo e l'orizzonte temporale massimo (15 anni).";
+                "Il valore mostrato è l'anticipo massimo ottenibile, calcolato con il 100% del catalogo in anticipo e l'orizzonte temporale massimo (15 anni). " +
+                "Imposta un obiettivo di liquidità inferiore o uguale a " + formatEuro(maxObtainableAdvance) + " per procedere con la simulazione.";
             rsNoteEl.classList.add('visible');
         } else {
             rsCF0El.textContent      = formatEuro(r.royaltySaleCF0);
