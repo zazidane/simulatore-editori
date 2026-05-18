@@ -3778,19 +3778,17 @@
         const maxObtainableAdvance = calculateMaxObtainableAdvance(state);
         const targetLiquidity      = state.financingTarget || 0;
         const currentAdvance       = r.royaltySaleCF0;
+        // Feasibility rule: the currently computed advance is the source of
+        // truth. If it's ≤ 0, the operation is not economically sustainable
+        // regardless of how that state was reached (intake inputs, auto-
+        // configuration, or manual slider edits). Only when the current
+        // configuration is itself viable do we fall through to the
+        // target-unreachable / normal states.
         let advanceUiState;
-        let unreachableReason = null; // 'target' | 'current_negative'
-        if (maxObtainableAdvance <= 0) {
+        if (currentAdvance <= 0) {
             advanceUiState = 'non_applicable';
         } else if (targetLiquidity > maxObtainableAdvance) {
             advanceUiState = 'target_unreachable';
-            unreachableReason = 'target';
-        } else if (currentAdvance <= 0) {
-            // Catalog can produce a positive advance (max > 0), but the user's
-            // current slider configuration drives the net advance to ≤ 0.
-            // Never render a negative euro amount on the card.
-            advanceUiState = 'target_unreachable';
-            unreachableReason = 'current_negative';
         } else {
             advanceUiState = 'normal';
         }
@@ -3804,10 +3802,9 @@
             rsBadgeEl.classList.add('is-na');
             rsBadgeEl.style.display  = '';
             if (rsSubLabelEl) rsSubLabelEl.style.visibility = 'hidden';
-            rsNoteTitleEl.textContent = 'Anticipo non disponibile per questo catalogo';
+            rsNoteTitleEl.textContent = 'Anticipo non disponibile';
             rsNoteTextEl.textContent  =
-                "I costi di origination superano l'anticipo massimo ottenibile da questo catalogo. " +
-                "L'operazione non è economicamente sostenibile con i parametri attuali.";
+                "I costi superano l'anticipo ottenibile con i parametri selezionati.";
             rsNoteEl.classList.add('visible');
         } else if (advanceUiState === 'target_unreachable') {
             rsCF0El.textContent      = formatEuro(maxObtainableAdvance);
@@ -3815,17 +3812,10 @@
             rsBadgeEl.classList.add('is-max');
             rsBadgeEl.style.display  = '';
             if (rsSubLabelEl) rsSubLabelEl.style.visibility = '';
-            if (unreachableReason === 'current_negative') {
-                rsNoteTitleEl.textContent = 'Parametri attuali non sostenibili';
-                rsNoteTextEl.textContent  =
-                    "I parametri attualmente selezionati (quota in anticipo e orizzonte temporale) non producono un anticipo positivo. " +
-                    "Il valore mostrato è l'anticipo massimo ottenibile da questo catalogo, calcolato con il 100% del catalogo in anticipo e l'orizzonte temporale massimo (15 anni).";
-            } else {
-                rsNoteTitleEl.textContent = 'Target di liquidità non raggiungibile';
-                rsNoteTextEl.textContent  =
-                    "Il target di liquidità inserito supera l'anticipo massimo ottenibile da questo catalogo. " +
-                    "Il valore mostrato è l'anticipo massimo ottenibile, calcolato con il 100% del catalogo in anticipo e l'orizzonte temporale massimo (15 anni).";
-            }
+            rsNoteTitleEl.textContent = 'Target di liquidità non raggiungibile';
+            rsNoteTextEl.textContent  =
+                "Il target di liquidità inserito supera l'anticipo massimo ottenibile da questo catalogo. " +
+                "Il valore mostrato è l'anticipo massimo ottenibile, calcolato con il 100% del catalogo in anticipo e l'orizzonte temporale massimo (15 anni).";
             rsNoteEl.classList.add('visible');
         } else {
             rsCF0El.textContent      = formatEuro(r.royaltySaleCF0);
