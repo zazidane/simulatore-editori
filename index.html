@@ -3815,8 +3815,7 @@
             rsNoteTitleEl.textContent = 'Target di liquidità non raggiungibile';
             rsNoteTextEl.textContent  =
                 "Il target di liquidità inserito supera l'anticipo massimo ottenibile da questo catalogo. " +
-                "Il valore mostrato è l'anticipo massimo ottenibile, calcolato con il 100% del catalogo in anticipo e l'orizzonte temporale massimo (15 anni). " +
-                "Imposta un obiettivo di liquidità inferiore o uguale a " + formatEuro(maxObtainableAdvance) + " per procedere con la simulazione.";
+                "Il valore mostrato è l'anticipo massimo ottenibile, calcolato con il 100% del catalogo in anticipo e l'orizzonte temporale massimo (15 anni).";
             rsNoteEl.classList.add('visible');
         } else {
             rsCF0El.textContent      = formatEuro(r.royaltySaleCF0);
@@ -4386,13 +4385,17 @@
                 saleUpper   = r.saleUpper_C;
                 saleLower   = r.saleLower_C;
             } else {
-                // Pure Scenario A view: net of the spent anticipo. The band
-                // logic is unchanged — bounds shift by the same offset, so
-                // the existing ±RISK_BAND_DELTA spread is preserved and
-                // recentered on the new baseline.
-                saleCentral = shiftA(r.saleCumulative_A);
-                saleUpper   = shiftA(r.saleUpper_A);
-                saleLower   = shiftA(r.saleLower_A);
+                // Pure Scenario A view: the residual cash (saleCF0 − anticipo)
+                // is reinvested at the BTP-equivalent net rate (3% gross with
+                // 12.5% imposta sostitutiva → 2.625% net), so the Vendita
+                // Catalogo curve compounds from its initial shifted value
+                // instead of sitting flat. Bands compound from their own
+                // ±RISK_BAND_DELTA shifted baselines.
+                const venditaRateA_net = 0.03 * (1 - 0.125);
+                const compoundA = (v, t) => v * Math.pow(1 + venditaRateA_net, t);
+                saleCentral = shiftA(r.saleCumulative_A).map(compoundA);
+                saleUpper   = shiftA(r.saleUpper_A).map(compoundA);
+                saleLower   = shiftA(r.saleLower_A).map(compoundA);
             }
             chart.data.datasets[0].data        = saleCentral;
             chart.data.datasets[0].borderDash  = [];
