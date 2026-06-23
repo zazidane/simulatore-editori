@@ -2416,7 +2416,7 @@
                 <div class="input-group">
                     <label class="input-label">Orizzonte temporale</label>
                     <div class="slider-row">
-                        <input type="range" id="timeHorizon" min="3" max="15" value="10" step="1">
+                        <input type="range" id="timeHorizon" min="3" max="20" value="10" step="1">
                         <span class="slider-value" id="timeHorizonDisplay">10 anni</span>
                     </div>
                 </div>
@@ -3713,13 +3713,13 @@
     }
 
     // Conservative maximum obtainable advance for the current catalog:
-    // run the existing engine with tokenPct=100 and timeHorizon=15 against a
+    // run the existing engine with tokenPct=100 and timeHorizon=20 against a
     // CLONE of the user state. Natural path/threshold/aggregation/tier/fee
     // logic is preserved — this is not a global optimization, just the
     // simulator evaluated at the upper bound of the two parameters the UX
     // is allowed to push.
     function calculateMaxObtainableAdvance(s) {
-        const probe = Object.assign({}, s, { tokenPct: 100, timeHorizon: 15 });
+        const probe = Object.assign({}, s, { tokenPct: 100, timeHorizon: 20 });
         if (s.activeScenarios) probe.activeScenarios = s.activeScenarios;
         return calculate(probe).royaltySaleCF0;
     }
@@ -3763,7 +3763,7 @@
 
         // Result cards — NPV as main value, CF0 as detail.
         // The Anticipo sui Ricavi card uses a parallel "conservative max
-        // obtainable advance" probe (tokenPct=100, timeHorizon=15, natural
+        // obtainable advance" probe (tokenPct=100, timeHorizon=20, natural
         // path/threshold/tier/fee preserved) to drive three UI states:
         //   normal             — target reachable, show current advance
         //   target_unreachable — target > max obtainable, show max + note
@@ -3815,7 +3815,7 @@
             rsNoteTitleEl.textContent = 'Target di liquidità non raggiungibile';
             rsNoteTextEl.textContent  =
                 "Il target di liquidità inserito supera l'anticipo massimo ottenibile da questo catalogo. " +
-                "Il valore mostrato è l'anticipo massimo ottenibile, calcolato con il 100% del catalogo in anticipo e l'orizzonte temporale massimo (15 anni).";
+                "Il valore mostrato è l'anticipo massimo ottenibile, calcolato con il 100% del catalogo in anticipo e l'orizzonte temporale massimo (20 anni).";
             rsNoteEl.classList.add('visible');
         } else {
             rsCF0El.textContent      = formatEuro(r.royaltySaleCF0);
@@ -4709,7 +4709,7 @@
     //   • path / nCatalogs come from backCalculate (they only depend on
     //     annualCashFlow vs the aggregation threshold).
     //   • If the target is unreachable under the conservative max-capacity
-    //     probe (tokenPct=100, timeHorizon=15), pin both sliders to that
+    //     probe (tokenPct=100, timeHorizon=20), pin both sliders to that
     //     pair — same pair the card uses to render "massimo ottenibile".
     //   • Otherwise, walk the existing calculate() engine over (T, pct):
     //     minimize T first, then minimize integer pct, and take the first
@@ -4732,7 +4732,7 @@
         const tokenMin   = tokenSlider   ? (parseInt(tokenSlider.min)   || 10) : 10;
         const tokenMax   = tokenSlider   ? (parseInt(tokenSlider.max)   || 100) : 100;
         const horizonMin = horizonSlider ? (parseInt(horizonSlider.min) || 3)  : 3;
-        const horizonMax = horizonSlider ? (parseInt(horizonSlider.max) || 15) : 15;
+        const horizonMax = horizonSlider ? (parseInt(horizonSlider.max) || 20) : 20;
 
         const target         = state.financingTarget;
         const maxObtainable  = calculateMaxObtainableAdvance(state);
