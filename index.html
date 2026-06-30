@@ -1910,6 +1910,65 @@
             color: var(--color-chrome-muted);
         }
 
+        /* ---------- CONTACTS OVERLAY (simulator context) ---------- */
+        /* Full-screen overlay shown when "About us" is clicked from inside
+           the simulator. It floats above #simulator and the navbar without
+           hiding them, so all simulator state and the chart canvas remain
+           intact underneath. Content reuses the landing's lp-* contact
+           classes for visual parity; only the wrapper and top bar are new. */
+        #contactsOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: var(--color-bg-base);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .contacts-overlay-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+            padding: 0 36px;
+            background: rgba(7, 11, 20, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .contacts-overlay-back {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #BFDBFE;
+            background: transparent;
+            border: 1px solid rgba(59, 130, 246, 0.45);
+            border-radius: 8px;
+            padding: 9px 20px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+        .contacts-overlay-back:hover {
+            color: #EFF6FF;
+            border-color: rgba(96, 165, 250, 0.75);
+            background: rgba(59, 130, 246, 0.10);
+        }
+        .contacts-overlay-body {
+            padding: 72px 0 80px;
+        }
+        @media (max-width: 768px) {
+            .contacts-overlay-topbar { padding: 0 16px; height: 60px; }
+            .contacts-overlay-back { font-size: 12px; padding: 8px 14px; }
+            .contacts-overlay-body { padding: 48px 0 56px; }
+        }
+
         /* ---------- REVEAL ON SCROLL ---------- */
         .reveal {
             opacity: 0;
@@ -2024,7 +2083,7 @@
         </div>
 
         <nav class="navbar-right">
-            <a href="#about" class="navbar-about-btn">About us</a>
+            <a href="#about" id="aboutUsBtn" class="navbar-about-btn">About us</a>
         </nav>
     </header>
 
@@ -4799,6 +4858,125 @@
             landing && landing.classList.add('is-loaded');
         });
     })();
+    </script>
+
+    <!-- CONTACTS OVERLAY — shown when "About us" is clicked from the simulator.
+         Floats above #simulator (does not hide it) so state is preserved. -->
+    <div id="contactsOverlay" aria-hidden="true">
+        <div class="contacts-overlay-topbar">
+            <button type="button" class="contacts-overlay-back" id="contactsOverlayBack">← Indietro</button>
+            <svg class="brand-logo-svg" width="200" height="32" viewBox="0 0 200 32"
+                 xmlns="http://www.w3.org/2000/svg" aria-label="Synthonia">
+                <text x="0" y="16"
+                      font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+                      font-weight="300" font-size="16" letter-spacing="4"
+                      fill="#E2E8F0" dominant-baseline="middle" text-anchor="start">SYNTH</text>
+                <g transform="translate(86, 16)">
+                    <circle r="7" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+                    <circle r="5.5" fill="none" stroke="rgba(226,232,240,0.35)" stroke-width="0.5"/>
+                    <circle r="4" fill="none" stroke="rgba(226,232,240,0.35)" stroke-width="0.5"/>
+                    <circle r="2.5" fill="none" stroke="rgba(226,232,240,0.35)" stroke-width="0.5"/>
+                    <circle r="2" fill="#3B82F6"/>
+                    <circle r="0.8" fill="#070B14"/>
+                </g>
+                <text x="100" y="16"
+                      font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+                      font-weight="300" font-size="16" letter-spacing="4"
+                      fill="#E2E8F0" dominant-baseline="middle" text-anchor="start">NIA</text>
+            </svg>
+        </div>
+        <div class="contacts-overlay-body">
+            <div class="lp-container">
+                <div class="lp-contact-intro">
+                    <div class="lp-eyebrow">SYN — 04</div>
+                    <h2 class="lp-h2">Contatti</h2>
+                    <p class="lp-body">
+                        Per approfondimenti, demo guidate o confronto sul progetto
+                        Synthonia, puoi scriverci a:
+                    </p>
+                </div>
+                <div class="lp-founders">
+                    <a class="lp-founder" href="mailto:Leonardo.agostini@polimi.it">
+                        <div class="lp-founder-name">Leonardo Agostini</div>
+                        <div class="lp-founder-affiliation">Politecnico di Milano</div>
+                        <div class="lp-founder-divider"></div>
+                        <div class="lp-founder-email">
+                            <span>Leonardo.agostini@polimi.it</span>
+                            <svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M2 6h7M6 2.5L9.5 6 6 9.5"/>
+                            </svg>
+                        </div>
+                    </a>
+                    <a class="lp-founder" href="mailto:Ettore.zauli@polimi.it">
+                        <div class="lp-founder-name">Ettore Zauli</div>
+                        <div class="lp-founder-affiliation">Politecnico di Milano</div>
+                        <div class="lp-founder-divider"></div>
+                        <div class="lp-founder-email">
+                            <span>Ettore.zauli@polimi.it</span>
+                            <svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M2 6h7M6 2.5L9.5 6 6 9.5"/>
+                            </svg>
+                        </div>
+                    </a>
+                </div>
+                <div class="lp-footer-marker">
+                    <span>SYNTHONIA — 2026</span>
+                    <span>EOF</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================
+        //  CONTEXT-AWARE "ABOUT US" + CONTACTS OVERLAY
+        // =========================================
+        // From the landing page, "About us" keeps its native anchor behavior
+        // (scroll to #about). From the simulator, it opens a full-screen
+        // contacts overlay instead, so the simulator's state is never torn
+        // down by an in-page scroll/navigation.
+        (function aboutUsContextAware() {
+            const overlay   = document.getElementById('contactsOverlay');
+            const aboutBtn  = document.getElementById('aboutUsBtn');
+            const backBtn   = document.getElementById('contactsOverlayBack');
+            const simulator = document.getElementById('simulator');
+
+            function simulatorIsVisible() {
+                // showSimulator() removes the 'hidden' class from #simulator;
+                // showLanding() adds it back. Mirror that exact condition.
+                return simulator && !simulator.classList.contains('hidden');
+            }
+
+            function showContactsOverlay() {
+                overlay.style.display = 'block';
+                overlay.setAttribute('aria-hidden', 'false');
+                overlay.scrollTop = 0;
+            }
+
+            function hideContactsOverlay() {
+                overlay.style.display = 'none';
+                overlay.setAttribute('aria-hidden', 'true');
+                // No state reset and no re-render: the simulator (incl. the
+                // Chart.js canvas) was never hidden or resized — it stayed
+                // laid out beneath the fixed overlay — so it reappears exactly
+                // as the user left it.
+            }
+
+            if (aboutBtn) {
+                aboutBtn.addEventListener('click', function (event) {
+                    if (simulatorIsVisible()) {
+                        event.preventDefault();
+                        showContactsOverlay();
+                    }
+                    // Landing context: do nothing — native href="#about"
+                    // anchor scroll behavior is preserved.
+                });
+            }
+
+            if (backBtn) {
+                backBtn.addEventListener('click', hideContactsOverlay);
+            }
+        })();
     </script>
 
 </body>
